@@ -1,3 +1,6 @@
+CREATE DATABASE `servv_buildings` character set utf8mb4;
+use `servv_buildings`;
+
 CREATE TABLE `organisation` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
@@ -5,8 +8,7 @@ CREATE TABLE `organisation` (
     `config` JSON,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_by` INT,
-    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    KEY `domain` (`domain`)
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE `services` (
@@ -59,7 +61,6 @@ CREATE TABLE `resident` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_by` INT,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    KEY `ph_num` (`ph_num`),
     CONSTRAINT `fk_resident_ibfk_1` FOREIGN KEY (`org_id`) REFERENCES organisation(id) ON DELETE CASCADE,
     CONSTRAINT `fk_resident_ibfk_2` FOREIGN KEY (`project_id`) REFERENCES project(id) ON DELETE CASCADE
 );
@@ -81,65 +82,6 @@ CREATE TABLE `apartment_resident_rel` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT `fk_apartment_resident_rel_ibfk_1` FOREIGN KEY (apartment_id) REFERENCES apartment(id) ON DELETE CASCADE,
     CONSTRAINT `fk_apartment_resident_rel_ibfk_2` FOREIGN KEY (resident_id) REFERENCES resident(id) ON DELETE CASCADE
-);
-
-CREATE TABLE `manager` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(255) NOT NULL,
-    `username` VARCHAR(255) UNIQUE NOT NULL,
-    `password` VARCHAR(255) NOT NULL,
-    `org_id` INT,
-    `project_id` INT,
-    `status` TINYINT DEFAULT 1,
-    `reports_to` INT,
-    `role_id` INT,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_by` INT,
-    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    KEY `username` (`username`),
-    CONSTRAINT `fk_manager_ibfk_1` FOREIGN KEY (org_id) REFERENCES organisation(id) ON DELETE CASCADE,
-    CONSTRAINT `fk_manager_ibfk_2` FOREIGN KEY (project_id) REFERENCES project(id) ON DELETE CASCADE,
-    CONSTRAINT `fk_manager_ibfk_3` FOREIGN KEY (role_id) REFERENCES role(id) ON DELETE CASCADE
-);
-
-CREATE TABLE `manager_service_rel` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `manager_id` INT,
-    `service_id` INT,
-    `status` TINYINT DEFAULT 1,
-    CONSTRAINT `fk_manager_service_rel_ibfk_1` FOREIGN KEY (manager_id) REFERENCES manager(id) ON DELETE CASCADE,
-    CONSTRAINT `fk_manager_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
-);
-
-CREATE TABLE `agent` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(255) NOT NULL,
-    `ph_num` VARCHAR(255) UNIQUE NOT NULL,
-    `status` TINYINT DEFAULT 1,
-    `proficient_service` JSON,
-    `location` VARCHAR(255),
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_by` INT,
-    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    KEY `ph_num` (`ph_num`),
-);
-
-CREATE TABLE `agent_service_rel` (
-    `agent_id` INT,
-    `service_id` INT,
-    `status` TINYINT DEFAULT 1,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_agent_service_rel_ibfk_1` FOREIGN KEY (agent_id) REFERENCES agent(id) ON DELETE CASCADE,
-    CONSTRAINT `fk_agent_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
-);
-
-CREATE TABLE `agent_organisation_rel` (
-    `agent_id` INT,
-    `organisation_id` INT,
-    `status` TINYINT DEFAULT 1,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_agent_organisation_rel_ibfk_1` FOREIGN KEY (agent_id) REFERENCES agent(id) ON DELETE CASCADE,
-    CONSTRAINT `fk_agent_organisation_rel_ibfk_2` FOREIGN KEY (organisation_id) REFERENCES organisation(id) ON DELETE CASCADE
 );
 
 CREATE TABLE `role` (
@@ -171,6 +113,63 @@ CREATE TABLE `role_permission` (
     CONSTRAINT `fk_role_permission_ibfk_2` FOREIGN KEY (permission_id) REFERENCES permission(id) ON DELETE CASCADE
 );
 
+CREATE TABLE `manager` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
+    `username` VARCHAR(255) UNIQUE NOT NULL,
+    `password` VARCHAR(255) NOT NULL,
+    `org_id` INT,
+    `project_id` INT,
+    `status` TINYINT DEFAULT 1,
+    `reports_to` INT,
+    `role_id` INT,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_by` INT,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_manager_ibfk_1` FOREIGN KEY (org_id) REFERENCES organisation(id) ON DELETE CASCADE,
+    CONSTRAINT `fk_manager_ibfk_2` FOREIGN KEY (project_id) REFERENCES project(id) ON DELETE CASCADE,
+    CONSTRAINT `fk_manager_ibfk_3` FOREIGN KEY (role_id) REFERENCES role(id) ON DELETE CASCADE
+);
+
+CREATE TABLE `manager_service_rel` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `manager_id` INT,
+    `service_id` INT,
+    `status` TINYINT DEFAULT 1,
+    CONSTRAINT `fk_manager_service_rel_ibfk_1` FOREIGN KEY (manager_id) REFERENCES manager(id) ON DELETE CASCADE,
+    CONSTRAINT `fk_manager_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
+);
+
+CREATE TABLE `agent` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
+    `ph_num` VARCHAR(255) UNIQUE NOT NULL,
+    `status` TINYINT DEFAULT 1,
+    `proficient_service` JSON,
+    `location` VARCHAR(255),
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_by` INT,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE `agent_service_rel` (
+    `agent_id` INT,
+    `service_id` INT,
+    `status` TINYINT DEFAULT 1,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_agent_service_rel_ibfk_1` FOREIGN KEY (agent_id) REFERENCES agent(id) ON DELETE CASCADE,
+    CONSTRAINT `fk_agent_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES services(id) ON DELETE CASCADE
+);
+
+CREATE TABLE `agent_organisation_rel` (
+    `agent_id` INT,
+    `organisation_id` INT,
+    `status` TINYINT DEFAULT 1,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_agent_organisation_rel_ibfk_1` FOREIGN KEY (agent_id) REFERENCES agent(id) ON DELETE CASCADE,
+    CONSTRAINT `fk_agent_organisation_rel_ibfk_2` FOREIGN KEY (organisation_id) REFERENCES organisation(id) ON DELETE CASCADE
+);
+
 CREATE TABLE `payment` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `order_id` VARCHAR(255) UNIQUE NOT NULL,
@@ -180,8 +179,6 @@ CREATE TABLE `payment` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     `updated_by` INT,
-    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    KEY `order_id` (`order_id`),
     KEY `status` (`status`)
 );
 
@@ -216,7 +213,7 @@ CREATE TABLE `escalation` (
     CONSTRAINT `fk_escalation_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue(id) ON DELETE CASCADE
 );
 
-CREATE TABLE `issue_event` {
+CREATE TABLE `issue_event` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `issue_id` INT,
     `event_type` VARCHAR(50) NOT NULL,
@@ -227,9 +224,9 @@ CREATE TABLE `issue_event` {
     `creator_type` TINYINT,
     KEY `status` (`status`),
     CONSTRAINT `fk_issue_event_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue(id) ON DELETE CASCADE
-};
+);
 
-CREATE TABLE `agent_assignment` {
+CREATE TABLE `agent_assignment` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `issue_id` INT,
     `agent_id` INT,
@@ -239,12 +236,12 @@ CREATE TABLE `agent_assignment` {
     `visit_scheduled_time` DATETIME,
     `otp_sent_time` DATETIME,
     `otp_code` VARCHAR(10),
-    KEY `job_type` (`job_type`)
+    KEY `job_type` (`job_type`),
     CONSTRAINT `fk_agent_assignment_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue(id) ON DELETE CASCADE,
     CONSTRAINT `fk_agent_assignment_ibfk_2` FOREIGN KEY (agent_id) REFERENCES agent(id) ON DELETE CASCADE
-};
+);
 
-CREATE TABLE `estimate` {
+CREATE TABLE `estimate` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `issue_id` INT,
     `agent_id` INT,
@@ -257,4 +254,4 @@ CREATE TABLE `estimate` {
     `other_charge` INT DEFAULT 0,
     CONSTRAINT `fk_estimate_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue(id) ON DELETE CASCADE,
     CONSTRAINT `fk_estimate_ibfk_2` FOREIGN KEY (agent_id) REFERENCES agent(id) ON DELETE CASCADE
-};
+);
