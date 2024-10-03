@@ -8,7 +8,6 @@ CREATE TABLE `organisation` (
     `domain` VARCHAR(255) UNIQUE NOT NULL,
     `config` JSON,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_by` INT,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
@@ -22,6 +21,7 @@ CREATE TABLE `service` (
 
 CREATE TABLE `service_organisation_rel` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `description` TEXT,
     `service_id` INT,
     `org_id` INT,
     `status` TINYINT DEFAULT 1,
