@@ -12,7 +12,7 @@ CREATE TABLE `organisation` (
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE `services` (
+CREATE TABLE `service` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) UNIQUE NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -22,12 +22,12 @@ CREATE TABLE `services` (
 
 CREATE TABLE `service_organisation_rel` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `services_id` INT,
+    `service_id` INT,
     `org_id` INT,
     `status` TINYINT DEFAULT 1,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_service_organisation_ibfk_1` FOREIGN KEY (services_id) REFERENCES services (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_service_organisation_ibfk_1` FOREIGN KEY (service_id) REFERENCES service (id) ON DELETE CASCADE,
     CONSTRAINT `fk_service_organisation_ibfk_2` FOREIGN KEY (org_id) REFERENCES organisation (id) ON DELETE CASCADE
 );
 
