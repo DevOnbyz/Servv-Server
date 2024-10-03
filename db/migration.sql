@@ -23,7 +23,7 @@ CREATE TABLE `service_organisation_rel` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `description` TEXT,
     `service_id` INT,
-    `org_id` INT,
+    `org_id` INT NOT NULL,
     `status` TINYINT DEFAULT 1,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
