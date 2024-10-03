@@ -1,6 +1,6 @@
-CREATE DATABASE `servv_buildings` character set utf8mb4;
+CREATE DATABASE `servv_residence` character set utf8mb4;
 
-use `servv_buildings`;
+use `servv_residence`;
 
 CREATE TABLE `organisation` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -20,7 +20,8 @@ CREATE TABLE `services` (
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
-CREATE TABLE `service_organisation` (
+CREATE TABLE `service_organisation_rel` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
     `services_id` INT,
     `org_id` INT,
     `status` TINYINT DEFAULT 1,
@@ -44,6 +45,7 @@ CREATE TABLE `project` (
 );
 
 CREATE TABLE `project_service_rel` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
     `project_id` INT,
     `service_id` INT,
     `meta_data` TEXT,
@@ -80,6 +82,7 @@ CREATE TABLE `apartment` (
 );
 
 CREATE TABLE `apartment_resident_rel` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
     `apartment_id` INT,
     `resident_id` INT,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -110,6 +113,7 @@ CREATE TABLE `permission` (
 );
 
 CREATE TABLE `role_permission_rel` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
     `role_id` INT,
     `permission_id` INT,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -159,6 +163,7 @@ CREATE TABLE `agent` (
 );
 
 CREATE TABLE `agent_service_rel` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
     `agent_id` INT,
     `service_id` INT,
     `status` TINYINT DEFAULT 1,
@@ -169,6 +174,7 @@ CREATE TABLE `agent_service_rel` (
 );
 
 CREATE TABLE `agent_organisation_rel` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
     `agent_id` INT,
     `organisation_id` INT,
     `status` TINYINT DEFAULT 1,
@@ -191,8 +197,8 @@ CREATE TABLE `payment` (
 );
 
 CREATE TABLE `issue` (
-    `apartment_id` INT,
     `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `apartment_id` INT,
     `resident_id` INT,
     `agent_id` INT,
     `creator_id` INT,
