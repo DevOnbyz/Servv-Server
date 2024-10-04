@@ -34,10 +34,12 @@ CREATE TABLE `service_organisation_rel` (
 CREATE TABLE `project` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
+    `city` VARCHAR(255),
     `district` VARCHAR(255),
     `state` VARCHAR(255),
     `country` VARCHAR(255),
     `org_id` INT,
+    `floors` INT,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_by` INT,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -52,7 +54,7 @@ CREATE TABLE `project_service_rel` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_project_service_rel_ibfk_1` FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE CASCADE,
-    CONSTRAINT `fk_project_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES services (id) ON DELETE CASCADE
+    CONSTRAINT `fk_project_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES service (id) ON DELETE CASCADE
 );
 
 CREATE TABLE `resident` (
@@ -147,7 +149,7 @@ CREATE TABLE `manager_service_rel` (
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_manager_service_rel_ibfk_1` FOREIGN KEY (manager_id) REFERENCES manager (id) ON DELETE CASCADE,
-    CONSTRAINT `fk_manager_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES services (id) ON DELETE CASCADE
+    CONSTRAINT `fk_manager_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES service (id) ON DELETE CASCADE
 );
 
 CREATE TABLE `agent` (
@@ -170,7 +172,7 @@ CREATE TABLE `agent_service_rel` (
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_agent_service_rel_ibfk_1` FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE,
-    CONSTRAINT `fk_agent_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES services (id) ON DELETE CASCADE
+    CONSTRAINT `fk_agent_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES service (id) ON DELETE CASCADE
 );
 
 CREATE TABLE `agent_organisation_rel` (
