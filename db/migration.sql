@@ -52,7 +52,7 @@ CREATE TABLE `project_service_rel` (
     `project_id` INT,
     `service_id` INT,
     `meta_data` TEXT,
-     `status` TINYINT DEFAULT 1,
+    `status` TINYINT DEFAULT 1,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_project_service_rel_ibfk_1` FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE CASCADE,
