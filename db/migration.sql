@@ -131,7 +131,7 @@ CREATE TABLE `manager` (
     `name` VARCHAR(255) NOT NULL,
     `username` VARCHAR(255) UNIQUE NOT NULL,
     `password` VARCHAR(255) NOT NULL,
-    `org_id` INT,
+    `org_id` INT NOT NULL,
     `project_id` INT,
     `status` TINYINT DEFAULT 1,
     `reports_to` INT,
