@@ -41,6 +41,7 @@ CREATE TABLE `project` (
     `country` VARCHAR(255),
     `org_id` INT,
     `floors` INT,
+    `gmap_link` TEXT,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_by` INT,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
