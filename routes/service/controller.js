@@ -7,8 +7,9 @@ const _ = require('lodash')
 
 exports.getServicesController = async (request, response) => {
   const orgID = request.orgID
+  const state = request.query.state ?? null
   try {
-    const services = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllServicesByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
+    const services = state == 'active' ? await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllActiveServicesByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID]) : await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllServicesByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
     return sendHTTPResponse.success(response, 'Service List fetched successfully', services)
   } catch (error) {
     Log.error(`[Servv | OrganisationID:${orgID}] | getServicesController | Error in fetching service list`)

@@ -6,6 +6,13 @@ module.exports = {
     ON s.id = sor.service_id
     WHERE sor.org_id = ?`;
   },
+  getAllActiveServicesByOrgID(database) {
+    return `SELECT s.id, sor.id as relID, s.name, sor.description,sor.status as status, s.created_at
+    FROM ${database}.service s
+    JOIN ${database}.service_organisation_rel sor 
+    ON s.id = sor.service_id
+    WHERE sor.org_id = ? AND sor.status = 1`;
+  },
   getServiceByName(database) {
     return `SELECT * FROM ${database}.service WHERE name = ?`;
   },
