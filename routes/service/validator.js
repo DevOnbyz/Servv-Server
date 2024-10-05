@@ -7,9 +7,6 @@ const addServiceSchema = Joi.object({
   description: Joi.string().optional(),
 })
 const editServiceSchema = Joi.object({
-  name: Joi.string().optional().messages({
-    'string.empty': 'Name is required',
-  }),
   description: Joi.string().optional(),
   status: Joi.number().optional(),
 })

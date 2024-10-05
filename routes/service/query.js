@@ -20,12 +20,24 @@ module.exports = {
     return `INSERT INTO ${database}.service SET ?`;
   },
   isServiceAddedForOrg(database) {
-    return `SELECT service_id FROM ${database}.service_organisation_rel WHERE org_id = ? AND service_id = ?;`;
+    return `SELECT * FROM ${database}.service_organisation_rel WHERE org_id = ? AND service_id = ?;`;
+  },
+  getServiceIDForOrg(database) {
+    return `SELECT service_id as serviceID FROM ${database}.service_organisation_rel WHERE id=?`;
   },
   updateServiceOrgRel(database) {
     return `UPDATE ${database}.service_organisation_rel SET ? WHERE id = ?`;
   },
   addServiceToOrg(database) {
     return `INSERT INTO ${database}.service_organisation_rel SET ?`;
+  },
+  getAllProjectsByOrgID(database) {
+    return `SELECT * FROM ${database}.project WHERE org_id = ?`;
+  },
+  getProjectServiceRelData(database) {
+    return `SELECT * FROM ${database}.project_service_rel WHERE project_id = ? AND service_id = ?`;
+  },
+  updateProjectServiceRel(database) {
+    return `UPDATE ${database}.project_service_rel SET ? WHERE id = ?`;
   },
 };
