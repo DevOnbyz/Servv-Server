@@ -15,19 +15,20 @@ CREATE TABLE `service` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) UNIQUE NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_by` INT,
+    `updated_by` INT DEFAULT NULL,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 CREATE TABLE `service_organisation_rel` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
     `description` TEXT,
-    `service_id` INT,
+    `service_type` INT,
     `org_id` INT NOT NULL,
     `status` TINYINT DEFAULT 1,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_service_organisation_ibfk_1` FOREIGN KEY (service_id) REFERENCES service (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_service_organisation_ibfk_1` FOREIGN KEY (service_type) REFERENCES service (id) ON DELETE CASCADE,
     CONSTRAINT `fk_service_organisation_ibfk_2` FOREIGN KEY (org_id) REFERENCES organisation (id) ON DELETE CASCADE
 );
 
@@ -126,33 +127,32 @@ CREATE TABLE `role_permission_rel` (
     CONSTRAINT `fk_role_permission_ibfk_2` FOREIGN KEY (permission_id) REFERENCES permission (id) ON DELETE CASCADE
 );
 
-CREATE TABLE `manager` (
+CREATE TABLE `admin` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
     `username` VARCHAR(255) UNIQUE NOT NULL,
     `password` VARCHAR(255) NOT NULL,
     `org_id` INT NOT NULL,
-    `project_id` INT,
+    `project_id` JSON DEFAULT NULL,
     `status` TINYINT DEFAULT 1,
     `reports_to` INT,
     `role_id` INT,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_by` INT,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_manager_ibfk_1` FOREIGN KEY (org_id) REFERENCES organisation (id) ON DELETE CASCADE,
-    CONSTRAINT `fk_manager_ibfk_2` FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE CASCADE,
-    CONSTRAINT `fk_manager_ibfk_3` FOREIGN KEY (role_id) REFERENCES role (id) ON DELETE CASCADE
+    CONSTRAINT `fk_admin_ibfk_1` FOREIGN KEY (org_id) REFERENCES organisation (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_admin_ibfk_2` FOREIGN KEY (role_id) REFERENCES role (id) ON DELETE CASCADE
 );
 
-CREATE TABLE `manager_service_rel` (
+CREATE TABLE `admin_service_rel` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `manager_id` INT,
+    `admin_id` INT,
     `service_id` INT,
     `status` TINYINT DEFAULT 1,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_manager_service_rel_ibfk_1` FOREIGN KEY (manager_id) REFERENCES manager (id) ON DELETE CASCADE,
-    CONSTRAINT `fk_manager_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES service (id) ON DELETE CASCADE
+    CONSTRAINT `fk_admin_service_rel_ibfk_1` FOREIGN KEY (admin_id) REFERENCES admin (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_admin_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES service (id) ON DELETE CASCADE
 );
 
 CREATE TABLE `agent` (
@@ -282,3 +282,9 @@ CREATE TABLE `estimate` (
     CONSTRAINT `fk_estimate_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE,
     CONSTRAINT `fk_estimate_ibfk_2` FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE
 );
+
+INSERT INTO `service` SET name='plumbing';
+INSERT INTO `service` SET name='electrical';
+INSERT INTO `service` SET name='cleaning';
+INSERT INTO `service` SET name='desinging';
+INSERT INTO `service` SET name='others';
