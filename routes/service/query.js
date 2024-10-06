@@ -1,29 +1,29 @@
 module.exports = {
   getAllServicesByOrgID(database) {
-    return `SELECT s.id, sor.id as relID, s.name, sor.description, s.created_at
+    return `SELECT s.id, sor.name as name, sor.id as relID, s.name as type, sor.description, sor.status as status, s.created_at
     FROM ${database}.service s
     JOIN ${database}.service_organisation_rel sor 
-    ON s.id = sor.service_id
+    ON s.id = sor.service_type
     WHERE sor.org_id = ?`;
   },
   getAllActiveServicesByOrgID(database) {
-    return `SELECT s.id, sor.id as relID, s.name, sor.description,sor.status as status, s.created_at
+    return `SELECT s.id, sor.name as name, sor.id as relID, s.name as type, sor.description, s.created_at
     FROM ${database}.service s
     JOIN ${database}.service_organisation_rel sor 
-    ON s.id = sor.service_id
+    ON s.id = sor.service_type
     WHERE sor.org_id = ? AND sor.status = 1`;
   },
-  getServiceByName(database) {
-    return `SELECT * FROM ${database}.service WHERE name = ?`;
+  getServiceByID(database) {
+    return `SELECT * FROM ${database}.service WHERE id = ?`;
   },
   addService(database) {
     return `INSERT INTO ${database}.service SET ?`;
   },
   isServiceAddedForOrg(database) {
-    return `SELECT * FROM ${database}.service_organisation_rel WHERE org_id = ? AND service_id = ?;`;
+    return `SELECT * FROM ${database}.service_organisation_rel WHERE org_id = ? AND service_type = ?;`;
   },
   getServiceIDForOrg(database) {
-    return `SELECT service_id as serviceID FROM ${database}.service_organisation_rel WHERE id=?`;
+    return `SELECT service_type as serviceID FROM ${database}.service_organisation_rel WHERE id=?`;
   },
   updateServiceOrgRel(database) {
     return `UPDATE ${database}.service_organisation_rel SET ? WHERE id = ?`;
@@ -35,9 +35,12 @@ module.exports = {
     return `SELECT * FROM ${database}.project WHERE org_id = ?`;
   },
   getProjectServiceRelData(database) {
-    return `SELECT * FROM ${database}.project_service_rel WHERE project_id = ? AND service_id = ?`;
+    return `SELECT * FROM ${database}.project_service_rel WHERE project_id = ? AND service_type = ?`;
   },
   updateProjectServiceRel(database) {
     return `UPDATE ${database}.project_service_rel SET ? WHERE id = ?`;
   },
+  getServiceType(database){
+    return `SELECT * FROM ${database}.service;`
+  }
 };

@@ -6,6 +6,7 @@ const { addServiceSchema, editServiceSchema } = require('./validator')
 router.get('/', controller.getServicesController)
 router.post('/', validateRequest(addServiceSchema), controller.addServicesController)
 router.patch('/:id', validateRequest(editServiceSchema), controller.editServicesController)
+router.get('/types', controller.getServiceTypeController)
 
 
 module.exports = router
