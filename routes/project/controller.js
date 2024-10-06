@@ -53,11 +53,9 @@ exports.addProjectController = async (request, response) => {
     }
 
     const insertID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addProjectToOrg(CONSTANTS.BUILDING_DATABASE), [projectDetails]))?.insertId
-    const completeServiceListForOrg = await runQuery(CONSTANTS.BUILDING_DATABASE, getAllServicesByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
 
-    for (const serviceName of serviceList) {
-      const serviceID = completeServiceListForOrg.find((item) => item.name === serviceName)?.id
-      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addprojectServiceRel(CONSTANTS.BUILDING_DATABASE), [{ service_id: serviceID, project_id: insertID }])
+    for (const serviceOrgRelID of serviceList) {
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addprojectServiceRel(CONSTANTS.BUILDING_DATABASE), [{ service_id: serviceOrgRelID, project_id: insertID }])
     }
     
     Log.info(`[Servv | OrganisationID:${orgID}] addProjectController| insertID: ${insertID} | Project: ${name} | Project added successfully`)
@@ -81,21 +79,18 @@ exports.editProjectController = async (request, response) => {
     const description = request.body.description
     const serviceList = request.body.serviceList
     
-    const addedProjectServiceList = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllActiveServicesByProject(CONSTANTS.BUILDING_DATABASE), [projectID]))?.map((item) => (item.name)?.toLowerCase())
+    const activeServiceOnProjectList = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllActiveServicesByProject(CONSTANTS.BUILDING_DATABASE), [projectID]))?.map((item) => (item.id))
 
     // Get the difference between serviceList and addedProjectServiceList to get deactivatedProjectServiceList and newProjectServiceList
-    const newProjectServiceList = _.difference(serviceList, addedProjectServiceList)
-    const deactivatedProjectServiceList = _.difference(addedProjectServiceList, serviceList)
-    const completeProjectServiceList = [...newProjectServiceList, ...deactivatedProjectServiceList]
-
-    if(!_.isEmpty(completeProjectServiceList)) {
-      const completeServiceListForOrg = await runQuery(CONSTANTS.BUILDING_DATABASE, getAllServicesByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
-
-      for (const serviceName of completeProjectServiceList) {
-        const serviceID = completeServiceListForOrg.find((item) => item.name === serviceName)?.id
-        const projectServiceRel = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.isServiceAddedForProject(CONSTANTS.BUILDING_DATABASE), [projectID, serviceID])
-        if(_.isEmpty(projectServiceRel)) await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addprojectServiceRel(CONSTANTS.BUILDING_DATABASE), [{ service_id: serviceID, project_id: projectID }])
-        else await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateprojectServiceRel(CONSTANTS.BUILDING_DATABASE), [{status: projectServiceRel[0].status===1 ? 0 : 1}, projectID, serviceID])
+    const newProjectServiceList = _.difference(serviceList, activeServiceOnProjectList)
+    const deactivatedProjectServiceList = _.difference(activeServiceOnProjectList, serviceList)
+    const completeProjectServiceIDs = [...newProjectServiceList, ...deactivatedProjectServiceList]
+    if(!_.isEmpty(completeProjectServiceIDs)) {
+      for (const serviceForProjectID of completeProjectServiceIDs) {
+        // serviceForProjectID is the service id associated with orgainsation
+        const projectServiceRel = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.isServiceAddedForProject(CONSTANTS.BUILDING_DATABASE), [projectID, serviceForProjectID])
+        if(_.isEmpty(projectServiceRel)) await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addprojectServiceRel(CONSTANTS.BUILDING_DATABASE), [{ service_id: serviceForProjectID, project_id: projectID }])
+        else await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateprojectServiceRel(CONSTANTS.BUILDING_DATABASE), [{status: projectServiceRel[0].status===1 ? 0 : 1}, projectID, serviceForProjectID])
 
       }
     }

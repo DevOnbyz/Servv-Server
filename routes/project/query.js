@@ -9,7 +9,9 @@ module.exports = {
     return `INSERT INTO ${database}.project_service_rel SET ?`;
   },
   getAllActiveServicesByProject(database) {
-    return `SELECT id,name FROM ${database}.service WHERE id IN (SELECT service_id FROM ${database}.project_service_rel WHERE project_id = ? and status = 1)`;
+    return `SELECT sor.id, sor.name, sor.service_type, s.name AS serviceTypeName FROM ${database}.service_organisation_rel sor JOIN ${database}.service s
+            ON sor.service_type = s.id 
+            WHERE sor.id IN (SELECT service_id FROM ${database}.project_service_rel WHERE project_id = ? and status = 1)`;
   },
   getAllProjectsByOrgID(database) {
     return `SELECT * FROM ${database}.project WHERE org_id = ?`;
