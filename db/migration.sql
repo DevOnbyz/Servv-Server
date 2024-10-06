@@ -34,7 +34,7 @@ CREATE TABLE `service_organisation_rel` (
 
 CREATE TABLE `project` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `desciption` TEXT,
+    `description` TEXT,
     `name` VARCHAR(255) NOT NULL,
     `city` VARCHAR(255),
     `district` VARCHAR(255),
