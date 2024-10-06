@@ -58,7 +58,7 @@ CREATE TABLE `project_service_rel` (
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_project_service_rel_ibfk_1` FOREIGN KEY (project_id) REFERENCES project (id) ON DELETE CASCADE,
-    CONSTRAINT `fk_project_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES service (id) ON DELETE CASCADE
+    CONSTRAINT `fk_project_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES service_organisation_rel (id) ON DELETE CASCADE
 );
 
 CREATE TABLE `resident` (
