@@ -12,9 +12,6 @@ const loginSchema = Joi.object({
   }),
 })
 const tokenSchema = Joi.object({
-  accessToken: Joi.string().required().messages({
-    'string.empty': 'accessToken is required',
-  }),
   refreshToken: Joi.string().required().messages({
     'string.empty': 'accessToken is required',
   })
