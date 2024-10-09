@@ -15,7 +15,7 @@ exports.generateAdminToken = async (adminData) => {
     const orgID = adminData.org_id
     const role = adminData.role_id ?? null
     const projectID = adminData.project_id ?? null
-    const accessToken = await jwtSign({id,name, username, orgID, role, projectID}, {expiresIn: CONSTANTS.ACCESS_TOKEN_EXPIRY})
+    const accessToken = await jwtSign({id,name, username, orgID, role, projectID, userType: CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN}, {expiresIn: CONSTANTS.ACCESS_TOKEN_EXPIRY})
     const refreshToken = await jwtSign({id}, {expiresIn: CONSTANTS.REFRESH_TOKEN_EXPIRY})
     return {error: false, data:{accessToken, refreshToken}}
   }
