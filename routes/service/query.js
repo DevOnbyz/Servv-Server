@@ -35,7 +35,7 @@ module.exports = {
     return `SELECT * FROM ${database}.project WHERE org_id = ?`;
   },
   getProjectServiceRelData(database) {
-    return `SELECT * FROM ${database}.project_service_rel WHERE project_id = ? AND service_type = ?`;
+    return `SELECT * FROM ${database}.project_service_rel WHERE project_id = ? AND service_id = ?`;
   },
   updateProjectServiceRel(database) {
     return `UPDATE ${database}.project_service_rel SET ? WHERE id = ?`;

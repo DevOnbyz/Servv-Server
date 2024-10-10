@@ -13,9 +13,6 @@ module.exports = {
             ON sor.service_type = s.id 
             WHERE sor.id IN (SELECT service_id FROM ${database}.project_service_rel WHERE project_id = ? and status = 1)`;
   },
-  getAllProjectsByOrgID(database) {
-    return `SELECT * FROM ${database}.project WHERE org_id = ?`;
-  },
   updateProject(database) {
     return `UPDATE ${database}.project SET ? WHERE id = ?`;
   },
