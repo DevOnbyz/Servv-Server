@@ -11,7 +11,7 @@ module.exports = async (request, response, next) => {
     const decoded = await jwt.verify(token, process.env.JWT_SECRET)
     request.orgID = decoded?.data?.orgID
     request.username = decoded?.data?.username
-    request.userID = decoded?.data?.username
+    request.userID = decoded?.data?.id
     request.userType = decoded?.data?.userType
     next()
     
