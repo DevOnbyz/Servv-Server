@@ -132,7 +132,6 @@ CREATE TABLE `resident` (
     `identity_id` INT,  -- Link to identity (phone number)
     `firstname` VARCHAR(255) NOT NULL,
     `lastname` VARCHAR(255) NOT NULL,
-    `ph_num` INT UNIQUE NOT NULL,
     `email_id` VARCHAR(255),
     `fcm_token` TEXT,
     `created_by` INT,
