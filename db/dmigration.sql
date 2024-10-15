@@ -8,4 +8,6 @@ ALTER TABLE resident DROP COLUMN project_id;
 ALTER TABLE resident ADD COLUMN firstname VARCHAR(255) NOT NULL AFTER id;
 ALTER TABLE resident_identity ADD COLUMN created_by INT AFTER id;
 ALTER TABLE resident ADD COLUMN lastname VARCHAR(255) NOT NULL AFTER firstname;
-DROP TABLE resident;
+ALTER TABLE apartment MODIFY COLUMN `name` VARCHAR(255) NULL;
+ALTER TABLE apartment ADD COLUMN `status` TINYINT DEFAULT 1 AFTER name;
+ALTER TABLE resident ADD COLUMN `status` TINYINT DEFAULT 1 AFTER email_id;
