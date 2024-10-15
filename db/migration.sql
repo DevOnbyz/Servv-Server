@@ -129,7 +129,7 @@ CREATE TABLE `resident_identity` (
 
 CREATE TABLE `resident` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `identity_id` INT,  -- Link to identity (phone number)
+    `identity_id` INT,
     `firstname` VARCHAR(255) NOT NULL,
     `lastname` VARCHAR(255) NOT NULL,
     `email_id` VARCHAR(255),
@@ -145,7 +145,8 @@ CREATE TABLE `resident` (
 
 CREATE TABLE `apartment` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(255) NOT NULL,
+    `name` VARCHAR(255),
+    `status` `TINYINT` DEFAULT 1,
     `floor` INT,
     `project_id` INT,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -161,6 +162,7 @@ CREATE TABLE `apartment_resident_rel` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `apartment_id` INT,
     `resident_id` INT,
+    `status` `TINYINT` DEFAULT 1,
     `created_by` INT,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_by` INT,
