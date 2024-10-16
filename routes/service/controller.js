@@ -28,13 +28,21 @@ exports.addServicesController = async (request, response) => {
     const description = request.body.description
     const serviceData = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getServiceByID(CONSTANTS.BUILDING_DATABASE), [type])
     if (_.isEmpty(serviceData)) return sendHTTPResponse.error(response, 'Invalid service type', null, 400)
+      
+      const serviceRelDetails = {
+        name,
+        description,
+        service_type: type,
+        org_id: orgID,
+      }
+      
+    const serviceDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getServiceAddedForOrgByName(CONSTANTS.BUILDING_DATABASE), [orgID, name])
 
-    const serviceRelDetails = {
-      name,
-      description,
-      service_type: type,
-      org_id: orgID,
+    if((serviceDetails?.name)?.toLowerCase() === name?.toLowerCase()){
+      Log.error(`[Servv | OrganisationID:${orgID}] | addServicesController | Service already added for organisation`)
+      return sendHTTPResponse.error(response, 'This service name is already added for organisation', null, 400)
     }
+
     const insertID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addServiceToOrg(CONSTANTS.BUILDING_DATABASE), [serviceRelDetails]))?.insertId
     return sendHTTPResponse.success(response, 'Service added successfully', { serviceID: insertID })
   } catch (error) {

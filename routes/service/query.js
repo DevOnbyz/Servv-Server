@@ -22,6 +22,9 @@ module.exports = {
   isServiceAddedForOrg(database) {
     return `SELECT * FROM ${database}.service_organisation_rel WHERE org_id = ? AND service_type = ?;`;
   },
+  getServiceAddedForOrgByName(database) {
+    return `SELECT * FROM ${database}.service_organisation_rel WHERE org_id = ? AND name = ?;`;
+  },
   getServiceIDForOrg(database) {
     return `SELECT service_type as serviceID FROM ${database}.service_organisation_rel WHERE id=?`;
   },
