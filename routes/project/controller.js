@@ -46,7 +46,7 @@ exports.addProjectController = async (request, response) => {
     }
 
     const getAllProjectUnderOrg = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
-    const projectDataByName = getAllProjectUnderOrg.find((item) => item.name === name)
+    const projectDataByName = getAllProjectUnderOrg.find((item) => (item.name)?.toLowerCase() === name?.toLowerCase())
     if (!_.isEmpty(projectDataByName)) {
       Log.error(`[Servv | OrganisationID:${orgID}] | addProjectController | Project already added for organisation`)
       return sendHTTPResponse.error(response, 'Project already added for organisation', null, 400)
