@@ -39,9 +39,9 @@ const editProjectSchema = Joi.object({
   serviceList: Joi.array().required().messages({
     'string.empty': 'Service List is required',
   }),
-  description: Joi.string().optional(),
-  floors: Joi.number().optional(),
-  gmap_link: Joi.string().optional(),
+  description: Joi.string().optional().allow(null),
+  floors: Joi.number().optional().allow(null),
+  gmap_link: Joi.string().optional().allow(null),
 })
 
 module.exports = { addProjectSchema, editProjectSchema }
