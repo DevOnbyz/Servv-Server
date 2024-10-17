@@ -1,14 +1,5 @@
 const Joi = require('joi')
 
-const addServiceSchema = Joi.object({
-  name: Joi.string().required().messages({
-    'string.empty': 'Name is required',
-  }),
-  type: Joi.number().required().messages({
-    'string.empty': 'Type is required',
-  }),
-  description: Joi.string().optional(),
-})
 const addResidentSchema = Joi.object({
   firstname: Joi.string().required(),
   lastname: Joi.string().required(),
@@ -17,4 +8,12 @@ const addResidentSchema = Joi.object({
   project: Joi.array().required(),
 })
 
-module.exports = { addServiceSchema, addResidentSchema }
+const editResidentSchema = Joi.object({
+  firstname: Joi.string().optional(),
+  lastname: Joi.string().optional(),
+  emailID: Joi.string().optional(),
+  project: Joi.array().optional(),
+  status: Joi.number().optional(),
+})
+
+module.exports = { addResidentSchema, editResidentSchema }

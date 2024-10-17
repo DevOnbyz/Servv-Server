@@ -1,4 +1,4 @@
-const { add } = require("lodash");
+const { add, update } = require("lodash");
 
 module.exports = {
   addResident(database) {
@@ -19,12 +19,16 @@ module.exports = {
   getApratmentByProjectAndName(database){
     return `SELECT * FROM ${database}.apartment WHERE project_id = ? AND name = ?`
   },
+  getActiveApratmentByProjectAndName(database){
+    return `SELECT * FROM ${database}.apartment WHERE project_id = ? AND name = ? AND status = 1`
+  },
   addApartmentResidentRel(database){
     return `INSERT INTO ${database}.apartment_resident_rel SET ?`
   },
   getResidentDataUnderOrg(database){
     return `
-    SELECT 
+    SELECT
+    arr.id,
     i.ph_num,            
     r.email_id,
     r.firstname,
@@ -46,7 +50,25 @@ JOIN
 JOIN 
     ${database}.project p ON a.project_id = p.id
 WHERE 
-    p.org_id = ?;
+    p.org_id = ? AND arr.status = 1 ORDER BY r.created_at DESC;
     `
-  }
+  },
+getResidentApartmentRelByID(database){
+  return `SELECT * FROM ${database}.apartment_resident_rel WHERE id = ?`
+},
+getApartmentByID(database){
+  return `SELECT * FROM ${database}.apartment WHERE id = ?`
+},
+getResidentByID(database){
+  return `SELECT * FROM ${database}.resident WHERE id = ?`
+},
+updateApartmentDetails(database){
+  return `UPDATE ${database}.apartment SET ? WHERE id = ?`
+},
+updateResidentDetails(database){
+    return `UPDATE ${database}.resident SET ? WHERE id = ?`
+},
+updateResidentApartmentRel(database){
+  return `UPDATE ${database}.apartment_resident_rel SET ? WHERE id = ?`
+}
 };
