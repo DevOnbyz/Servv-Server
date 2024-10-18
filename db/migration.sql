@@ -146,7 +146,7 @@ CREATE TABLE `resident` (
 CREATE TABLE `apartment` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255),
-    `status` `TINYINT` DEFAULT 1,
+    `status` TINYINT DEFAULT 1,
     `floor` INT,
     `project_id` INT,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -162,7 +162,7 @@ CREATE TABLE `apartment_resident_rel` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `apartment_id` INT,
     `resident_id` INT,
-    `status` `TINYINT` DEFAULT 1,
+    `status` TINYINT DEFAULT 1,
     `created_by` INT,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_by` INT,
