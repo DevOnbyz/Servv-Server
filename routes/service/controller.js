@@ -60,6 +60,9 @@ exports.editServicesController = async (request, response) => {
     const status = request.body.status
     const type = request.body.type
 
+    const serviceDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.isServiceAddedForOrgNotInID(CONSTANTS.BUILDING_DATABASE), [orgID, name, serviceOrgRelID])
+    if(!_.isEmpty(serviceDetails)) return sendHTTPResponse.error(response, 'This service name is already added for organisation', null, 400)
+
     const updateDetails = {}
     if (status !== undefined) {
       updateDetails.status = status
