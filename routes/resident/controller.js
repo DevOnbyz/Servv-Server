@@ -12,7 +12,7 @@ exports.getResidentController = async (request, response) => {
   const orgID = request.orgID
   try {
     const residentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentDataUnderOrg(CONSTANTS.BUILDING_DATABASE), [orgID])
-    const groupedData = residentDetails.reduce((acc, row) => {
+    const groupedData = residentDetails?.reduce((acc, row) => {
       const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, city, district, state, country } = row;
       const fullName = `${firstname} ${lastname}`.trim();
       let resident = acc.find((r) => r.phNum === ph_num);
@@ -67,12 +67,19 @@ exports.addResidentController = async (request, response) => {
 
     const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum])
     const residentIdentityID = _.isEmpty(phNumDetails) ? (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addResidentIdentity(CONSTANTS.BUILDING_DATABASE), [{ph_num: phNum}]))?.insertId : phNumDetails[0]?.id
+    
+    if(!_.isEmpty(phNumDetails)){ // if a resident having same phone number exists in a same organisation then the admin can edit not add
+      const residentOrgDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [residentIdentityID, orgID])
+      if(!_.isEmpty(residentOrgDetails))
+        return sendHTTPResponse.error(response, 'Resident already exists', null, 400)
+    }
 
     const residentDetails = {
       firstname,
       lastname,
       email_id: email,
       updated_by:userID,
+      org_id: orgID,
       identity_id: residentIdentityID
     }
 
@@ -112,6 +119,7 @@ exports.editResidentController = async (request, response) => {
     const email = request.body.emailID
     const project = request.body.project
     const status = request.body.status
+    // return sendHTTPResponse.error(response, 'Resident not found', null, 400)
 
     const residentApartmentRel = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentApartmentRelByID(CONSTANTS.BUILDING_DATABASE), [residentApartmentRelID])
     if (_.isEmpty(residentApartmentRel))

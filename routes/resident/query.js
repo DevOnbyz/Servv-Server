@@ -1,8 +1,9 @@
-const { add, update } = require("lodash");
-
 module.exports = {
   addResident(database) {
     return `INSERT INTO ${database}.resident SET ?`;
+  },
+  getResidentByPhNumIDAndOrgID(database) {
+    return `SELECT * FROM ${database}.resident WHERE resident_identity_id = ? AND org_id = ?`;
   },
   getResidentByNameAndIdentity(database) {
     return `SELECT * FROM ${database}.resident WHERE firstname = ? AND lastname = ? AND email = ? AND resident_identity_id = ?`;
