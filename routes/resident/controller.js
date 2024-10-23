@@ -71,7 +71,7 @@ exports.addResidentController = async (request, response) => {
     if(!_.isEmpty(phNumDetails)){ // if a resident having same phone number exists in a same organisation then the admin can edit not add
       const residentOrgDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [residentIdentityID, orgID])
       if(!_.isEmpty(residentOrgDetails))
-        return sendHTTPResponse.error(response, 'Resident already exists', null, 400)
+        return sendHTTPResponse.error(response, 'Resident with same phone number already exists', null, 400)
     }
 
     const residentDetails = {
