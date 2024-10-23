@@ -8,7 +8,7 @@ const addManager = `INSERT INTO ${BUILDING_DATABASE}.admin SET ?`
 const main = async () => {
   try {
     const orgID = (await runQuery(BUILDING_DATABASE, addOrgQuery))?.insertId
-    await runQuery(BUILDING_DATABASE, addManager , {name: 'testUser', username: 'test', password: await hashPassword('123456'), org_id: orgID})
+    await runQuery(BUILDING_DATABASE, addManager , {firstname: 'test', lastname: 'user', username: 'test', password: await hashPassword('123456'), org_id: orgID})
     console.log('Organisation and admin added successfully')
   } catch (error) {
     console.error('Error adding organisation:', error)
