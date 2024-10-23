@@ -3,10 +3,10 @@ module.exports = {
     return `INSERT INTO ${database}.resident SET ?`;
   },
   getResidentByPhNumIDAndOrgID(database) {
-    return `SELECT * FROM ${database}.resident WHERE resident_identity_id = ? AND org_id = ?`;
+    return `SELECT * FROM ${database}.resident WHERE identity_id = ? AND org_id = ?`;
   },
   getResidentByNameAndIdentity(database) {
-    return `SELECT * FROM ${database}.resident WHERE firstname = ? AND lastname = ? AND email = ? AND resident_identity_id = ?`;
+    return `SELECT * FROM ${database}.resident WHERE firstname = ? AND lastname = ? AND email = ? AND identity_id = ?`;
   },
   getResidentIdentityByPhNum(database){
     return `SELECT * FROM ${database}.resident_identity where ph_num = ?`
