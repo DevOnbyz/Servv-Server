@@ -3,7 +3,7 @@ const Joi = require('joi')
 const addResidentSchema = Joi.object({
   firstname: Joi.string().required(),
   lastname: Joi.string().required(),
-  phNum: Joi.string().required(),
+  phNum: Joi.string().optional(),
   emailID: Joi.string().required(),
   project: Joi.array().required(),
 })
