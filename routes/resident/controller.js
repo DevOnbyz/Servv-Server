@@ -27,6 +27,7 @@ exports.getResidentController = async (request, response) => {
         acc.push(resident);
       }
       resident.project.push({
+        id,
         name: projectName,
         doorNo: doorNo,
         city: city,
