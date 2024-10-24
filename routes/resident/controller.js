@@ -13,9 +13,9 @@ exports.getResidentController = async (request, response) => {
   try {
     const residentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentDataUnderOrg(CONSTANTS.BUILDING_DATABASE), [orgID])
     const groupedData = residentDetails?.reduce((acc, row) => {
-      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, city, district, state, country } = row;
-      const fullName = `${firstname} ${lastname}`.trim();
-      let resident = acc.find((r) => r.phNum === ph_num);
+      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, city, district, state, country } = row
+      const fullName = `${firstname} ${lastname}`.trim()
+      let resident = acc.find((r) => r.phNum === ph_num)
       if (!resident) {
         resident = {
           id,
@@ -23,8 +23,8 @@ exports.getResidentController = async (request, response) => {
           phNum: ph_num,
           email: email_id,
           project: [],
-        };
-        acc.push(resident);
+        }
+        acc.push(resident)
       }
       resident.project.push({
         id,
@@ -34,10 +34,10 @@ exports.getResidentController = async (request, response) => {
         district: district,
         state: state,
         country: country,
-      });
+      })
     
-      return acc;
-    }, []);
+      return acc
+    }, []) 
     return sendHTTPResponse.success(response, 'Resident List fetched successfully', groupedData)
   } catch (error) {
     Log.error(`[Servv | OrganisationID:${orgID}] | getResidentController | Error in fetching service list`)
