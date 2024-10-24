@@ -29,11 +29,13 @@ module.exports = {
   getResidentDataUnderOrg(database){
     return `
     SELECT
-    arr.id,
+    r.id,
+    arr.id AS apartmentResidentRelID,
     i.ph_num,            
     r.email_id,
     r.firstname,
     r.lastname,
+    a.id AS apartmentID,
     a.name AS doorNo,
     p.name AS projectName,
     p.city AS city, 
@@ -71,5 +73,11 @@ updateResidentDetails(database){
 },
 updateResidentApartmentRel(database){
   return `UPDATE ${database}.apartment_resident_rel SET ? WHERE id = ?`
-}
+},
+getResidentApartmentRelByResidentID(database){
+  return `SELECT * FROM ${database}.apartment_resident_rel WHERE resident_id = ?`
+},
+getApartmentsByIDs(database){
+  return `SELECT * FROM ${database}.apartment WHERE id in (?)`
+},
 };

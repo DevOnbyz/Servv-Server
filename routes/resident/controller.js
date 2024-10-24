@@ -13,7 +13,7 @@ exports.getResidentController = async (request, response) => {
   try {
     const residentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentDataUnderOrg(CONSTANTS.BUILDING_DATABASE), [orgID])
     const groupedData = residentDetails?.reduce((acc, row) => {
-      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, city, district, state, country } = row
+      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, city, district, state, country, apartmentID, apartmentResidentRelID } = row
       const fullName = `${firstname} ${lastname}`.trim()
       let resident = acc.find((r) => r.phNum === ph_num)
       if (!resident) {
@@ -27,7 +27,8 @@ exports.getResidentController = async (request, response) => {
         acc.push(resident)
       }
       resident.project.push({
-        id,
+        apartmentID,
+        apartmentResidentRelID,
         name: projectName,
         doorNo: doorNo,
         city: city,
@@ -112,7 +113,9 @@ exports.addResidentController = async (request, response) => {
 
 exports.editResidentController = async (request, response) => {
   const orgID = request.orgID
-  const residentApartmentRelID = parseInt(request.params.id)
+  return sendHTTPResponse.error(response, 'Not implemented')
+  // const residentApartmentRelID = parseInt(request.params.id)
+  const residentID = parseInt(request.params.id) //A resident can have multiple apartment. A resident will have a id under a organisation who can own multiple apartments
   const userID = request.userID
   try {
     const firstname = request.body.firstname
@@ -120,7 +123,61 @@ exports.editResidentController = async (request, response) => {
     const email = request.body.emailID
     const project = request.body.project
     const status = request.body.status
-    // return sendHTTPResponse.error(response, 'Resident not found', null, 400)
+    const residentOwnedApartmentRelDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentApartmentRelByResidentID(CONSTANTS.BUILDING_DATABASE), [residentID])
+    const ownedApartmentID = residentOwnedApartmentRelDetails?.map((item)=>item.apartment_id)
+    const residentOwnedApartmentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getApartmentsByIDs(CONSTANTS.BUILDING_DATABASE), [ownedApartmentID])
+    const residentOwnedDoorNos = residentOwnedApartmentDetails?.map((item)=>item.name)
+
+    for(item of project){
+      const doorNo = unifyDoorNumber(item?.doorNo)
+      const projectID = item?.projectID
+      const data = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveApratmentByProjectAndName(CONSTANTS.BUILDING_DATABASE), [projectID, doorNo])
+      console.log({residentOwnedDoorNos, doorNo, aa: !_.includes(residentOwnedDoorNos, doorNo)})
+      // if a resident owned 18A and he is changing it by 2A which is owned by another guy then error so he have make the existing 2A person null
+      if(!_.isEmpty(data) && !_.includes(residentOwnedDoorNos, doorNo)) {
+        const message = `Door number already exists for the project`
+        return sendHTTPResponse.error(response, message, null, 400)
+      }
+    }
+
+    const newResidentRecord = {
+      firstname,
+      lastname,
+      email_id: email,
+      updated_by:userID
+    }
+    // await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentDetails(CONSTANTS.BUILDING_DATABASE), [newResidentRecord, residentID ])
+
+    for(item of project){
+      const doorNo = unifyDoorNumber(item?.doorNo)
+      const projectID = item?.projectID
+      const apartmentData = {
+        project_id: projectID,
+        name: doorNo,
+        updated_by: userID
+      }
+      console.log({apartmentData})
+      // await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateApartmentDetails(CONSTANTS.BUILDING_DATABASE), [apartmentData, residentApartmentRel?.apartment_id])
+    }
+
+
+    // if (status !== undefined) {
+    //   // changing status of resident table, apartment table and apartment_resident_rel table
+    //   // Once it is done another one can use same apartment doorname for another resident.
+    //   await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentApartmentRel(CONSTANTS.BUILDING_DATABASE), [{status}, residentApartmentRelID])
+    //   await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateApartmentDetails(CONSTANTS.BUILDING_DATABASE), [{status}, residentApartmentRel?.apartment_id])
+    //   await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentDetails(CONSTANTS.BUILDING_DATABASE), [{status}, residentApartmentRel?.apartment_id])
+    //   Log.info(`[Servv | OrganisationID:${orgID}] | editResidentController | Resident status updated successfully`)
+    //   return sendHTTPResponse.success(response, 'Resident status updated successfully')
+    // }
+
+    return sendHTTPResponse.error(response, 'Resident not found', {newResidentRecord}, 400)
+
+
+
+
+
+
 
     const residentApartmentRel = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentApartmentRelByID(CONSTANTS.BUILDING_DATABASE), [residentApartmentRelID])
     if (_.isEmpty(residentApartmentRel))
@@ -130,34 +187,18 @@ exports.editResidentController = async (request, response) => {
     const residentDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByID(CONSTANTS.BUILDING_DATABASE), [residentApartmentRel?.resident_id])
     const residentOwnerDoorNo = unifyDoorNumber(apartmentDetails?.name)
     
-    if (status !== undefined) {
-      // changing status of resident table, apartment table and apartment_resident_rel table
-      // Once it is done another one can use same apartment doorname for another resident.
-      await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentApartmentRel(CONSTANTS.BUILDING_DATABASE), [{status}, residentApartmentRelID])
-      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateApartmentDetails(CONSTANTS.BUILDING_DATABASE), [{status}, residentApartmentRel?.apartment_id])
-      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentDetails(CONSTANTS.BUILDING_DATABASE), [{status}, residentApartmentRel?.apartment_id])
-      Log.info(`[Servv | OrganisationID:${orgID}] | editResidentController | Resident status updated successfully`)
-      return sendHTTPResponse.success(response, 'Resident status updated successfully')
-    }
 
-    for(item of project){
-      const doorNo = unifyDoorNumber(item?.doorNo)
-      const projectID = item?.projectID
-      const data = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveApratmentByProjectAndName(CONSTANTS.BUILDING_DATABASE), [projectID, doorNo])
-      
-      // if resident owned 18A and he is changing it by 2A which is owned by another guy then error so he have make the existing 2A person null
-      if(!_.isEmpty(data) && residentOwnerDoorNo !== doorNo) {
-        const message = `Door number already exists for the project. Door No: ${doorNo} is owned by ${residentDetails?.firstname}.`
-        return sendHTTPResponse.error(response, message, null, 400)
-      }
-    }
-    const newResidentRecord = {
-      firstname,
-      lastname,
-      email_id: email,
-      updated_by:userID
-    }
-    await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentDetails(CONSTANTS.BUILDING_DATABASE), [newResidentRecord, residentApartmentRel?.resident_id ])
+
+
+    // const newResidentRecord = {
+    //   firstname,
+    //   lastname,
+    //   email_id: email,
+    //   updated_by:userID
+    // }
+    // See a resident in a organisation will only have an entry
+    // const residentOwnedApartmentDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentApartmentRelByResidentID(CONSTANTS.BUILDING_DATABASE), [residentApartmentRel?.resident_id])
+    // await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentDetails(CONSTANTS.BUILDING_DATABASE), [newResidentRecord, residentApartmentRel?.resident_id ])
 
     for(item of project){
       const doorNo = unifyDoorNumber(item?.doorNo)
@@ -172,7 +213,8 @@ exports.editResidentController = async (request, response) => {
 
     return sendHTTPResponse.success(response, 'Resident updated successfully',)
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | editServicesController | OrgainsationRelID:${residentApartmentRelID} | Error in updating service list`)
+    console.log(error)
+    Log.error(`[Servv | OrganisationID:${orgID}] | editServicesController | OrgainsationRelID:${residentID} | Error in updating service list`)
     return sendHTTPResponse.error(response, 'Error on updating service', error.message)
   }
 }
