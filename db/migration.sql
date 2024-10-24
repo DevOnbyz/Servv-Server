@@ -333,6 +333,30 @@ CREATE TABLE `estimate` (
     CONSTRAINT `fk_estimate_ibfk_2` FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE
 );
 
+CREATE TABLE `announcement` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `title` VARCHAR(255),
+    `org_id` INT,
+    `project_id` JSON,
+    `description` TEXT,
+    `status` TINYINT DEFAULT 1,
+    `img_src` VARCHAR(255),
+    `expire_date` DATETIME,
+    `created_by` INT,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_announcement_ibfk_1` FOREIGN KEY (org_id) REFERENCES organisation (id) ON DELETE CASCADE
+);
+CREATE TABLE `announcement_interest` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `announcement_id` INT,
+    `resident_id` INT,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_announcement_interest_ibfk_1` FOREIGN KEY (announcement_id) REFERENCES announcement (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_announcement_interest_ibfk_2` FOREIGN KEY (resident_id) REFERENCES resident (id) ON DELETE CASCADE
+);
+
 INSERT INTO `service` SET name='plumbing';
 INSERT INTO `service` SET name='electrical';
 INSERT INTO `service` SET name='cleaning';
