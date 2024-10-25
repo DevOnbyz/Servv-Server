@@ -27,8 +27,8 @@ exports.getUserController = async (request, response) => {
     }
     return sendHTTPResponse.success(response, 'Fetched admin details successfully', adminList)
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | getUserController | Error in fetching project list`)
-    sendHTTPResponse.error(response, 'Error while fetching project list', error)
+    Log.error(`[Servv | OrganisationID:${orgID}] | getUserController | Error in fetching admin list`)
+    sendHTTPResponse.error(response, 'Error while fetching admin list', error)
   }
 }
 exports.addAdminController = async (request, response) => {
