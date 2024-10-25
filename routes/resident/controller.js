@@ -29,6 +29,7 @@ exports.getResidentController = async (request, response) => {
       resident.project.push({
         apartmentID,
         apartmentResidentRelID,
+        projectID,
         name: projectName,
         doorNo: doorNo,
         city: city,

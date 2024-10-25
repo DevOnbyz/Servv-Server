@@ -36,6 +36,7 @@ module.exports = {
     r.firstname,
     r.lastname,
     a.id AS apartmentID,
+    p.id AS projectID,
     a.name AS doorNo,
     p.name AS projectName,
     p.city AS city, 
