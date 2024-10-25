@@ -1,4 +1,3 @@
-
 const runQuery = require('../../../db/runQuery')
 const CONSTANTS = require('../../../lib/constants')
 const Log = require('../../../log')
@@ -31,6 +30,7 @@ exports.getUserController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while fetching admin list', error)
   }
 }
+
 exports.addAdminController = async (request, response) => {
   const orgID = request.orgID
   try {
