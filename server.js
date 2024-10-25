@@ -20,8 +20,11 @@ app.use(cors({
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true,
 }));
-app.use(express.json())
 app.use(express.urlencoded({ extended: true }))
+app.use(express.json())
+
+app.use('/uploads', express.static('uploads'));
+
 
 app.use(requestLogger)
 app.use('/auth',authRouter)
