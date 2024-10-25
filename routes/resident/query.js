@@ -81,4 +81,10 @@ getResidentApartmentRelByResidentID(database){
 getApartmentsByIDs(database){
   return `SELECT * FROM ${database}.apartment WHERE id in (?)`
 },
+deleteApartmentRelByResidentID(database){
+  return `DELETE FROM ${database}.apartment_resident_rel WHERE resident_id = ? and apartment_id = ?`
+},
+deleteApartmentByApartmentID(database){
+  return `DELETE FROM ${database}.apartment WHERE id = ?`
+}
 };
