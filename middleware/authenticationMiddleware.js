@@ -13,6 +13,7 @@ module.exports = async (request, response, next) => {
     request.username = decoded?.data?.username
     request.userID = decoded?.data?.id
     request.userType = decoded?.data?.userType
+    request.domain = decoded?.data?.domain
     next()
     
   } catch (error) {

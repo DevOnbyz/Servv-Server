@@ -66,15 +66,17 @@ exports.editServicesController = async (request, response) => {
     const updateDetails = {}
     if (status !== undefined) {
       updateDetails.status = status
-      const projectList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
-      if (!_.isEmpty(projectList)) {
-        for (project of projectList) {
-          const projectID = project?.id
-          const projectRelData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getProjectServiceRelData(CONSTANTS.BUILDING_DATABASE), [projectID, type])
-          if (!_.isEmpty(projectRelData)) {
-            // if that project already has that service then update the project status
-            Log.info(`[Servv | OrganisationID:${orgID}] | editServicesController | OrgainsationServiceRelID:${serviceOrgRelID} | Updating Project status`)
-            await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateProjectServiceRel(CONSTANTS.BUILDING_DATABASE), [{ status }, projectRelData.id])
+      if(status == 0){ // only if the service is deactivated then update the project status
+        const projectList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
+        if (!_.isEmpty(projectList)) {
+          for (project of projectList) {
+            const projectID = project?.id
+            const projectRelData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getProjectServiceRelData(CONSTANTS.BUILDING_DATABASE), [projectID, serviceOrgRelID])
+            if (!_.isEmpty(projectRelData)) {
+              // if that project already has that service then update the project status
+              Log.info(`[Servv | OrganisationID:${orgID}] | editServicesController | OrgainsationServiceRelID:${serviceOrgRelID} | Updating Project status`)
+              await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateProjectServiceRel(CONSTANTS.BUILDING_DATABASE), [{ status }, projectRelData.id])
+            }
           }
         }
       }
