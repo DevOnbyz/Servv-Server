@@ -65,3 +65,41 @@ exports.addAdminController = async (request, response) => {
     return sendHTTPResponse.error(response, 'Error on adding admin', error.message)
   }
 }
+
+exports.editAdminController = async (request, response) => {
+  const orgID = request.orgID
+  const id = request.params.id
+  try {
+    const firstname = request.body.firstname
+    const lastname = request.body.lastname
+    const username = request.body.username
+    const email = request.body.email
+    const roleID = request.body.roleID
+    const phNum = request.body.phNum
+    const projectList = request.body.project
+    const isPassordChanged = !!request.body.isPasswordChanged
+    const password = request.body.password
+    const serviceList = request.body.serviceList ?? []
+
+    const adminDetails = {
+      firstname,
+      lastname,
+      username,
+      email,
+      role_id: roleID,
+      ph_num: phNum,
+      project_id: JSON.stringify(projectList)
+    }
+
+    if (isPassordChanged) {
+      adminDetails.password = await hashPassword(password)
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAdminDetails(CONSTANTS.BUILDING_DATABASE), [adminDetails, id])
+    Log.info(`[Servv | OrganisationID:${orgID}] | editAdminController | AdminID:${id} | Admin updated successfully`)
+    return sendHTTPResponse.success(response, 'Admin updated successfully')
+  }
+catch (error) {
+    Log.error(`[Servv | OrganisationID:${orgID}] | editAdminController | Error in fetching admin list`)
+    return sendHTTPResponse.error(response, 'Error on editing admin', error)
+  }
+}

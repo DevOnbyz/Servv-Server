@@ -7,7 +7,10 @@ module.exports = {
   },
   getProjectsByIDs(database) {
     return `SELECT id,name, city, district, state, country FROM ${database}.project WHERE id in (?)`;
-  }
+  },
+  updateAdminDetails(database) {
+    return `UPDATE ${database}.admin SET ? WHERE id = ?`;
+  },
 };
 
 
