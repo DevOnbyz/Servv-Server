@@ -10,7 +10,7 @@ const addAnnouncement = Joi.object({
   project: Joi.array().required().messages({
     'string.empty': 'Project List is required',
   }),
-  expireDate: Joi.date().required().messages({
+  expiryDate: Joi.date().required().messages({
     'string.empty': 'Expire Date is required',
   })
 })

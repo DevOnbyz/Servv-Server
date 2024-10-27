@@ -7,18 +7,8 @@ const multer = require('multer')
 const path = require('path')
 const sendHTTPResponse = require('../../lib/sendHTTPResponse')
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, 'uploads/announcement/')
-  },
-  filename: (req, file, cb) => {
-    console.log({file: JSON.stringify(file)})
-    cb(null, file.fieldname + '-' + uuidv4() + '-' + file.originalname)
-  }
-})
-
 const upload = multer({
-  storage: storage,
+  storage: multer.memoryStorage(), 
   limits: { fileSize: 2 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const filetypes = /jpeg|jpg|png/

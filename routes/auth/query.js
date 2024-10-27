@@ -4,5 +4,8 @@ module.exports = {
   },
   getAdminDataByID(database) {
     return `SELECT * FROM ${database}.admin where id = ?`
+  },
+  getOrgDetails(database) {
+    return `SELECT * FROM ${database}.organisation where id = ?`
   }
 };
