@@ -11,7 +11,7 @@ const addServiceSchema = Joi.object({
 })
 const editServiceSchema = Joi.object({
   name: Joi.string().optional(),
-  description: Joi.string().optional(),
+  description: Joi.string().optional().allow(null, ''),
   type: Joi.number().optional(),
   status: Joi.number().optional(),
 })
