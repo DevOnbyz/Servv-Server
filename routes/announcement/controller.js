@@ -45,6 +45,7 @@ const saveFileToDisk = (file, destination) => {
   })
 }
 exports.addAnnouncementController = async (request, response) => {
+  console.log(request.body);
   const orgID = request.orgID
   try {
     const title = request.body.title
@@ -60,13 +61,14 @@ exports.addAnnouncementController = async (request, response) => {
       return sendHTTPResponse.error(response, 'Please select expire date', null, 400)
     if(expiryDate < moment().format('YYYY-MM-DD HH:mm:ss'))
       return sendHTTPResponse.error(response, 'Please select expire date greater than current date', null, 400)
-
+    
     if (request.file) {
+     
       const destination = 'uploads/announcement/'
       const savedFilePath = await saveFileToDisk(request.file, destination)
       request.body.imgSrcPath = savedFilePath
     }
-
+   
     const announcementData = {
       title,
       description,
