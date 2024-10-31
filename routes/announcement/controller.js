@@ -9,14 +9,19 @@ const moment = require('moment')
 const path = require('path')
 const fs = require('fs')
 const { v4: uuidv4 } = require('uuid')
+const { getAllProjectsByOrgID } = require('../../db/query')
 
 exports.getAnnouncemntsController = async (request, response) => {
   const orgID = request.orgID
   try {
     const announcementList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAnnouncementsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
+    const projectNames = await runQuery(CONSTANTS.BUILDING_DATABASE, getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE), orgID)
     const dateFormattedData = announcementList.map((announcement) => {
+      const projectList = announcement.project_id ? (JSON.parse(announcement.project_id))?.map((project) => parseInt(project)) : []
+      const projectAssociated = (projectNames.filter((project) => projectList.includes(project.id)))?.map((project) => project.name)
       return {
         ...announcement,
+        project: projectAssociated,
         created_at: moment(announcement.created_at).format('DD-MM-YYYY'),
         expire_date: moment(announcement.expire_date).format('DD-MM-YYYY'),
         duration: moment(announcement.expire_date).startOf('day').diff(moment(announcement.created_at).startOf('day'), 'days'),
