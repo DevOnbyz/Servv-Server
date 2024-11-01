@@ -43,7 +43,7 @@ exports.getResidentController = async (request, response) => {
     return sendHTTPResponse.success(response, 'Resident List fetched successfully', groupedData)
   } catch (error) {
     Log.error(`[Servv | OrganisationID:${orgID}] | getResidentController | Error in fetching resident list | Error: ${error.message}`)
-    sendHTTPResponse.error(response, 'Error while fetching resident list', error)
+    sendHTTPResponse.error(response, 'Error while fetching resident list', error.message)
   }
 }
 exports.addResidentController = async (request, response) => {
@@ -107,7 +107,7 @@ exports.addResidentController = async (request, response) => {
     return sendHTTPResponse.success(response, 'Resident added successfully', {})
   } catch (error) {
     Log.error(`[Servv | OrganisationID:${orgID}] | addResidentController | Error on adding resident | Error: ${error.message}`)
-    return sendHTTPResponse.error(response, 'Error on adding resident', error)
+    return sendHTTPResponse.error(response, 'Error on adding resident', error.message)
   }
 }
 

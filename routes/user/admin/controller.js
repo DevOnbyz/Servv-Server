@@ -26,8 +26,8 @@ exports.getUserController = async (request, response) => {
     }
     return sendHTTPResponse.success(response, 'Fetched admin details successfully', adminList)
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | getUserController | Error in fetching admin list`)
-    sendHTTPResponse.error(response, 'Error while fetching admin list', error)
+    Log.error(`[Servv | OrganisationID:${orgID}] | getUserController | Error in fetching admin list | Error: ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while fetching admin list', error.message)
   }
 }
 
@@ -61,7 +61,7 @@ exports.addAdminController = async (request, response) => {
   } catch (error) {
     if(error.code === 'ER_DUP_ENTRY') return sendHTTPResponse.error(response, 'Admin already exists', error.message)
 
-    Log.error(`[Servv | OrganisationID:${orgID}] | addAdminController | Error in fetching admin list`)
+    Log.error(`[Servv | OrganisationID:${orgID}] | addAdminController | Error in fetching admin list | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on adding admin', error.message)
   }
 }
@@ -99,7 +99,7 @@ exports.editAdminController = async (request, response) => {
     return sendHTTPResponse.success(response, 'Admin updated successfully')
   }
 catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | editAdminController | Error in fetching admin list`)
-    return sendHTTPResponse.error(response, 'Error on editing admin', error)
+    Log.error(`[Servv | OrganisationID:${orgID}] | editAdminController | Error in fetching admin list | Error: ${error.message}`)
+    return sendHTTPResponse.error(response, 'Error on editing admin', error.message)
   }
 }

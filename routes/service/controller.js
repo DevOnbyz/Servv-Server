@@ -46,8 +46,8 @@ exports.addServicesController = async (request, response) => {
     const insertID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addServiceToOrg(CONSTANTS.BUILDING_DATABASE), [serviceRelDetails]))?.insertId
     return sendHTTPResponse.success(response, 'Service added successfully', { serviceID: insertID })
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | addServicesController | Error in fetching service list`)
-    return sendHTTPResponse.error(response, 'Error on adding service', error)
+    Log.error(`[Servv | OrganisationID:${orgID}] | addServicesController | Error in fetching service list | Error: ${error.message}`)
+    return sendHTTPResponse.error(response, 'Error on adding service', error.message)
   }
 }
 
@@ -89,7 +89,7 @@ exports.editServicesController = async (request, response) => {
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateServiceOrgRel(CONSTANTS.BUILDING_DATABASE), [updateDetails, serviceOrgRelID])
     return sendHTTPResponse.success(response, 'Service updated successfully')
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | editServicesController | OrgainsationRelID:${serviceOrgRelID} | Error in updating service list`)
+    Log.error(`[Servv | OrganisationID:${orgID}] | editServicesController | OrgainsationRelID:${serviceOrgRelID} | Error in updating service list | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on updating service', error.message)
   }
 }
@@ -101,7 +101,7 @@ exports.getServiceTypeController = async (request, response) => {
     const serviceTypes = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getServiceType(CONSTANTS.BUILDING_DATABASE), [orgID])
     return sendHTTPResponse.success(response, 'Service type List fetched successfully', serviceTypes)
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | getServicesController | Error in fetching service type list`)
+    Log.error(`[Servv | OrganisationID:${orgID}] | getServicesController | Error in fetching service type list | Error: ${error.message}`)
     sendHTTPResponse.error(response, 'Error while fetching service type list', error.message)
   }
 }
