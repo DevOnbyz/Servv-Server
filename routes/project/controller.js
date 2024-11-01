@@ -16,7 +16,7 @@ exports.getProjectsController = async (request, response) => {
     }
     return sendHTTPResponse.success(response, 'Project List fetched successfully', projects)
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | getProjectsController | Error in fetching project list`)
+    Log.error(`[Servv | OrganisationID:${orgID}] | getProjectsController | Error in fetching project list | Error: ${error.message}`)
     sendHTTPResponse.error(response, 'Error while fetching project list', error)
   }
 }
@@ -61,7 +61,7 @@ exports.addProjectController = async (request, response) => {
     Log.info(`[Servv | OrganisationID:${orgID}] addProjectController| insertID: ${insertID} | Project: ${name} | Project added successfully`)
     return sendHTTPResponse.success(response, 'Project added successfully')
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | addProjectController | Error in fetching project list`)
+    Log.error(`[Servv | OrganisationID:${orgID}] | addProjectController | Error in fetching project list | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on adding project', error)
   }
 }
@@ -98,7 +98,7 @@ exports.editProjectController = async (request, response) => {
     return sendHTTPResponse.success(response, 'Project updated successfully')
 
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | editProjectController | projectID:${projectID} | Error in updating project list`)
+    Log.error(`[Servv | OrganisationID:${orgID}] | editProjectController | projectID:${projectID} | Error in updating project list | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on updating project', error)
   }
 }
