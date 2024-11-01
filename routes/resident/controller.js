@@ -42,7 +42,7 @@ exports.getResidentController = async (request, response) => {
     }, [])
     return sendHTTPResponse.success(response, 'Resident List fetched successfully', groupedData)
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | getResidentController | Error in fetching service list`)
+    Log.error(`[Servv | OrganisationID:${orgID}] | getResidentController | Error in fetching service list | Error: ${error.message}`)
     sendHTTPResponse.error(response, 'Error while fetching service list', error)
   }
 }
@@ -106,7 +106,7 @@ exports.addResidentController = async (request, response) => {
     Log.info(`[Servv | OrganisationID:${orgID}] | addResidentController | Resident added successfully`)
     return sendHTTPResponse.success(response, 'Resident added successfully', {})
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | addResidentController | Error on adding service | ${error}`)
+    Log.error(`[Servv | OrganisationID:${orgID}] | addResidentController | Error on adding service | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on adding service', error)
   }
 }
@@ -203,7 +203,7 @@ exports.editResidentController = async (request, response) => {
     await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentDetails(CONSTANTS.BUILDING_DATABASE), [newResidentRecord, residentID])
     return sendHTTPResponse.success(response, 'Resident updated successfully')
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | editServicesController | OrgainsationRelID:${residentID} | Error in updating service list`)
+    Log.error(`[Servv | OrganisationID:${orgID}] | editServicesController | OrgainsationRelID:${residentID} | Error in updating service list | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on updating service', error.message)
   }
 }
