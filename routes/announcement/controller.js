@@ -63,6 +63,8 @@ exports.addAnnouncementController = async (request, response) => {
       return sendHTTPResponse.error(response, 'Please select atleast one project', null, 400)
     if(_.isEmpty(expiryDate))
       return sendHTTPResponse.error(response, 'Please select expire date', null, 400)
+    if(expiryDate == 'Invalid date')
+      return sendHTTPResponse.error(response, 'Please select expire date', null, 400)
     if(expiryDate < moment().format('YYYY-MM-DD HH:mm:ss'))
       return sendHTTPResponse.error(response, 'Please select expire date greater than current date', null, 400)
 
