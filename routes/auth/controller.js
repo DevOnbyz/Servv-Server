@@ -75,3 +75,16 @@ exports.regenreateTokenController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error in regenreate token', error)
   }
 }
+
+exports.checkResidentPhoneController = async (request, response) => {
+  const {phone} = request.params
+  try{
+    const residentData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentbyPhNum(CONSTANTS.BUILDING_DATABASE), [phone])
+    if(_.isEmpty(residentData))
+      return sendHTTPResponse.error(response, 'Invalid phone number', null, 400)
+    return sendHTTPResponse.success(response, 'Phone number is valid', null, 200)
+  }catch(error){
+    Log.error(`[Servv] | checkPhoneController | Error in check phone number ${phone} | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error in check phone number', error)
+  }
+}
