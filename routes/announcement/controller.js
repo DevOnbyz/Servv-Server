@@ -16,9 +16,9 @@ exports.getAnnouncemntsController = async (request, response) => {
   try {
     const announcementList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAnnouncementsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
     const projectNames = await runQuery(CONSTANTS.BUILDING_DATABASE, getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE), orgID)
-    const dateFormattedData = announcementList.map((announcement) => {
-      const projectList = announcement.project_id ? (JSON.parse(announcement.project_id))?.map((project) => parseInt(project)) : []
-      const projectAssociated = (projectNames.filter((project) => projectList.includes(project.id)))?.map((project) => project.name)
+    const dateFormattedData = announcementList?.map((announcement) => {
+      const projectList = !_.isEmpty(announcement.project_id) ? (JSON.parse(announcement.project_id))?.map((project) => parseInt(project)) : []
+      const projectAssociated = (projectNames?.filter((project) => projectList?.includes(project.id)))?.map((project) => project.name)
       return {
         ...announcement,
         project: projectAssociated,
