@@ -133,12 +133,12 @@ exports.editResidentController = async (request, response) => {
       doorNo: item.name,
     }))
 
-    for(item of apartments){
+    for (item of apartments) {
       const doorNo = unifyDoorNumber(item?.doorNo)
       const projectID = item?.projectID
       const data = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveApratmentByProjectAndName(CONSTANTS.BUILDING_DATABASE), [projectID, doorNo])
       // if a resident owned 18A and he is changing it by 2A which is owned by another guy then error so he have make the existing 2A person null
-      if(!_.isEmpty(data) && !_.includes(residentOwnedDoorNos, doorNo)) {
+      if (!_.isEmpty(data) && !_.includes(residentOwnedDoorNos, doorNo)) {
         const message = `Door number already exists for the project`
         return sendHTTPResponse.error(response, message, null, 400)
       }
@@ -159,7 +159,7 @@ exports.editResidentController = async (request, response) => {
       const projectID = item?.projectID
 
       const status = item?.status
-      
+
       if (status === 'delete') {
         const residentApartmentRel = residentOwnedApartmentRelDetails.find((rel) => rel.apartment_id === item.apartmentID)
         console.log({ deleteDetails: residentApartmentRel })
@@ -216,13 +216,36 @@ exports.getResidentByProjectController = async (request, response) => {
   const projectID = request.params.projectID
   try {
     const apartmentsUnderProject = await runQuery(CONSTANTS.BUILDING_DATABASE, getAllApartmentsUnderProject(CONSTANTS.BUILDING_DATABASE), [projectID])
+
+    const apartmentIDAndDoorNoList = apartmentsUnderProject?.map((apartment) => ({
+      apartment_id: apartment?.id,
+      door_no: apartment?.name,
+    }))
+
     const apartmentIDList = apartmentsUnderProject?.map((apartment) => apartment?.id)
     const residentApartmentRelDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllResidentApartmentRelDetails(CONSTANTS.BUILDING_DATABASE), [apartmentIDList])
     const residentIDs = residentApartmentRelDetails?.map((relDetails) => relDetails?.resident_id)
     const residentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, getResidentByIDs(CONSTANTS.BUILDING_DATABASE), [residentIDs])
+
     if (_.isEmpty(apartmentIDList)) return sendHTTPResponse.success(response, [])
 
-      return sendHTTPResponse.success(response, residentDetails)
+    const residentApartmentMap = residentApartmentRelDetails.reduce((acc, relDetails) => {
+      const apartment = apartmentIDAndDoorNoList.find((apartment) => apartment.apartment_id === relDetails.apartment_id)
+      if (apartment) {
+        if (!acc[relDetails.resident_id]) {
+          acc[relDetails.resident_id] = []
+        }
+        acc[relDetails.resident_id].push(apartment)
+      }
+      return acc
+    }, {})
+
+    const residentDetailsWithApartments = residentDetails.map((resident) => ({
+      ...resident,
+      apartments: residentApartmentMap[resident.id] || [],
+    }))
+
+    return sendHTTPResponse.success(response, residentDetailsWithApartments)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | getResidentByProjectController | ProjectID:${projectID} | Error in getting resident list | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on getting resident list', error.message)
