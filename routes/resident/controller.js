@@ -229,8 +229,8 @@ exports.getResidentByProjectController = async (request, response) => {
 
     if (_.isEmpty(apartmentIDList)) return sendHTTPResponse.success(response, [])
 
-    const residentApartmentMap = residentApartmentRelDetails.reduce((acc, relDetails) => {
-      const apartment = apartmentIDAndDoorNoList.find((apartment) => apartment.apartment_id === relDetails.apartment_id)
+    const residentApartmentMap = residentApartmentRelDetails?.reduce((acc, relDetails) => {
+      const apartment = apartmentIDAndDoorNoList?.find((apartment) => apartment.apartment_id === relDetails.apartment_id)
       if (apartment) {
         if (!acc[relDetails.resident_id]) {
           acc[relDetails.resident_id] = []
