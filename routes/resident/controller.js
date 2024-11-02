@@ -245,7 +245,7 @@ exports.getResidentByProjectController = async (request, response) => {
       apartments: residentApartmentMap[resident.id] || [],
     }))
 
-    return sendHTTPResponse.success(response, residentDetailsWithApartments)
+    return sendHTTPResponse.success(response, 'Resident list fetched successfully', residentDetailsWithApartments)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | getResidentByProjectController | ProjectID:${projectID} | Error in getting resident list | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on getting resident list', error.message)
