@@ -33,7 +33,7 @@ exports.getAnnouncemntsController = async (request, response) => {
     }
     return sendHTTPResponse.success(response, 'Announcement List fetched successfully', dateFormattedData)
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | getAnnouncemntsController | Error in fetching announcement list`)
+    Log.error(`[Servv | OrganisationID:${orgID}] | getAnnouncemntsController | Error in fetching announcement list | Error: ${error.message}`)
     sendHTTPResponse.error(response, 'Error while fetching announcement list', error.message)
   }
 }
@@ -63,6 +63,8 @@ exports.addAnnouncementController = async (request, response) => {
       return sendHTTPResponse.error(response, 'Please select atleast one project', null, 400)
     if(_.isEmpty(expiryDate))
       return sendHTTPResponse.error(response, 'Please select expire date', null, 400)
+    if(expiryDate == 'Invalid date')
+      return sendHTTPResponse.error(response, 'Please select expire date', null, 400)
     if(expiryDate < moment().format('YYYY-MM-DD HH:mm:ss'))
       return sendHTTPResponse.error(response, 'Please select expire date greater than current date', null, 400)
 
@@ -84,7 +86,7 @@ exports.addAnnouncementController = async (request, response) => {
     const insertID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAnnouncementToOrg(CONSTANTS.BUILDING_DATABASE), [announcementData]))?.insertId
     return sendHTTPResponse.success(response, 'Announcement added successfully', { announcementID: insertID })
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | addAnnouncementController | Error in adding announcement`)
+    Log.error(`[Servv | OrganisationID:${orgID}] | addAnnouncementController | Error in adding announcement | Error: ${error.message}`)
     sendHTTPResponse.error(response, 'Error on adding announcement', error.message)
   }
 } 

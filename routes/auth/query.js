@@ -7,5 +7,8 @@ module.exports = {
   },
   getOrgDetails(database) {
     return `SELECT * FROM ${database}.organisation where id = ?`
+  },
+  getResidentbyPhNum(database) {
+    return `SELECT * FROM ${database}.resident_identity where ph_num = ?`
   }
 };

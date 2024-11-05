@@ -6,4 +6,5 @@ const { addResidentSchema, editResidentSchema } = require('./validator')
 router.get('/', controller.getResidentController)
 router.post('/', validateRequest(addResidentSchema), controller.addResidentController)
 router.patch('/:id', validateRequest(editResidentSchema), controller.editResidentController)
+router.get('/project/:projectID', controller.getResidentByProjectController)
 module.exports = router
