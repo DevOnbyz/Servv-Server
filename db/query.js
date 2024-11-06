@@ -14,5 +14,8 @@ module.exports = {
   getOrganisations(database) {
     return `SELECT * FROM ${database}.organisation`;
   },
+  addIssueEvent(database) {
+    return `INSERT INTO ${database}.issue_event SET ?`;
+  }
   
 }
