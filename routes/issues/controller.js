@@ -78,7 +78,7 @@ exports.addIssueController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData])
     Log.info(`[${domain} | OrganisationID:${orgID}] | addIssueController | Issue added successfully | IssueID: ${insertID}`)
-    return sendHTTPResponse.success(response, 'Issue added successfully', 'projects')
+    return sendHTTPResponse.success(response, 'Issue added successfully', insertID)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | addIssueController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while fetching project list', error)
