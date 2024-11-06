@@ -9,6 +9,23 @@ const path = require('path')
 const { v4: uuidv4 } = require('uuid')
 const { addIssueEvent } = require('../../db/query')
 
+
+exports.getIssuesController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  try {
+    const issues = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssues(CONSTANTS.BUILDING_DATABASE),[orgID])
+    for (const issue of issues) {
+      const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE),[issue.id])
+      issue.issuesEvents = issuesEvents
+    }
+    Log.info(`[${domain} | OrganisationID:${orgID}] | getIssuesController | Issues fetched successfully`)
+    return sendHTTPResponse.success(response, issues)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getIssuesController | Error in fetching issues | Error: ${error.message}`)
+    return sendHTTPResponse.error(response, error.message, null, 400)
+  }
+}
 const saveFileToDisk = (file, destination) => {
   return new Promise((resolve, reject) => {
     const filePath = path.join(destination, file.fieldname + '-' + uuidv4() + '-' + file.originalname)
