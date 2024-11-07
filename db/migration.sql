@@ -254,16 +254,23 @@ CREATE TABLE `payment` (
 
 CREATE TABLE `issue` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `org_id` INT,
     `apartment_id` INT,
     `resident_id` INT,
+    `description` TEXT,
     `agent_id` INT,
     `creator_id` INT,
     `creator_type` TINYINT,
+    `service_type` INT,
+    `service_subtype` INT,
     `issue_type` VARCHAR(255),
     `status` TINYINT DEFAULT 1,
+    `preferred_date` DATETIME,
+    `preferred_time` TIME,
     `due_date` DATETIME,
     `rating` INT,
     `payment_id` INT,
+    `img_src` TEXT,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_by` INT,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -271,7 +278,10 @@ CREATE TABLE `issue` (
     CONSTRAINT `fk_issue_ibfk_1` FOREIGN KEY (apartment_id) REFERENCES apartment (id) ON DELETE CASCADE,
     CONSTRAINT `fk_issue_ibfk_2` FOREIGN KEY (resident_id) REFERENCES resident (id) ON DELETE CASCADE,
     CONSTRAINT `fk_issue_ibfk_3` FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE,
-    CONSTRAINT `fk_issue_ibfk_4` FOREIGN KEY (payment_id) REFERENCES payment (id) ON DELETE SET NULL
+    CONSTRAINT `fk_issue_ibfk_4` FOREIGN KEY (payment_id) REFERENCES payment (id) ON DELETE SET NULL,
+    CONSTRAINT `fk_issue_ibfk_5` FOREIGN KEY (org_id) REFERENCES organisation (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_issue_ibfk_6` FOREIGN KEY (service_type) REFERENCES service (id) ON DELETE SET NULL,
+    CONSTRAINT `fk_issue_ibfk_7` FOREIGN KEY (service_subtype) REFERENCES service_organisation_rel (id) ON DELETE SET NULL
 );
 
 CREATE TABLE `escalation` (
