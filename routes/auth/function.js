@@ -29,3 +29,30 @@ exports.generateAdminToken = async (adminData) => {
   }
   
 }
+
+const generateCustomerToken = async (customerData) => {
+  try{
+    const id = customerData.id
+    const identityID = customerData.identity_id
+    const firstname = customerData.firstname
+    const lastname = customerData.lastname
+    const associatedOrganisationList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getDistichOrgOfResidentsByIdentityID(CONSTANTS.BUILDING_DATABASE), [identityID])
+    const orgIDs = associatedOrganisationList?.map(org => org.org_id)
+    const orgsDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getOrgDetailsByIDs(CONSTANTS.BUILDING_DATABASE), [orgIDs])
+    const associatedOrganisation = orgsDetails?.map((org) => ({
+      id: org.id,
+      name: org.domain,
+      residentID: associatedOrganisationList?.find((resident) => resident.org_id === org.id)?.residentId,
+    }))
+    const orgDomains = (orgsDetails?.map(org => org.domain))?.join(',')
+    const domain = `MOBILE-${orgDomains}`
+    
+    const accessToken = await jwtSign({id, name: `${firstname} ${lastname}`, identityID, domain, associatedOrganisation, userType: CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER})
+    return {error: false, data:{accessToken}}
+  }
+  catch(error){
+    Log.error(`[Servv] | generateCustomerToken | Error in generating customer token`)
+    return {error: true, data: null}
+  }
+  
+}

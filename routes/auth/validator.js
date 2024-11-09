@@ -1,12 +1,9 @@
 const Joi = require('joi')
 
 const loginSchema = Joi.object({
-  username: Joi.string().required().messages({
-    'string.empty': 'Username is required',
-  }),
-  password: Joi.string().required().messages({
-    'string.empty': 'Password is required',
-  }),
+  username: Joi.string().optional().allow(null),
+  password: Joi.string().optional().allow(null),
+  token: Joi.string().optional().allow(null),
   userType: Joi.string().required().messages({
     'string.empty': 'User type is required',
   }),

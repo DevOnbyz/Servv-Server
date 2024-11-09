@@ -10,5 +10,14 @@ module.exports = {
   },
   getResidentbyPhNum(database) {
     return `SELECT * FROM ${database}.resident_identity where ph_num = ?`
-  }
+  },
+  getCustomerData(database) {
+    return `SELECT * FROM ${database}.resident R INNER JOIN ${database}.resident_identity RI ON R.identity_id = RI.id WHERE RI.ph_num = ?`
+  },
+  getDistichOrgOfResidentsByIdentityID(database) {
+    return `SELECT DISTINCT org_id, id as residentId FROM ${database}.resident where identity_id = ?`
+  },
+  getOrgDetailsByIDs(database) {
+    return `SELECT * FROM ${database}.organisation where id in (?)`
+  },
 };
