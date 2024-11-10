@@ -193,12 +193,29 @@ CREATE TABLE `admin_service_rel` (
     CONSTRAINT `fk_admin_service_rel_ibfk_3` FOREIGN KEY (created_by) REFERENCES admin (id),
     CONSTRAINT `fk_admin_service_rel_ibfk_4` FOREIGN KEY (updated_by) REFERENCES admin (id)
 );
-
+CREATE TABLE `agent_identity` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `ph_num` VARCHAR(255) UNIQUE NOT NULL,  -- Phone number stays unique here
+    `email_id` VARCHAR(255),
+    `fcm_token` TEXT,
+    `created_by` INT,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_by` INT,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_agent_identity_ibfk_1` FOREIGN KEY (created_by) REFERENCES admin (id)
+);
 CREATE TABLE `agent` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `name` VARCHAR(255) NOT NULL,
-    `ph_num` VARCHAR(255) UNIQUE NOT NULL,
+    `identity_id` INT NOT NULL,
+    `firstname` VARCHAR(255) NOT NULL,
+    `lastname` VARCHAR(255) NOT NULL,
+    `org_id` INT,
     `status` TINYINT DEFAULT 1,
+    `city` VARCHAR(255),
+    `district` VARCHAR(255),
+    `state` VARCHAR(255),
+    `country` VARCHAR(255),
+    `email_id` VARCHAR(255),
     `proficient_service` JSON,
     `location` VARCHAR(255),
     `created_by` INT,
@@ -206,7 +223,9 @@ CREATE TABLE `agent` (
     `updated_by` INT,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_agent_ibfk_1` FOREIGN KEY (created_by) REFERENCES admin (id),
-    CONSTRAINT `fk_agent_ibfk_2` FOREIGN KEY (updated_by) REFERENCES admin (id)
+    CONSTRAINT `fk_agent_ibfk_2` FOREIGN KEY (updated_by) REFERENCES admin (id),
+    CONSTRAINT `fk_agent_ibfk_3` FOREIGN KEY (identity_id) REFERENCES agent_identity (id),
+    CONSTRAINT `fk_agent_ibfk_4` FOREIGN KEY (org_id) REFERENCES organisation (id)
 );
 
 CREATE TABLE `agent_service_rel` (
@@ -222,21 +241,6 @@ CREATE TABLE `agent_service_rel` (
     CONSTRAINT `fk_agent_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES service (id) ON DELETE CASCADE,
     CONSTRAINT `fk_agent_service_rel_ibfk_3` FOREIGN KEY (created_by) REFERENCES admin (id),
     CONSTRAINT `fk_agent_service_rel_ibfk_4` FOREIGN KEY (updated_by) REFERENCES admin (id)
-);
-
-CREATE TABLE `agent_organisation_rel` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `agent_id` INT,
-    `organisation_id` INT,
-    `status` TINYINT DEFAULT 1,
-    `created_by` INT,
-    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-    `updated_by` INT,
-    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_agent_organisation_rel_ibfk_1` FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE,
-    CONSTRAINT `fk_agent_organisation_rel_ibfk_2` FOREIGN KEY (organisation_id) REFERENCES organisation (id) ON DELETE CASCADE,
-    CONSTRAINT `fk_agent_organisation_rel_ibfk_3` FOREIGN KEY (created_by) REFERENCES admin (id),
-    CONSTRAINT `fk_agent_organisation_rel_ibfk_4` FOREIGN KEY (updated_by) REFERENCES admin (id)
 );
 
 CREATE TABLE `payment` (
