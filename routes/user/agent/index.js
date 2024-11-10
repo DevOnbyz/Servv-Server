@@ -7,6 +7,7 @@ const { addAgentSchema, editAgentSchema } = require('./validator')
 router.get('/', controller.getAgentController)
 router.post('/', validateRequest(addAgentSchema), controller.addAgentController)
 router.patch('/:id', validateRequest(editAgentSchema) , controller.editAgentController)
+router.get('/service/:serviceID', controller.getAgentsByServiceController)
 
 
 module.exports = router

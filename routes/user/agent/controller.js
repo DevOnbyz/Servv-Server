@@ -24,6 +24,23 @@ exports.getAgentController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while fetching agent list', error)
   }
 }
+exports.getAgentsByServiceController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const serviceID = request.params.serviceID
+  try {
+    const agentIDUnderService = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAgentsUnderServiceID(CONSTANTS.BUILDING_DATABASE), [serviceID]))?.map((item) => item.agent_id)
+    const agentList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAgentsByAgentIDandOrg(CONSTANTS.BUILDING_DATABASE), [agentIDUnderService, orgID])
+    for (const agent of agentList) {
+      agent.activeSiteVisit = 0
+      agent.activeWorkLoad = 0
+    }
+    return sendHTTPResponse.success(response, 'Fetched agent details under service successfully', agentList)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getAgentsByServiceController | Error in fetching agent under service list`)
+    sendHTTPResponse.error(response, 'Error while fetching agent under service list', error)
+  }
+}
 
 exports.addAgentController = async (request, response) => {
   const orgID = request.orgID

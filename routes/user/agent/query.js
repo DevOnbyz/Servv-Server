@@ -17,6 +17,9 @@ module.exports = {
   getAllAgentsUnderOrg(database) {
     return `SELECT AG.id, AG.org_id, AG.identity_id, AG.status, AG.firstname, AG.lastname, AG.email_id, AG.city, AG.district, AG.state, AG.country ,AGI.ph_num as phNum FROM ${database}.agent AG INNER JOIN ${database}.agent_identity AGI ON AG.identity_id = AGI.id WHERE AG.org_id = ?`;
   },
+  getAllAgentsByAgentIDandOrg(database) {
+    return `SELECT AG.id, AG.org_id, AG.identity_id, AG.status, AG.firstname, AG.lastname, AG.email_id, AG.city, AG.district, AG.state, AG.country ,AGI.ph_num as phNum FROM ${database}.agent AG INNER JOIN ${database}.agent_identity AGI ON AG.identity_id = AGI.id WHERE AG.id in (?) AND AG.org_id = ?`;
+  },
   getDistinctServiceAgentMappingByAgentID(database) {
     return `SELECT DISTINCT service_id FROM ${database}.agent_service_rel where agent_id = ?`;
   },
@@ -31,6 +34,9 @@ module.exports = {
   },
   getAllServicesByAgentID(database) {
     return `SELECT * FROM ${database}.agent_service_rel WHERE agent_id = ?`;
+  },
+  getAllAgentsUnderServiceID(database) {
+    return `SELECT * FROM ${database}.agent_service_rel WHERE service_id = ?`;
   },
   deleteAgentServiceRelByAgentIDAndServiceIDs(database) {
     return `DELETE FROM ${database}.agent_service_rel WHERE agent_id = ? AND service_id in (?)`;
