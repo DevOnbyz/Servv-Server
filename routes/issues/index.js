@@ -22,7 +22,11 @@ const upload = multer({
   },
 }).array('imgSrc', 5)
 
+
+
 router.get('/', controller.getIssuesController)
+router.get('/resident/:id', controller.getIssuesUnderResidentController)
+
 router.post('/', 
   (req, res, next) => {
     upload(req, res, (err) => {
