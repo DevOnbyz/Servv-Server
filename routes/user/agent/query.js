@@ -19,6 +19,21 @@ module.exports = {
   },
   getDistinctServiceAgentMappingByAgentID(database) {
     return `SELECT DISTINCT service_id FROM ${database}.agent_service_rel where agent_id = ?`;
+  },
+  getAgentDetailsByID(database) {
+    return `SELECT * FROM ${database}.agent WHERE id = ?`;
+  },
+  getAgentIdentityDetailsByID(database) {
+    return `SELECT * FROM ${database}.agent_identity WHERE id = ?`;
+  },
+  updateAgentDetailsByID(database) {
+    return `UPDATE ${database}.agent SET ? WHERE id = ?`;
+  },
+  getAllServicesByAgentID(database) {
+    return `SELECT * FROM ${database}.agent_service_rel WHERE agent_id = ?`;
+  },
+  deleteAgentServiceRelByAgentIDAndServiceIDs(database) {
+    return `DELETE FROM ${database}.agent_service_rel WHERE agent_id = ? AND service_id in (?)`;
   }
 };
 
