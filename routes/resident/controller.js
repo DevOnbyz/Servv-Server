@@ -150,7 +150,7 @@ exports.editResidentController = async (request, response) => {
     //   await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentApartmentRel(CONSTANTS.BUILDING_DATABASE), [{status}, residentApartmentRelID])
     //   await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateApartmentDetails(CONSTANTS.BUILDING_DATABASE), [{status}, residentApartmentRel?.apartment_id])
     //   await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentDetails(CONSTANTS.BUILDING_DATABASE), [{status}, residentApartmentRel?.apartment_id])
-    //   Log.info(`[Servv | OrganisationID:${orgID}] | editResidentController | Resident status updated successfully`)
+    //   Log.info(`[${domain} | OrganisationID:${orgID}] | editResidentController | Resident status updated successfully`)
     //   return sendHTTPResponse.success(response, 'Resident status updated successfully')
     // }
 
@@ -162,7 +162,6 @@ exports.editResidentController = async (request, response) => {
 
       if (status === 'delete') {
         const residentApartmentRel = residentOwnedApartmentRelDetails.find((rel) => rel.apartment_id === item.apartmentID)
-        console.log({ deleteDetails: residentApartmentRel })
         if (residentApartmentRel) {
           Log.info(`[${domain} | OrganisationID:${orgID}] | editResidentController | Deleting resident from apartment  | ResidentID: ${residentID} | ApartmentID: ${item.apartmentID}`)
           await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.deleteApartmentRelByResidentID(CONSTANTS.BUILDING_DATABASE), [residentID, item.apartmentID])
@@ -185,12 +184,12 @@ exports.editResidentController = async (request, response) => {
           apartment_id: apartmentID,
           created_by: userID,
         }
-        Log.info(`[Servv | OrganisationID:${orgID}] | editResidentController | Adding resident in apartment | ResidentID: ${residentID} | ApartmentID: ${apartmentID}`)
+        Log.info(`[${domain} | OrganisationID:${orgID}] | editResidentController | Adding resident in apartment | ResidentID: ${residentID} | ApartmentID: ${apartmentID}`)
         await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartmentResidentRel(CONSTANTS.BUILDING_DATABASE), [residentApartmentRel])
       } else if (status === 'update') {
         const residentApartmentRel = residentOwnedApartmentRelDetails.find((rel) => rel.apartment_id === item.apartmentID)
         if (residentApartmentRel) {
-          Log.info(`[Servv | OrganisationID:${orgID}] | editResidentController | Updating resident in apartment | ResidentID: ${residentID} | ApartmentID: ${residentApartmentRel?.apartment_id} | apartmentData: ${JSON.stringify(apartmentData)}`)
+          Log.info(`[${domain} | OrganisationID:${orgID}] | editResidentController | Updating resident in apartment | ResidentID: ${residentID} | ApartmentID: ${residentApartmentRel?.apartment_id} | apartmentData: ${JSON.stringify(apartmentData)}`)
           await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateApartmentDetails(CONSTANTS.BUILDING_DATABASE), [apartmentData, residentApartmentRel?.apartment_id])
         }
       }
@@ -205,7 +204,7 @@ exports.editResidentController = async (request, response) => {
     await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentDetails(CONSTANTS.BUILDING_DATABASE), [newResidentRecord, residentID])
     return sendHTTPResponse.success(response, 'Resident updated successfully')
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | editResidentController | OrgainsationRelID:${residentID} | Error in updating resident list | Error: ${error.message}`)
+    Log.error(`[${domain} | OrganisationID:${orgID}] | editResidentController | OrgainsationRelID:${residentID} | Error in updating resident list | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on updating resident', error.message)
   }
 }
