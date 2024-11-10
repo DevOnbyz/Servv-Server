@@ -261,6 +261,8 @@ CREATE TABLE `issue` (
     `org_id` INT,
     `apartment_id` INT,
     `resident_id` INT,
+    `status` TINYINT DEFAULT 0,
+    `sub_status` INT DEFAULT NULL,
     `description` TEXT,
     `agent_id` INT,
     `creator_id` INT,
@@ -268,7 +270,6 @@ CREATE TABLE `issue` (
     `service_type` INT,
     `service_subtype` INT,
     `issue_type` VARCHAR(255),
-    `status` TINYINT DEFAULT 1,
     `preferred_date` DATETIME,
     `preferred_time` TIME,
     `due_date` DATETIME,
@@ -303,6 +304,7 @@ CREATE TABLE `issue_event` (
     `issue_id` INT,
     `event_type` VARCHAR(50) NOT NULL,
     `status` TINYINT DEFAULT 1,
+    `entity_id` INT DEFAULT NULL,
     `event_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `description` TEXT,
     `creator_id` INT,
@@ -317,7 +319,8 @@ CREATE TABLE `agent_assignment` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `issue_id` INT,
     `agent_id` INT,
-    `job_type` VARCHAR(255),
+    `status` TINYINT DEFAULT 0, -- 0 = pending, 1 = completed
+    `notes` TEXT,
     `assigned_by` INT,
     `assigned_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `visit_scheduled_time` DATETIME,
@@ -325,7 +328,6 @@ CREATE TABLE `agent_assignment` (
     `otp_code` VARCHAR(10),
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    KEY `job_type` (`job_type`),
     CONSTRAINT `fk_agent_assignment_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE,
     CONSTRAINT `fk_agent_assignment_ibfk_2` FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE
 );

@@ -2,7 +2,7 @@ const router = require('express').Router()
 const sendHTTPResponse = require('../../lib/sendHTTPResponse')
 const validateRequest = require('../../middleware/validateRequest')
 const controller = require('./controller')
-const { addIssueSchema } = require('./validator')
+const { addIssueSchema, scheduleSiteVisitSchema } = require('./validator')
 const multer = require('multer')
 const path = require('path')
 
@@ -37,5 +37,6 @@ router.post('/',
     })
   }
 )
+router.post('/:issueID/schedule-visit', validateRequest(scheduleSiteVisitSchema), controller.scheduleVisitIssueController)
 
 module.exports = router
