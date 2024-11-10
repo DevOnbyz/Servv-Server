@@ -47,6 +47,49 @@ exports.getResidentController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while fetching resident list', error.message)
   }
 }
+
+
+exports.getResidentByIDController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const residentID = request.params.id
+  try {
+    const residentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentDataByID(CONSTANTS.BUILDING_DATABASE), [orgID, residentID])
+    const groupedData = residentDetails?.reduce((acc, row) => {
+      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
+      const fullName = `${firstname} ${lastname}`.trim()
+      let resident = acc.find((r) => r.phNum === ph_num)
+      if (!resident) {
+        resident = {
+          id,
+          name: fullName,
+          phNum: ph_num,
+          email: email_id,
+          project: [],
+        }
+        acc.push(resident)
+      }
+      resident.project.push({
+        apartmentID,
+        apartmentResidentRelID,
+        projectID,
+        name: projectName,
+        doorNo: doorNo,
+        city: city,
+        district: district,
+        state: state,
+        country: country,
+      })
+
+      return acc
+    }, [])
+    return sendHTTPResponse.success(response, 'Resident List fetched successfully', groupedData)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getResidentController | Error in fetching resident list | Error: ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while fetching resident list', error.message)
+  }
+}
+
 exports.addResidentController = async (request, response) => {
   const orgID = request.orgID
   const userID = request.userID
