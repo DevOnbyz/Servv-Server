@@ -30,7 +30,7 @@ exports.generateAdminToken = async (adminData) => {
   
 }
 
-const generateCustomerToken = async (customerData) => {
+exports.generateCustomerToken = async (customerData) => {
   try{
     const id = customerData.id
     const identityID = customerData.identity_id
