@@ -11,3 +11,22 @@ ALTER TABLE admin ADD COLUMN `firstname` VARCHAR(100) NOT NULL AFTER `id`;
 ALTER TABLE admin ADD COLUMN `lastname` VARCHAR(100) NOT NULL AFTER `firstname`;
 ALTER TABLE admin ADD COLUMN `email` VARCHAR(100)  AFTER `lastname`;
 ALTER TABLE admin ADD COLUMN `ph_num` VARCHAR(30)  AFTER `email`;
+
+-- 10-11-24
+ALTER TABLE agent drop column `name`;
+ALTER TABLE agent drop column `ph_num`;
+ALTER TABLE agent drop column `location`;
+ALTER TABLE agent drop column `email`;
+ALTER TABLE agent drop column `proficient_service`;
+ALTER TABLE agent ADD COLUMN `identity_id` INT NOT NULL AFTER `id`;
+ALTER TABLE agent ADD COLUMN `firstname` VARCHAR(100) NOT NULL AFTER `identity_id`;
+ALTER TABLE agent ADD COLUMN `lastname` VARCHAR(100) NOT NULL AFTER `firstname`;
+ALTER TABLE agent ADD COLUMN `email_id` VARCHAR(255)  AFTER `lastname`;
+ALTER TABLE agent ADD COLUMN `city` VARCHAR(255)  AFTER `email_id`;
+ALTER TABLE agent ADD COLUMN `district` VARCHAR(255)  AFTER `city`;
+ALTER TABLE agent ADD COLUMN `state` VARCHAR(255)  AFTER `district`;
+ALTER TABLE agent ADD COLUMN `country` VARCHAR(255)  AFTER `state`;
+ALTER TABLE agent ADD COLUMN `org_id` INT AFTER `email`;
+ALTER TABLE agent ADD CONSTRAINT fk_agent_ibfk_3 FOREIGN KEY (`identity_id`) REFERENCES `agent_identity`(`id`);
+ALTER TABLE agent ADD CONSTRAINT fk_agent_ibfk_4 FOREIGN KEY (`org_id`) REFERENCES `organisation`(`id`);
+drop table agent_organisation_rel;

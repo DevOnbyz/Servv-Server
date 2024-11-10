@@ -37,6 +37,27 @@ const saveFileToDisk = (file, destination) => {
     })
   })
 }
+
+exports.getIssuesUnderResidentController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const residentID = parseInt(request.params.id)
+  const itemsPerPage = 3
+  const pageNumber = request.query.pageNumber ? parseInt(request.query.pageNumber) : 0
+  const offset = (pageNumber - 1) * itemsPerPage
+  try {
+    const issues = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesUnderResident(CONSTANTS.BUILDING_DATABASE, itemsPerPage, offset),[residentID, orgID])
+    for (const issue of issues) {
+      const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE),[issue.id])
+      issue.issuesEvents = issuesEvents
+    }
+    Log.info(`[${domain} | OrganisationID:${orgID} | residentID:${residentID}] | getIssuesUnderResidentController | Issues fetched for resident successfully`)
+    return sendHTTPResponse.success(response, issues)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID} | residentID:${residentID}] | getIssuesUnderResidentController | Error in fetching issues | Error: ${error.message}`)
+    return sendHTTPResponse.error(response, error.message, null, 400)
+  }
+}
 exports.addIssueController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
