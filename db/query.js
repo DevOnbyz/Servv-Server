@@ -11,5 +11,14 @@ module.exports = {
   getResidentByIDs(database) {
     return `SELECT r.id, r.firstname, r.lastname, r.status,r.email_id, r.org_id, i.ph_num FROM ${database}.resident r left join ${database}.resident_identity i on r.identity_id = i.id WHERE r.id in (?)`;
   },
+  getOrganisations(database) {
+    return `SELECT * FROM ${database}.organisation`;
+  },
+  addIssueEvent(database) {
+    return `INSERT INTO ${database}.issue_event SET ?`;
+  },
+  getAllServicesUnderSystem(database) {
+    return `SELECT * FROM ${database}.service`;
+  }
   
 }

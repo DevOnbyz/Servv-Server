@@ -57,6 +57,37 @@ WHERE
     p.org_id = ? AND arr.status = 1 ORDER BY r.created_at DESC;
     `
   },
+  getResidentDataByID(database){
+    return `
+    SELECT
+    r.id,
+    arr.id AS apartmentResidentRelID,
+    i.ph_num,            
+    r.email_id,
+    r.firstname,
+    r.lastname,
+    a.id AS apartmentID,
+    p.id AS projectID,
+    a.name AS doorNo,
+    p.name AS projectName,
+    p.city AS city, 
+    p.district AS district, 
+    p.state AS state, 
+    p.country AS country
+FROM 
+    ${database}.resident_identity i
+JOIN 
+    ${database}.resident r ON i.id = r.identity_id
+JOIN 
+    ${database}.apartment_resident_rel arr ON r.id = arr.resident_id
+JOIN 
+    ${database}.apartment a ON arr.apartment_id = a.id
+JOIN 
+    ${database}.project p ON a.project_id = p.id
+WHERE 
+    p.org_id = ? AND arr.status = 1 AND r.id = ?;
+    `
+  },
 getResidentApartmentRelByID(database){
   return `SELECT * FROM ${database}.apartment_resident_rel WHERE id = ?`
 },
