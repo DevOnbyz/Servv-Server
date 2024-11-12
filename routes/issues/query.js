@@ -51,26 +51,48 @@ module.exports = {
   },
   getSiteVisitUnderIssue(database) {
     return `SELECT 
-    IE.issue_id, 
-    IE.event_type, 
-    CONCAT(A.firstname, ' ', A.lastname) as assignee, 
-    AA.assigned_time, 
-    I.due_date,
-    CASE 
-      WHEN I.due_date < CURDATE() THEN DATEDIFF(CURDATE(), I.due_date)
-      ELSE 0
-    END AS over_due_date,
-    AA.agent_inferences, 
-    AA.agent_uploads
-    FROM ${database}.issue_event IE
-    LEFT JOIN ${database}.issue I ON I.id = IE.issue_id
-    LEFT JOIN ${database}.agent A ON A.id = I.agent_id
-    LEFT JOIN ${database}.agent_assignment AA ON AA.agent_id = A.id
-    WHERE IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.REVISIT_REQUIRED}) 
-    AND IE.issue_id = ? 
-    ORDER BY I.created_at DESC`;
+        IE.issue_id, 
+        IE.event_type, 
+        CONCAT(A.firstname, ' ', A.lastname) AS assignee, 
+        I.due_date,
+        CASE 
+            WHEN I.due_date < CURDATE() THEN DATEDIFF(CURDATE(), I.due_date)
+            ELSE 0
+        END AS over_due_date,
+        (
+            SELECT AA.assigned_time 
+            FROM ${database}.agent_assignment AA 
+            WHERE AA.agent_id = A.id 
+            LIMIT 1
+        ) AS assigned_time,
+        (
+            SELECT AA.agent_inferences 
+            FROM ${database}.agent_assignment AA 
+            WHERE AA.agent_id = A.id 
+            LIMIT 1
+        ) AS agent_inferences,
+        (
+            SELECT AA.agent_uploads 
+            FROM ${database}.agent_assignment AA 
+            WHERE AA.agent_id = A.id 
+            LIMIT 1
+        ) AS agent_uploads
+    FROM 
+        ${database}.issue_event IE
+    LEFT JOIN 
+        ${database}.issue I ON I.id = IE.issue_id
+    LEFT JOIN 
+        ${database}.agent A ON A.id = I.agent_id
+    WHERE 
+        IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.REVISIT_REQUIRED}) 
+        AND I.id = ? 
+    ORDER BY 
+        I.created_at DESC;`
   }
 };
+
+
+
 
 
 
