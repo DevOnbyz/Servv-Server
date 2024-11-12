@@ -1,11 +1,11 @@
-const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM } = require("../../lib/constants");
+const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS } = require("../../lib/constants");
 
 module.exports = {
   addIssue(database) {
     return `INSERT INTO ${database}.issue SET ?`;
   },
   getIssues(database) {
-    return `SELECT I.id, A.name as doorNo, P.name as projectName, CONCAT(R.firstname, ' ', R.lastname) as name,
+    return `SELECT I.id, A.name as doorNo, P.name as projectName, CONCAT(AG.firstname, ' ', AG.lastname) as agentName, I.agent_id as agentID ,CONCAT(R.firstname, ' ', R.lastname) as name,
     CONCAT(P.city, ', ', P.district, ', ', P.state, ', ', P.country) as location,
     CASE WHEN I.status = ${ISSUE_STATUS.OPEN} THEN '${ISSUE_STATUS_STRING.OPEN}' 
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
@@ -19,6 +19,7 @@ module.exports = {
     left join ${database}.resident R on I.resident_id = R.id
     left join ${database}.resident_identity RI on R.identity_id = RI.id
     left join ${database}.service S on I.service_type = S.id
+    left join ${database}.agent AG on I.agent_id = AG.id
     where I.org_id = ?
     ORDER BY I.created_at DESC`;
   },
@@ -88,6 +89,9 @@ module.exports = {
         AND I.id = ? 
     ORDER BY 
         I.created_at DESC;`
+  },
+  updateAgentIDInAgentAssignmentofActiveIssue(database) {
+    return `UPDATE ${database}.agent_assignment SET agent_id = ? WHERE issue_id = ? AND status = ${AGENT_ASSIGNMENT_STATUS.PENDING}`;
   }
 };
 

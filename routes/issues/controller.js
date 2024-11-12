@@ -183,3 +183,24 @@ exports.getSiteVisitUnderIssueController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while fetching site visit', error.message)
   }
 }
+exports.reAssignSiteVisitController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  const agentID = request.body.agentID
+  try {
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      agent_id: agentID,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED
+    }
+
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentIDInAgentAssignmentofActiveIssue(CONSTANTS.BUILDING_DATABASE), [ agentID, issueID ])
+    Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | Issue re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
+    return sendHTTPResponse.success(response, 'Issue re-assigned successfully')
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while re-assigning issue', error.message)
+  }
+}

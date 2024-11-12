@@ -2,7 +2,7 @@ const router = require('express').Router()
 const sendHTTPResponse = require('../../lib/sendHTTPResponse')
 const validateRequest = require('../../middleware/validateRequest')
 const controller = require('./controller')
-const { addIssueSchema, scheduleSiteVisitSchema } = require('./validator')
+const { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema } = require('./validator')
 const multer = require('multer')
 const path = require('path')
 
@@ -38,6 +38,7 @@ router.post('/',
   }
 )
 router.post('/:issueID/schedule-visit', validateRequest(scheduleSiteVisitSchema), controller.scheduleVisitIssueController)
+router.patch('/:issueID/site-visit/re-assign',validateRequest(reAssignAgentSchema), controller.reAssignSiteVisitController)
 
 router.get('/:issueID/site-visit', controller.getSiteVisitUnderIssueController)
 
