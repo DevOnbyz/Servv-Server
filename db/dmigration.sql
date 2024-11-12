@@ -40,4 +40,4 @@ ALTER TABLE agent_assignment ADD COLUMN `notes` TEXT AFTER `status`;
 ALTER TABLE agent_assignment DROP COLUMN `job_type`;
 ALTER TABLE agent_assignment ADD COLUMN `agent_inferences` TEXT AFTER `otp_code`;
 ALTER TABLE agent_assignment ADD COLUMN `agent_uploads` TEXT AFTER `agent_inferences`;
-ALTER TABLE issue_event CHANGE `⁠status⁠` `⁠sub_status⁠` TINYINT DEFAULT NULL;
+ALTER TABLE issue_event CHANGE COLUMN `status` `sub_status` TINYINT DEFAULT NULL;
