@@ -39,4 +39,6 @@ router.post('/',
 )
 router.post('/:issueID/schedule-visit', validateRequest(scheduleSiteVisitSchema), controller.scheduleVisitIssueController)
 
+router.get('/:issueID/site-visit', controller.getSiteVisitUnderIssueController)
+
 module.exports = router
