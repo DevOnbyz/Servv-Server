@@ -21,7 +21,7 @@ exports.getIssuesController = async (request, response) => {
       issue.issuesEvents = issuesEvents
     }
     Log.info(`[${domain} | OrganisationID:${orgID}] | getIssuesController | Issues fetched successfully`)
-    return sendHTTPResponse.success(response, issues)
+    return sendHTTPResponse.success(response, 'Issues fetched successfully', issues)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | getIssuesController | Error in fetching issues | Error: ${error.message}`)
     return sendHTTPResponse.error(response, error.message, null, 400)

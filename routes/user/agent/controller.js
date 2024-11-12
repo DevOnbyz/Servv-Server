@@ -30,6 +30,9 @@ exports.getAgentsByServiceController = async (request, response) => {
   const serviceID = request.params.serviceID
   try {
     const agentIDUnderService = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAgentsUnderServiceID(CONSTANTS.BUILDING_DATABASE), [serviceID]))?.map((item) => item.agent_id)
+
+    if (_.isEmpty(agentIDUnderService)) return sendHTTPResponse.error(response, 'No agent found under this service', [], 400)
+
     const agentList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAgentsByAgentIDandOrg(CONSTANTS.BUILDING_DATABASE), [agentIDUnderService, orgID])
     for (const agent of agentList) {
       agent.activeSiteVisit = 0
