@@ -16,6 +16,9 @@ module.exports = {
   },
   addIssueEvent(database) {
     return `INSERT INTO ${database}.issue_event SET ?`;
+  },
+  getAllServicesUnderSystem(database) {
+    return `SELECT * FROM ${database}.service`;
   }
   
 }

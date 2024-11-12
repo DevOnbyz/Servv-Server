@@ -1,3 +1,5 @@
+const { ISSUE_STATUS, ISSUE_STATUS_STRING } = require("../../lib/constants");
+
 module.exports = {
   addIssue(database) {
     return `INSERT INTO ${database}.issue SET ?`;
@@ -5,7 +7,11 @@ module.exports = {
   getIssues(database) {
     return `SELECT I.id, A.name as doorNo, P.name as projectName, CONCAT(R.firstname, ' ', R.lastname) as name,
     CONCAT(P.city, ', ', P.district, ', ', P.state, ', ', P.country) as location,
-    I.status, I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.preferred_time as time, I.preferred_date as date,
+    CASE WHEN I.status = ${ISSUE_STATUS.OPEN} THEN '${ISSUE_STATUS_STRING.OPEN}' 
+    WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
+    WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
+    WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
+    I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.preferred_time as time, I.preferred_date as date,
     I.img_src
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
@@ -18,6 +24,30 @@ module.exports = {
   },
   getIssuesEvent(database) {
     return `SELECT * FROM ${database}.issue_event where issue_id = ? ORDER BY created_at DESC`;
+  },
+  getIssuesUnderResident(database, limit, offset) {
+    return `SELECT I.id, A.name as doorNo, P.name as projectName, CONCAT(R.firstname, ' ', R.lastname) as name,
+    CONCAT(P.city, ', ', P.district, ', ', P.state, ', ', P.country) as location,
+    CASE WHEN I.status = ${ISSUE_STATUS.OPEN} THEN '${ISSUE_STATUS_STRING.OPEN}' 
+    WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
+    WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
+    WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status,
+     I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.preferred_time as time, I.preferred_date as date,
+    I.img_src
+    FROM ${database}.issue I
+    left join ${database}.apartment A on I.apartment_id = A.id 
+    left join ${database}.project P on A.project_id = P.id
+    left join ${database}.resident R on I.resident_id = R.id
+    left join ${database}.resident_identity RI on R.identity_id = RI.id
+    left join ${database}.service S on I.service_type = S.id
+    where I.resident_id = ? AND I.org_id = ?
+    ORDER BY I.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
+  },
+  updateIssue(database) {
+    return `UPDATE ${database}.issue SET ? WHERE id = ?`;
+  },
+  addAgentAssignment(database) {
+    return `INSERT INTO ${database}.agent_assignment SET ?`;
   }
 };
 

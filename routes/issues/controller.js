@@ -8,7 +8,8 @@ const fs = require('fs')
 const path = require('path')
 const { v4: uuidv4 } = require('uuid')
 const { addIssueEvent } = require('../../db/query')
-
+const { generateOTP } = require('../../lib/function')
+const moment = require('moment')
 
 exports.getIssuesController = async (request, response) => {
   const orgID = request.orgID
@@ -36,6 +37,27 @@ const saveFileToDisk = (file, destination) => {
       resolve(filePath)
     })
   })
+}
+
+exports.getIssuesUnderResidentController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const residentID = parseInt(request.params.id)
+  const itemsPerPage = 3
+  const pageNumber = request.query.pageNumber ? parseInt(request.query.pageNumber) : 0
+  const offset = (pageNumber - 1) * itemsPerPage
+  try {
+    const issues = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesUnderResident(CONSTANTS.BUILDING_DATABASE, itemsPerPage, offset),[residentID, orgID])
+    for (const issue of issues) {
+      const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE),[issue.id])
+      issue.issuesEvents = issuesEvents
+    }
+    Log.info(`[${domain} | OrganisationID:${orgID} | residentID:${residentID}] | getIssuesUnderResidentController | Issues fetched for resident successfully`)
+    return sendHTTPResponse.success(response, issues)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID} | residentID:${residentID}] | getIssuesUnderResidentController | Error in fetching issues | Error: ${error.message}`)
+    return sendHTTPResponse.error(response, error.message, null, 400)
+  }
 }
 exports.addIssueController = async (request, response) => {
   const orgID = request.orgID
@@ -78,7 +100,8 @@ exports.addIssueController = async (request, response) => {
       service_type: serviceID,
       service_subtype: subServiceID,
       issue_type: '',
-      status: CONSTANTS.ISSUE_SUB_STATUS_NUM.CREATED,
+      status: CONSTANTS.ISSUE_STATUS.OPEN,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.CREATED,
       preferred_date: _.isEmpty(request.body.preferredDate) ? null : request.body.preferredDate,
       preferred_time: _.isEmpty(request.body.preferredTime) ? null : request.body.preferredTime,
       due_date: null,
@@ -99,5 +122,50 @@ exports.addIssueController = async (request, response) => {
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | addIssueController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while fetching project list', error)
+  }
+}
+
+
+exports.scheduleVisitIssueController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const { agentID, notes, scheduleTime } = request.body
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      agent_id: agentID,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
+
+    const agentAssignmentData = {
+      issue_id: issueID,
+      agent_id: agentID,
+      status: CONSTANTS.AGENT_ASSIGNMENT_STATUS.PENDING,
+      assigned_by : request.userID,
+      visit_scheduled_time : scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null,
+      otp_sent_time: null,
+      otp_code : generateOTP(),
+      notes
+    }
+    const entityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAgentAssignment(CONSTANTS.BUILDING_DATABASE), [ agentAssignmentData, issueID ]))?.insertId
+
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.AGENT_ASSIGNED,
+      status : CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED,
+      entity_id: entityID,
+      description : notes,
+      creator_id : request.userID,
+      creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+    Log.info(`[${domain} | OrganisationID:${orgID}] | scheduleVisitIssueController | Issue visit scheduled successfully | IssueID: ${issueID} | LogID: ${logID}`)
+    return sendHTTPResponse.success(response, 'Issue visit scheduled successfully', {entityID, logID})
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | scheduleVisitIssueController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while scheduling issue visit', error.message)
   }
 }

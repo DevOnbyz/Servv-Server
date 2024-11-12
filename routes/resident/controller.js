@@ -47,6 +47,49 @@ exports.getResidentController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while fetching resident list', error.message)
   }
 }
+
+
+exports.getResidentByIDController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const residentID = request.params.id
+  try {
+    const residentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentDataByID(CONSTANTS.BUILDING_DATABASE), [orgID, residentID])
+    const groupedData = residentDetails?.reduce((acc, row) => {
+      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
+      const fullName = `${firstname} ${lastname}`.trim()
+      let resident = acc.find((r) => r.phNum === ph_num)
+      if (!resident) {
+        resident = {
+          id,
+          name: fullName,
+          phNum: ph_num,
+          email: email_id,
+          project: [],
+        }
+        acc.push(resident)
+      }
+      resident.project.push({
+        apartmentID,
+        apartmentResidentRelID,
+        projectID,
+        name: projectName,
+        doorNo: doorNo,
+        city: city,
+        district: district,
+        state: state,
+        country: country,
+      })
+
+      return acc
+    }, [])
+    return sendHTTPResponse.success(response, 'Resident List fetched successfully', groupedData)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getResidentController | Error in fetching resident list | Error: ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while fetching resident list', error.message)
+  }
+}
+
 exports.addResidentController = async (request, response) => {
   const orgID = request.orgID
   const userID = request.userID
@@ -70,7 +113,7 @@ exports.addResidentController = async (request, response) => {
     }
 
     const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum])
-    const residentIdentityID = _.isEmpty(phNumDetails) ? (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addResidentIdentity(CONSTANTS.BUILDING_DATABASE), [{ ph_num: phNum }]))?.insertId : phNumDetails[0]?.id
+    const residentIdentityID = _.isEmpty(phNumDetails) ? (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addResidentIdentity(CONSTANTS.BUILDING_DATABASE), [{ ph_num: phNum, created_by: userID }]))?.insertId : phNumDetails[0]?.id
 
     if (!_.isEmpty(phNumDetails)) {
       // if a resident having same phone number exists in a same organisation then the admin can edit not add
@@ -150,7 +193,7 @@ exports.editResidentController = async (request, response) => {
     //   await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentApartmentRel(CONSTANTS.BUILDING_DATABASE), [{status}, residentApartmentRelID])
     //   await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateApartmentDetails(CONSTANTS.BUILDING_DATABASE), [{status}, residentApartmentRel?.apartment_id])
     //   await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentDetails(CONSTANTS.BUILDING_DATABASE), [{status}, residentApartmentRel?.apartment_id])
-    //   Log.info(`[Servv | OrganisationID:${orgID}] | editResidentController | Resident status updated successfully`)
+    //   Log.info(`[${domain} | OrganisationID:${orgID}] | editResidentController | Resident status updated successfully`)
     //   return sendHTTPResponse.success(response, 'Resident status updated successfully')
     // }
 
@@ -162,7 +205,6 @@ exports.editResidentController = async (request, response) => {
 
       if (status === 'delete') {
         const residentApartmentRel = residentOwnedApartmentRelDetails.find((rel) => rel.apartment_id === item.apartmentID)
-        console.log({ deleteDetails: residentApartmentRel })
         if (residentApartmentRel) {
           Log.info(`[${domain} | OrganisationID:${orgID}] | editResidentController | Deleting resident from apartment  | ResidentID: ${residentID} | ApartmentID: ${item.apartmentID}`)
           await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.deleteApartmentRelByResidentID(CONSTANTS.BUILDING_DATABASE), [residentID, item.apartmentID])
@@ -185,12 +227,12 @@ exports.editResidentController = async (request, response) => {
           apartment_id: apartmentID,
           created_by: userID,
         }
-        Log.info(`[Servv | OrganisationID:${orgID}] | editResidentController | Adding resident in apartment | ResidentID: ${residentID} | ApartmentID: ${apartmentID}`)
+        Log.info(`[${domain} | OrganisationID:${orgID}] | editResidentController | Adding resident in apartment | ResidentID: ${residentID} | ApartmentID: ${apartmentID}`)
         await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartmentResidentRel(CONSTANTS.BUILDING_DATABASE), [residentApartmentRel])
       } else if (status === 'update') {
         const residentApartmentRel = residentOwnedApartmentRelDetails.find((rel) => rel.apartment_id === item.apartmentID)
         if (residentApartmentRel) {
-          Log.info(`[Servv | OrganisationID:${orgID}] | editResidentController | Updating resident in apartment | ResidentID: ${residentID} | ApartmentID: ${residentApartmentRel?.apartment_id} | apartmentData: ${JSON.stringify(apartmentData)}`)
+          Log.info(`[${domain} | OrganisationID:${orgID}] | editResidentController | Updating resident in apartment | ResidentID: ${residentID} | ApartmentID: ${residentApartmentRel?.apartment_id} | apartmentData: ${JSON.stringify(apartmentData)}`)
           await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateApartmentDetails(CONSTANTS.BUILDING_DATABASE), [apartmentData, residentApartmentRel?.apartment_id])
         }
       }
@@ -205,7 +247,7 @@ exports.editResidentController = async (request, response) => {
     await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentDetails(CONSTANTS.BUILDING_DATABASE), [newResidentRecord, residentID])
     return sendHTTPResponse.success(response, 'Resident updated successfully')
   } catch (error) {
-    Log.error(`[Servv | OrganisationID:${orgID}] | editResidentController | OrgainsationRelID:${residentID} | Error in updating resident list | Error: ${error.message}`)
+    Log.error(`[${domain} | OrganisationID:${orgID}] | editResidentController | OrgainsationRelID:${residentID} | Error in updating resident list | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on updating resident', error.message)
   }
 }
