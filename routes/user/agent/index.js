@@ -8,6 +8,7 @@ router.get('/', controller.getAgentController)
 router.post('/', validateRequest(addAgentSchema), controller.addAgentController)
 router.patch('/:id', validateRequest(editAgentSchema) , controller.editAgentController)
 router.get('/service/:serviceID', controller.getAgentsByServiceController)
+router.get('/:id/statistics', controller.activeWorkLoadAndSiteVisitController)
 
 
 module.exports = router

@@ -1,3 +1,5 @@
+const { ISSUE_SUB_STATUS_NUM } = require("../../../lib/constants");
+
 module.exports = {
   getAgentIdentityByPhNum(database){
     return `SELECT * FROM ${database}.agent_identity where ph_num = ?`
@@ -40,7 +42,13 @@ module.exports = {
   },
   deleteAgentServiceRelByAgentIDAndServiceIDs(database) {
     return `DELETE FROM ${database}.agent_service_rel WHERE agent_id = ? AND service_id in (?)`;
-  }
+  },
+  getActiveSiteVisitByAgentID(database) {
+    return `SELECT * FROM ${database}.issue WHERE agent_id = ? AND status = ${ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED}`;
+  },
+  getActiveWorkLoadByAgentID(database) {
+    return `SELECT * FROM ${database}.issue WHERE agent_id = ? AND status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}`;
+  },
 };
 
 

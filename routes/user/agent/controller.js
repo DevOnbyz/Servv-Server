@@ -169,3 +169,22 @@ catch (error) {
     return sendHTTPResponse.error(response, 'Error on editing admin', error)
   }
 }
+
+exports.activeWorkLoadAndSiteVisitController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const agentID = request.params.id
+  try {
+    if (!parseInt(agentID)) {
+      return sendHTTPResponse.error(response, 'Invalid agent ID', null, 400)
+    }
+    
+    const activeSiteVisit = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByAgentID(CONSTANTS.BUILDING_DATABASE), [agentID])
+    const activeWorkLoad = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveWorkLoadByAgentID(CONSTANTS.BUILDING_DATABASE), [agentID])
+
+    return sendHTTPResponse.success(response, 'Agent statistics fetched successfully.', { activeSiteVisit, activeWorkLoad })
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | activeWorkLoadController | Error in fetching active work load`)
+    return sendHTTPResponse.error(response, 'Error on fetching active work load', error)
+  }
+}
