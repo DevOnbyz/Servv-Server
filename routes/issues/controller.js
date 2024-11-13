@@ -21,7 +21,7 @@ exports.getIssuesController = async (request, response) => {
       issue.issuesEvents = issuesEvents
     }
     Log.info(`[${domain} | OrganisationID:${orgID}] | getIssuesController | Issues fetched successfully`)
-    return sendHTTPResponse.success(response, issues)
+    return sendHTTPResponse.success(response, 'Issues fetched successfully', issues)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | getIssuesController | Error in fetching issues | Error: ${error.message}`)
     return sendHTTPResponse.error(response, error.message, null, 400)
@@ -111,7 +111,7 @@ exports.addIssueController = async (request, response) => {
     const issueLogData = {
       issue_id : insertID,
       event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.CREATED,
-      status : CONSTANTS.ISSUE_SUB_STATUS_NUM.CREATED,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.CREATED,
       description : '',
       creator_id : request.userID,
       creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
@@ -154,7 +154,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
     const issueLogData = {
       issue_id : issueID,
       event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.AGENT_ASSIGNED,
-      status : CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED,
       entity_id: entityID,
       description : notes,
       creator_id : request.userID,
@@ -167,5 +167,40 @@ exports.scheduleVisitIssueController = async (request, response) => {
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | scheduleVisitIssueController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while scheduling issue visit', error.message)
+  }
+}
+
+exports.getSiteVisitUnderIssueController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const siteVisit = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getSiteVisitUnderIssue(CONSTANTS.BUILDING_DATABASE), [issueID])
+    Log.info(`[${domain} | OrganisationID:${orgID}] | getSiteVisitUnderIssueController | Site visit fetched successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Site visit fetched successfully', siteVisit)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getSiteVisitUnderIssueController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while fetching site visit', error.message)
+  }
+}
+exports.reAssignSiteVisitController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  const agentID = request.body.agentID
+  try {
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      agent_id: agentID,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED
+    }
+
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentIDInAgentAssignmentofActiveIssue(CONSTANTS.BUILDING_DATABASE), [ agentID, issueID ])
+    Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | Issue re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
+    return sendHTTPResponse.success(response, 'Issue re-assigned successfully')
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while re-assigning issue', error.message)
   }
 }
