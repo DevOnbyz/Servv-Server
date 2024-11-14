@@ -32,4 +32,10 @@ const scheduleSiteVisitSchema = Joi.object({
   })
 })
 
-module.exports = { addIssueSchema, scheduleSiteVisitSchema }
+const reAssignAgentSchema = Joi.object({
+  agentID: Joi.number().required().messages({
+    'string.empty': 'agentID is required',
+  })
+})
+
+module.exports = { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema }
