@@ -41,5 +41,6 @@ router.post('/:issueID/schedule-visit', validateRequest(scheduleSiteVisitSchema)
 router.patch('/:issueID/site-visit/re-assign',validateRequest(reAssignAgentSchema), controller.reAssignSiteVisitController)
 
 router.get('/:issueID/site-visit', controller.getSiteVisitUnderIssueController)
+router.post('/:issueID/work-order', validateRequest(scheduleSiteVisitSchema), controller.workOrderIssueController)
 
 module.exports = router

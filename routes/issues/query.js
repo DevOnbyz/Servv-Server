@@ -92,6 +92,9 @@ module.exports = {
   },
   updateAgentIDInAgentAssignmentofActiveIssue(database) {
     return `UPDATE ${database}.agent_assignment SET agent_id = ? WHERE issue_id = ? AND status = ${AGENT_ASSIGNMENT_STATUS.PENDING}`;
+  },
+  getIssuseByID(database) {
+    return `SELECT * FROM ${database}.issue where id = ?`;
   }
 };
 

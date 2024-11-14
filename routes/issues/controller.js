@@ -170,6 +170,55 @@ exports.scheduleVisitIssueController = async (request, response) => {
   }
 }
 
+
+exports.workOrderIssueController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const { agentID, notes, scheduleTime } = request.body
+    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.COMPLETED]
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for work order')
+
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      agent_id: agentID,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
+
+    const agentAssignmentData = {
+      issue_id: issueID,
+      agent_id: agentID,
+      status: CONSTANTS.AGENT_ASSIGNMENT_STATUS.PENDING,
+      assigned_by : request.userID,
+      visit_scheduled_time : scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null,
+      otp_sent_time: null,
+      otp_code : generateOTP(),
+      notes
+    }
+    const entityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAgentAssignment(CONSTANTS.BUILDING_DATABASE), [ agentAssignmentData, issueID ]))?.insertId
+
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.WORK_ASSIGNED,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED,
+      entity_id: entityID,
+      description : notes,
+      creator_id : request.userID,
+      creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+    Log.info(`[${domain} | OrganisationID:${orgID}] | workOrderIssueController | Work order added successfully | IssueID: ${issueID} | LogID: ${logID}`)
+    return sendHTTPResponse.success(response, 'Work order added successfully', {entityID, logID})
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | workOrderIssueController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while adding work order', error.message)
+  }
+}
+
 exports.getSiteVisitUnderIssueController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
