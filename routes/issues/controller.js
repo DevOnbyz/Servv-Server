@@ -233,6 +233,21 @@ exports.getSiteVisitUnderIssueController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while fetching site visit', error.message)
   }
 }
+
+exports.getWorkOrderUnderIssueController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const siteVisit = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getWorkOrderUnderIssue(CONSTANTS.BUILDING_DATABASE), [issueID])
+    Log.info(`[${domain} | OrganisationID:${orgID}] | getWorkOrderUnderIssueController | Work order fetched successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Work order fetched successfully', siteVisit)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getWorkOrderUnderIssueController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while fetching work order', error.message)
+  }
+}
+
 exports.reAssignSiteVisitController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain

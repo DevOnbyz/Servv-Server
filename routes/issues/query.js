@@ -90,6 +90,46 @@ module.exports = {
     ORDER BY 
         I.created_at DESC;`
   },
+  getWorkOrderUnderIssue(database) {
+    return `SELECT 
+        IE.issue_id, 
+        IE.event_type, 
+        CONCAT(A.firstname, ' ', A.lastname) AS assignee, 
+        I.due_date,
+        CASE 
+            WHEN I.due_date < CURDATE() THEN DATEDIFF(CURDATE(), I.due_date)
+            ELSE 0
+        END AS over_due_date,
+        (
+            SELECT AA.assigned_time 
+            FROM ${database}.agent_assignment AA 
+            WHERE AA.agent_id = A.id 
+            LIMIT 1
+        ) AS assigned_time,
+        (
+            SELECT AA.agent_inferences 
+            FROM ${database}.agent_assignment AA 
+            WHERE AA.agent_id = A.id 
+            LIMIT 1
+        ) AS agent_inferences,
+        (
+            SELECT AA.agent_uploads 
+            FROM ${database}.agent_assignment AA 
+            WHERE AA.agent_id = A.id 
+            LIMIT 1
+        ) AS agent_uploads
+    FROM 
+        ${database}.issue_event IE
+    LEFT JOIN 
+        ${database}.issue I ON I.id = IE.issue_id
+    LEFT JOIN 
+        ${database}.agent A ON A.id = I.agent_id
+    WHERE 
+        IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.RE_WORK_REQUIRED}) 
+        AND I.id = ? 
+    ORDER BY 
+        I.created_at DESC;`
+  },
   updateAgentIDInAgentAssignmentofActiveIssue(database) {
     return `UPDATE ${database}.agent_assignment SET agent_id = ? WHERE issue_id = ? AND status = ${AGENT_ASSIGNMENT_STATUS.PENDING}`;
   },
