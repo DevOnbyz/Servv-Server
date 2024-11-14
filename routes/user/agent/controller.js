@@ -35,8 +35,8 @@ exports.getAgentsByServiceController = async (request, response) => {
 
     const agentList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAgentsByAgentIDandOrg(CONSTANTS.BUILDING_DATABASE), [agentIDUnderService, orgID])
     for (const agent of agentList) {
-      agent.activeSiteVisit = 0
-      agent.activeWorkLoad = 0
+      agent.activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitCountByAgentID(CONSTANTS.BUILDING_DATABASE), [agent.id]))?.activeSiteVisit ?? 0
+      agent.activeWorkLoad = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveWorkLoadByCountAgentID(CONSTANTS.BUILDING_DATABASE), [agent.id]))?.activeWorkLoad ?? 0
     }
     return sendHTTPResponse.success(response, 'Fetched agent details under service successfully', agentList)
   } catch (error) {
