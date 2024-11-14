@@ -311,7 +311,7 @@ CREATE TABLE `issue_event` (
     `creator_type` TINYINT,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    KEY `status` (`status`),
+    KEY `⁠sub_status ⁠` (`⁠sub_status ⁠`),
     CONSTRAINT `fk_issue_event_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE
 );
 
