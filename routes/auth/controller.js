@@ -8,9 +8,16 @@ const _ = require('lodash')
 const runQueryOne = require('../../db/runQueryOne')
 const bcrypt = require('bcrypt')
 const { jwtDecode } = require('../../lib/jwtFn')
+const admin = require('firebase-admin')
+
+const serviceAccount = require('../../firebase/adminConfig.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
 exports.loginController = async (request, response) => {
-  const {username, password, userType} = request.body
+  const {username, password, userType, token} = request.body
   try{
 
     const allowedUserTypes = [CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN, CONSTANTS.SERVV_USER_TYPE_STRING.AGENT, CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER]
@@ -18,7 +25,27 @@ exports.loginController = async (request, response) => {
     if(!_.includes(allowedUserTypes, userType))
       return sendHTTPResponse.error(response, 'Invalid user type', null, 400)
 
+    if(userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER){
+
+      const decodedToken = await admin.auth().verifyIdToken(token)
+      const phNum = decodedToken.phone_number
+      const customerData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getCustomerData(CONSTANTS.BUILDING_DATABASE), [phNum])
+
+      if(_.isEmpty(customerData))
+        return sendHTTPResponse.error(response, 'Invalid phone number', null, 400)
+
+      const {error, data} = await Fn.generateCustomerToken(customerData)
+      if(error)
+        return sendHTTPResponse.error(response, 'Error in generating admin token', null, 500)
+
+      return response.json({ accessToken: data.accessToken, refreshToken: data.refreshToken }) 
+    }
+
     if(userType == CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN){
+
+      if(_.isEmpty(username) || _.isEmpty(password))
+        return sendHTTPResponse.error(response, 'Invalid credentials', null, 400)
+
       const adminData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAdminData(CONSTANTS.BUILDING_DATABASE), [username])
 
       if(_.isEmpty(adminData))
@@ -52,7 +79,7 @@ exports.loginController = async (request, response) => {
 
   }catch(error){
     Log.error(`[Servv] | loginController | Error in login`)
-    sendHTTPResponse.error(response, 'Error in login', error)
+    sendHTTPResponse.error(response, 'Error in login', error.message)
   }
 }
 

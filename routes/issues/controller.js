@@ -62,6 +62,7 @@ exports.getIssuesUnderResidentController = async (request, response) => {
 exports.addIssueController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
+  const userType = request.userType
   try {
     const { projectID, residentID, apartmentID, serviceID, subServiceID } = request.body
 
@@ -96,7 +97,7 @@ exports.addIssueController = async (request, response) => {
       description: request.body.description ?? null,
       agent_id: null,
       creator_id: request.userID,
-      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      creator_type: userType === CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN ? CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN : CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER,
       service_type: serviceID,
       service_subtype: subServiceID,
       issue_type: '',
