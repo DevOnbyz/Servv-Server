@@ -152,6 +152,12 @@ module.exports = {
   },
   addEstimate(database) {
     return `INSERT INTO ${database}.estimate SET ?`;
+  },
+  getActiveSiteVisitByIssueID(database) {
+    return `SELECT * FROM ${database}.agent_assignment where issue_id = ? AND status = ${AGENT_ASSIGNMENT_STATUS.PENDING} LIMIT 1`;
+  },
+  updateAgentAssignmentByID(database) {
+    return `UPDATE ${database}.agent_assignment SET ? WHERE id = ?`;
   }
 };
 

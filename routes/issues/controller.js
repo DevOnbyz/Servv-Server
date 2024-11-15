@@ -10,6 +10,7 @@ const { v4: uuidv4 } = require('uuid')
 const { addIssueEvent } = require('../../db/query')
 const { generateOTP } = require('../../lib/function')
 const moment = require('moment')
+const runQueryOne = require('../../db/runQueryOne')
 
 exports.getIssuesController = async (request, response) => {
   const orgID = request.orgID
@@ -17,6 +18,7 @@ exports.getIssuesController = async (request, response) => {
   try {
     const issues = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssues(CONSTANTS.BUILDING_DATABASE),[orgID])
     for (const issue of issues) {
+      issue.img_src = issue.img_src?.split(',')
       const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE),[issue.id])
       issue.issuesEvents = issuesEvents
     }
@@ -62,6 +64,7 @@ exports.getIssuesUnderResidentController = async (request, response) => {
   try {
     const issues = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesUnderResident(CONSTANTS.BUILDING_DATABASE, itemsPerPage, offset),[residentID, orgID])
     for (const issue of issues) {
+      issue.img_src = issue.img_src?.split(',')
       const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE),[issue.id])
       issue.issuesEvents = issuesEvents
     }
@@ -280,6 +283,46 @@ exports.reAssignSiteVisitController = async (request, response) => {
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while re-assigning issue', error.message)
+  }
+}
+
+exports.cancelSiteVisitController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
+    const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    console.log({activeSiteVisit})
+    if(_.isEmpty(activeSiteVisit)) return sendHTTPResponse.error(response, 'There is no active site visit for this issue', null, 400)
+
+    const activeSiteVisitID = activeSiteVisit.id
+    const updatedAgentAssignmentData = {
+      status: CONSTANTS.AGENT_ASSIGNMENT_STATUS.CANCELLED
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentAssignmentByID(CONSTANTS.BUILDING_DATABASE), [ updatedAgentAssignmentData, activeSiteVisitID ])
+
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.SITE_VISIT_CANCELLED,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED,
+      entity_id: activeSiteVisitID,
+      creator_id : request.userID,
+      creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
+    // await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.cancelSiteVisit(CONSTANTS.BUILDING_DATABASE), [issueID])
+    Log.info(`[${domain} | OrganisationID:${orgID}] | cancelSiteVisitController | Issue cancelled successfully | IssueID: ${issueID} | LogID: ${logID}`)
+    return sendHTTPResponse.success(response, 'Issue site visit cancelled successfully')
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | cancelSiteVisitController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while canceling issue site visit', error.message)
   }
 }
 

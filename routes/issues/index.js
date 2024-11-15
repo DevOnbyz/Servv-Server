@@ -39,8 +39,6 @@ const uploadImageAndFile = multer({
 
 
 
-
-
 router.get('/', controller.getIssuesController)
 router.get('/stat', controller.getIssueStatController)
 router.get('/resident/:id', controller.getIssuesUnderResidentController)
@@ -57,7 +55,7 @@ router.post('/',
 )
 router.post('/:issueID/schedule-visit', validateRequest(scheduleSiteVisitSchema), controller.scheduleVisitIssueController)
 router.patch('/:issueID/site-visit/re-assign',validateRequest(reAssignAgentSchema), controller.reAssignSiteVisitController)
-
+router.patch('/:issueID/site-visit/cancel', controller.cancelSiteVisitController)
 router.get('/:issueID/site-visit', controller.getSiteVisitUnderIssueController)
 router.get('/:issueID/work-order', controller.getWorkOrderUnderIssueController)
 router.post('/:issueID/work-order', validateRequest(scheduleSiteVisitSchema), controller.workOrderIssueController)
