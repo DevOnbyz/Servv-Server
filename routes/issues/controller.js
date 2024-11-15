@@ -27,6 +27,19 @@ exports.getIssuesController = async (request, response) => {
     return sendHTTPResponse.error(response, error.message, null, 400)
   }
 }
+
+exports.getIssueStatController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  try {
+    const issueStat = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueStat(CONSTANTS.BUILDING_DATABASE),[orgID])
+    Log.info(`[${domain} | OrganisationID:${orgID}] | getIssueStatController | Issue stat fetched successfully`)
+    return sendHTTPResponse.success(response, 'Issue stat fetched successfully', issueStat)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getIssueStatController | Error in fetching issue stat | Error: ${error.message}`)
+    return sendHTTPResponse.error(response, error.message, null, 400)
+  }
+}
 const saveFileToDisk = (file, destination) => {
   return new Promise((resolve, reject) => {
     const filePath = path.join(destination, file.fieldname + '-' + uuidv4() + '-' + file.originalname)
@@ -309,7 +322,7 @@ exports.addEstimateController = async (request, response) => {
 
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
-      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_GENERATED
     }
 
     const estimateData = {

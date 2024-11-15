@@ -23,6 +23,20 @@ module.exports = {
     where I.org_id = ?
     ORDER BY I.created_at DESC`;
   },
+  getIssueStat(database) {
+    return `SELECT 
+             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 1 END) AS estimateApproved,
+             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} THEN 1 END) AS estimateRejected,
+             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED} THEN 1 END) AS invoiceGenerated,
+             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN 1 END) AS siteVisitCompleted,
+             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.REVISIT_REQUIRED} THEN 1 END) AS revisitRequired,
+             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.RE_WORK_REQUIRED} THEN 1 END) AS reWorkRequired,
+             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_GENERATED} THEN 1 END) AS estimateGenerated,
+             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 1 END) AS workCompleted,
+             COUNT(CASE WHEN due_date = CURDATE() THEN 1 END) AS dueToday 
+             FROM ${database}.issue
+             `
+  },
   getIssuesEvent(database) {
     return `SELECT * FROM ${database}.issue_event where issue_id = ? ORDER BY created_at DESC`;
   },

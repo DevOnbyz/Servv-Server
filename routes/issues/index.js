@@ -42,6 +42,7 @@ const uploadImageAndFile = multer({
 
 
 router.get('/', controller.getIssuesController)
+router.get('/stat', controller.getIssueStatController)
 router.get('/resident/:id', controller.getIssuesUnderResidentController)
 
 router.post('/', 
