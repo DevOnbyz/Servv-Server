@@ -35,7 +35,12 @@ const scheduleSiteVisitSchema = Joi.object({
 const reAssignAgentSchema = Joi.object({
   agentID: Joi.number().required().messages({
     'string.empty': 'agentID is required',
-  })
+  }),
+  modifiedVisit: Joi.boolean().required().messages({
+    'string.empty': 'modifiedVisit is required',
+  }),
+  modifiedDate: Joi.string().optional().allow(null),
+  modifiedNote: Joi.string().optional().allow(null),
 })
 
 const addEstimateSchema = Joi.object({

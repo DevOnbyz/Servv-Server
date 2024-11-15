@@ -276,6 +276,9 @@ exports.reAssignSiteVisitController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   const agentID = request.body.agentID
+  const modifiedVisit = request.body.modifiedVisit
+  const modifiedNote = request.body.modifiedNote
+  const modifiedDate = request.body.modifiedDate
   try {
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
@@ -283,8 +286,16 @@ exports.reAssignSiteVisitController = async (request, response) => {
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED
     }
 
+    const newAgentAssignmentData = {
+      agent_id: agentID,
+      otp_code: generateOTP(),
+    }
+    if(modifiedVisit){
+      newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
+      newAgentAssignmentData.notes = modifiedNote
+    }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
-    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentIDInAgentAssignmentofActiveIssue(CONSTANTS.BUILDING_DATABASE), [ agentID, issueID ])
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentIDInAgentAssignmentofActiveIssue(CONSTANTS.BUILDING_DATABASE), [ newAgentAssignmentData, issueID ])
     Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | Issue re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
     return sendHTTPResponse.success(response, 'Issue re-assigned successfully')
   } catch (error) {
