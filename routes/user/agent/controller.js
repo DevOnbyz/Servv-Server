@@ -35,8 +35,8 @@ exports.getAgentsByServiceController = async (request, response) => {
 
     const agentList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAgentsByAgentIDandOrg(CONSTANTS.BUILDING_DATABASE), [agentIDUnderService, orgID])
     for (const agent of agentList) {
-      agent.activeSiteVisit = 0
-      agent.activeWorkLoad = 0
+      agent.activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitCountByAgentID(CONSTANTS.BUILDING_DATABASE), [agent.id]))?.activeSiteVisit ?? 0
+      agent.activeWorkLoad = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveWorkLoadByCountAgentID(CONSTANTS.BUILDING_DATABASE), [agent.id]))?.activeWorkLoad ?? 0
     }
     return sendHTTPResponse.success(response, 'Fetched agent details under service successfully', agentList)
   } catch (error) {
@@ -59,7 +59,7 @@ exports.addAgentController = async (request, response) => {
     const district = request.body.district ?? null
     const state = request.body.state ?? null
     const country = request.body.country ?? null
-    // return sendHTTPResponse.success(response, 'Admin added successfully')
+
     const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum])
     const agentIdentityID = _.isEmpty(phNumDetails) ? (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAgentIdentity(CONSTANTS.BUILDING_DATABASE), [{ ph_num: phNum, created_by: userID }]))?.insertId : phNumDetails[0]?.id
 
@@ -98,7 +98,7 @@ exports.addAgentController = async (request, response) => {
     console.log(error)
     if(error.code === 'ER_DUP_ENTRY') return sendHTTPResponse.error(response, 'Agent already exists', error.message)
 
-    Log.error(`[${domain} | OrganisationID:${orgID}] | addAdminController | Error in fetching agent list`)
+    Log.error(`[${domain} | OrganisationID:${orgID}] | addAgentController | Error in fetching agent list`)
     return sendHTTPResponse.error(response, 'Error on adding agent', error.message)
   }
 }
@@ -155,17 +155,17 @@ exports.editAgentController = async (request, response) => {
       const agentOrgDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [phNumDetails?.id, orgID])
       if (!_.isEmpty(agentOrgDetails) && agentOrgDetails?.identity_id !== agentEntityID) return sendHTTPResponse.error(response, 'Agent with same phone number already exists in this organisation', null, 400)
 
-    // if a agent having same phone number exists in another organisation then the admin can update the identity id
+    // if a agent having same phone number exists in another organisation then the agent can update the identity id
       const updatedAgentIdentityId = phNumDetails?.id
       await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [{...newAgentDetails, identity_id: updatedAgentIdentityId}, id])
     }else{
       const newAgentIdentityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAgentIdentity(CONSTANTS.BUILDING_DATABASE), [{ ph_num: phNum, created_by: userID }]))?.insertId
       await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [{...newAgentDetails, identity_id: newAgentIdentityID}, id])
       }
-    return sendHTTPResponse.success(response, 'Admin updated successfully')
+    return sendHTTPResponse.success(response, 'Agent updated successfully')
   }
 catch (error) {
-    Log.error(`[${domain} | OrganisationID:${orgID}] | editAgentController | Error in fetching admin list`)
+    Log.error(`[${domain} | OrganisationID:${orgID}] | editAgentController | Error in fetching agent list`)
     return sendHTTPResponse.error(response, 'Error on editing admin', error)
   }
 }

@@ -35,7 +35,37 @@ const scheduleSiteVisitSchema = Joi.object({
 const reAssignAgentSchema = Joi.object({
   agentID: Joi.number().required().messages({
     'string.empty': 'agentID is required',
-  })
+  }),
+  modifiedVisit: Joi.boolean().required().messages({
+    'string.empty': 'modifiedVisit is required',
+  }),
+  modifiedDate: Joi.string().optional().allow(null),
+  modifiedNote: Joi.string().optional().allow(null),
 })
 
-module.exports = { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema }
+const addEstimateSchema = Joi.object({
+  materialCharge: Joi.number().required().messages({
+    'string.empty': 'materialCharge is required',
+  }),
+  labourCharge: Joi.number().required().messages({
+    'string.empty': 'labourCharge is required',
+  }),
+  is18PercentGSTApplied: Joi.boolean().required().messages({
+    'string.empty': 'is18PercentGSTApplied is required',
+  }),
+  isInclusiveTax: Joi.boolean().required().messages({
+    'string.empty': 'isInclusiveTax is required',
+  }),
+  isExlusiveTax: Joi.boolean().required().messages({
+    'string.empty': 'isExlusiveTax is required',
+  }),
+  expiryDate: Joi.string().required().messages({
+    'string.empty': 'expiryDate is required',
+  }),
+  totalCharge: Joi.number().required().messages({
+    'string.empty': 'totalCharge is required',
+  }),
+  notes: Joi.string().optional().allow(null)
+})
+
+module.exports = { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, addEstimateSchema }

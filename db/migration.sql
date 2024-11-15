@@ -304,14 +304,14 @@ CREATE TABLE `issue_event` (
     `issue_id` INT,
     `event_type` VARCHAR(50) NOT NULL,
     `⁠sub_status ⁠` TINYINT DEFAULT NULL,
-    `entity_id` INT DEFAULT NULL,
+    `entity_id` INT DEFAULT NULL, -- Can be agent_assignment_id, estimate_id wrt to the substatus added
     `event_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `description` TEXT,
     `creator_id` INT,
     `creator_type` TINYINT,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    KEY `status` (`status`),
+    KEY `⁠sub_status ⁠` (`⁠sub_status ⁠`),
     CONSTRAINT `fk_issue_event_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE
 );
 
@@ -333,22 +333,25 @@ CREATE TABLE `agent_assignment` (
     CONSTRAINT `fk_agent_assignment_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE,
     CONSTRAINT `fk_agent_assignment_ibfk_2` FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE
 );
-
+DROP TABLE estimate;
 CREATE TABLE `estimate` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `issue_id` INT,
-    `agent_id` INT,
-    `estimated_amount` INT,
-    `estimate_created_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
-    `customer_decision` TINYINT DEFAULT 0,
-    `decision_time` DATETIME,
+    `issue_id` INT NOT NULL,
+    `material_charge` INT,
     `labour_charge` INT DEFAULT 0,
-    `material_charge` INT DEFAULT 0,
+    `status` TINYINT DEFAULT 0,
+    `expiry_date` DATETIME,
     `other_charge` INT DEFAULT 0,
+    `total_charge` INT NOT NULL,
+    `is_18_percent_gst_applied` TINYINT DEFAULT 0,
+    `is_inclusive_tax` TINYINT DEFAULT 0,
+    `is_exclusive_tax` TINYINT DEFAULT 0,
+    `estimate_created_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `notes` TEXT,
+    `src` TEXT,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_estimate_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE,
-    CONSTRAINT `fk_estimate_ibfk_2` FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE
+    CONSTRAINT `fk_estimate_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE
 );
 
 CREATE TABLE `announcement` (
