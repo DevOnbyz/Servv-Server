@@ -47,6 +47,9 @@ const addEstimateSchema = Joi.object({
   materialCharge: Joi.number().required().messages({
     'string.empty': 'materialCharge is required',
   }),
+  labourCharge: Joi.number().required().messages({
+    'string.empty': 'labourCharge is required',
+  }),
   is18PercentGSTApplied: Joi.boolean().required().messages({
     'string.empty': 'is18PercentGSTApplied is required',
   }),

@@ -169,6 +169,9 @@ module.exports = {
   cancelEstimateByIssueID(database) {
     return `UPDATE ${database}.estimate SET status = ${ESTIMATE_STATUS.CANCELLED} WHERE issue_id = ?`;
   },
+  getEstimateByIssueID(database) {
+    return `SELECT * FROM ${database}.estimate where issue_id = ?`;
+  }
 
 };
 

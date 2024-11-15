@@ -336,7 +336,7 @@ CREATE TABLE `agent_assignment` (
 
 CREATE TABLE `estimate` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `issue_id` INT,
+    `issue_id` INT NOT NULL,
     `material_charge` INT,
     `labour_charge` INT DEFAULT 0,
     `status` TINYINT DEFAULT 0,

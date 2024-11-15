@@ -349,10 +349,13 @@ exports.addEstimateController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, isExlusiveTax, expiryDate, notes} = request.body
+    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, isExlusiveTax, expiryDate, notes, labourCharge} = request.body
 
     if (_.isEmpty(materialCharge)) {
       return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
+    }
+    if (_.isEmpty(labourCharge)) {
+      return sendHTTPResponse.error(response, 'labourCharge is required', null, 400)
     }
   
     if (_.isEmpty(is18PercentGSTApplied)) {
@@ -370,6 +373,8 @@ exports.addEstimateController = async (request, response) => {
     if (_.isEmpty(expiryDate)) {
       return sendHTTPResponse.error(response, 'expiryDate is required', null, 400)
     }
+    const isEstimateAlreadyGenerated = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    if(!_.isEmpty(isEstimateAlreadyGenerated)) return sendHTTPResponse.error(response, 'Estimate already generated for this issue', null, 400)
 
     const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
@@ -388,6 +393,8 @@ exports.addEstimateController = async (request, response) => {
 
     const estimateData = {
       material_charge: materialCharge,
+      issue_id: issueID,
+      labour_charge: labourCharge,
       is_18_percent_gst_applied: !!is18PercentGSTApplied ? 1 : 0,
       is_inclusive_tax: !!isInclusiveTax ? 1 : 0,
       is_exclusive_tax: !!isExlusiveTax ? 1 : 0,  
