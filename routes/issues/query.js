@@ -1,4 +1,4 @@
-const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS } = require("../../lib/constants");
+const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, ESTIMATE_STATUS } = require("../../lib/constants");
 
 module.exports = {
   addIssue(database) {
@@ -159,7 +159,17 @@ module.exports = {
   },
   updateAgentAssignmentByID(database) {
     return `UPDATE ${database}.agent_assignment SET ? WHERE id = ?`;
-  }
+  },
+  closeIssueByID(database) {
+    return `UPDATE ${database}.issue SET status = ${ISSUE_STATUS.CLOSED} WHERE id = ?`;
+  },
+  hasPendingInvoice(database) {
+    return `SELECT * FROM ${database}.issue where id = ? AND sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED}`;
+  },
+  cancelEstimateByIssueID(database) {
+    return `UPDATE ${database}.estimate SET status = ${ESTIMATE_STATUS.CANCELLED} WHERE issue_id = ?`;
+  },
+
 };
 
 

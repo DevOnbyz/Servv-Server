@@ -254,6 +254,23 @@ exports.getWorkOrderUnderIssueController = async (request, response) => {
   }
 }
 
+exports.closeIssueController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const hasPendingInvoice = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.hasPendingInvoice(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(!_.isEmpty(hasPendingInvoice)) return sendHTTPResponse.error(response, 'Invoice is pending for this issue')
+    
+    await Fn.closeIssueQueries(issueID)
+    Log.info(`[${domain} | OrganisationID:${orgID}] | closeIssueController | Issue closed successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Issue closed successfully')
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | closeIssueController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while closing issue', error.message)
+  }
+}
+
 exports.reAssignSiteVisitController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
@@ -287,7 +304,7 @@ exports.cancelSiteVisitController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
     const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
-    console.log({activeSiteVisit})
+
     if(_.isEmpty(activeSiteVisit)) return sendHTTPResponse.error(response, 'There is no active site visit for this issue', null, 400)
 
     const activeSiteVisitID = activeSiteVisit.id

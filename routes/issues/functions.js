@@ -6,6 +6,7 @@ const fs = require('fs')
 const path = require('path')
 const { v4: uuidv4 } = require('uuid')
 const queryBuilder = require('./query')
+const CONSTANTS = require('../../lib/constants')
 
 exports.saveFileToDisk = (file, destination) => {
   return new Promise((resolve, reject) => {
@@ -48,3 +49,20 @@ exports.uploadImageAndFile = multer({
     cb(new Error('Only .pdf, .jpeg, .jpg, and .png files are allowed!'))
   },
 }).single('estimateFile')
+
+exports.closeIssueQueries = async (issueID) => {
+  // if a site visit is assigned to issue then make to cancelled OR if a workorder is assigned to issue then make to cancelled
+  const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+  if(!_.isEmpty(activeSiteVisit)) {
+    const activeSiteVisitID = activeSiteVisit.id
+    const updatedAgentAssignmentData = {
+      status: CONSTANTS.AGENT_ASSIGNMENT_STATUS.CANCELLED
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentAssignmentByID(CONSTANTS.BUILDING_DATABASE), [ updatedAgentAssignmentData, activeSiteVisitID ])
+  }
+
+  // if a estimate is assigned to issue then make to cancelled
+  await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.cancelEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
+  await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.closeIssueByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+
+}

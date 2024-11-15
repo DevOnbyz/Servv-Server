@@ -37,5 +37,6 @@ router.post('/:issueID/estimate',
     })
   }
 )
+router.patch('/:issueID/close', controller.closeIssueController)
 
 module.exports = router
