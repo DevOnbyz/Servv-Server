@@ -38,13 +38,13 @@ exports.uploadImageAndFile = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 2 * 1024 * 1024 }, // 2 MB file size limit
   fileFilter: (req, file, cb) => {
-    const filetypes = /pdf|jpeg|jpg|png/;
-    const mimetype = filetypes.test(file.mimetype);
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
+    const filetypes = /pdf|jpeg|jpg|png/
+    const mimetype = filetypes.test(file.mimetype)
+    const extname = filetypes.test(path.extname(file.originalname).toLowerCase())
 
     if (mimetype && extname) {
-      return cb(null, true);
+      return cb(null, true)
     }
-    cb(new Error('Only .pdf, .jpeg, .jpg, and .png files are allowed!'));
+    cb(new Error('Only .pdf, .jpeg, .jpg, and .png files are allowed!'))
   },
-}).single('estimateFile');
+}).single('estimateFile')
