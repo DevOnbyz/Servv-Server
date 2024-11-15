@@ -178,7 +178,7 @@ exports.workOrderIssueController = async (request, response) => {
   const issueID = request.params.issueID
   try {
     const { agentID, notes, scheduleTime } = request.body
-    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.COMPLETED]
+    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for work order')
 
@@ -267,5 +267,79 @@ exports.reAssignSiteVisitController = async (request, response) => {
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while re-assigning issue', error.message)
+  }
+}
+
+exports.addEstimateController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, isExlusiveTax, expiryDate, notes} = request.body
+
+    if (_.isEmpty(materialCharge)) {
+      return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
+    }
+  
+    if (_.isEmpty(is18PercentGSTApplied)) {
+      return sendHTTPResponse.error(response, 'is18PercentGSTApplied is required', null, 400)
+    }
+  
+    if (_.isEmpty(isInclusiveTax)) {
+      return sendHTTPResponse.error(response, 'isInclusiveTax is required', null, 400)
+    }
+
+    if (_.isEmpty(isExlusiveTax)) {
+      return sendHTTPResponse.error(response, 'isExlusiveTax is required', null, 400)
+    }
+  
+    if (_.isEmpty(expiryDate)) {
+      return sendHTTPResponse.error(response, 'expiryDate is required', null, 400)
+    }
+
+    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED]
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for work order')
+      
+    if (request.file) {
+      const destination = 'uploads/estimates/'
+      const savedFilePath = await saveFileToDisk(request.file, destination)
+      request.body.estimateSRC = savedFilePath
+    }
+
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED
+    }
+
+    const estimateData = {
+      material_charge: materialCharge,
+      is_18_percent_gst_applied: !!is18PercentGSTApplied ? 1 : 0,
+      is_inclusive_tax: !!isInclusiveTax ? 1 : 0,
+      is_exclusive_tax: !!isExlusiveTax ? 1 : 0,  
+      expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
+      notes: notes ?? null,
+      src: request.body.estimateSRC
+    }
+
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
+    const entityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addEstimate(CONSTANTS.BUILDING_DATABASE), [ estimateData, issueID ]))?.insertId
+
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_GENERATED,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_GENERATED,
+      entity_id: entityID,
+      description : notes,
+      creator_id : request.userID,
+      creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addEstimateController | Estimate added successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Estimate added successfully', {logID})
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | addEstimateController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while adding estimate', error.message)
   }
 }

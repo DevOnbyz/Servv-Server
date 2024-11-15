@@ -135,6 +135,9 @@ module.exports = {
   },
   getIssuseByID(database) {
     return `SELECT * FROM ${database}.issue where id = ?`;
+  },
+  addEstimate(database) {
+    return `INSERT INTO ${database}.estimate SET ?`;
   }
 };
 

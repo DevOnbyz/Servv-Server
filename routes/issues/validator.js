@@ -38,4 +38,23 @@ const reAssignAgentSchema = Joi.object({
   })
 })
 
-module.exports = { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema }
+const addEstimateSchema = Joi.object({
+  materialCharge: Joi.number().required().messages({
+    'string.empty': 'materialCharge is required',
+  }),
+  is18PercentGSTApplied: Joi.boolean().required().messages({
+    'string.empty': 'is18PercentGSTApplied is required',
+  }),
+  isInclusiveTax: Joi.boolean().required().messages({
+    'string.empty': 'isInclusiveTax is required',
+  }),
+  isExlusiveTax: Joi.boolean().required().messages({
+    'string.empty': 'isExlusiveTax is required',
+  }),
+  expiryDate: Joi.string().required().messages({
+    'string.empty': 'expiryDate is required',
+  }),
+  notes: Joi.string().optional().allow(null)
+})
+
+module.exports = { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, addEstimateSchema }
