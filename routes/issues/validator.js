@@ -62,6 +62,9 @@ const addEstimateSchema = Joi.object({
   expiryDate: Joi.string().required().messages({
     'string.empty': 'expiryDate is required',
   }),
+  totalCharge: Joi.number().required().messages({
+    'string.empty': 'totalCharge is required',
+  }),
   notes: Joi.string().optional().allow(null)
 })
 

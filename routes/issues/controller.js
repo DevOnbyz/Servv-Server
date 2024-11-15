@@ -349,7 +349,7 @@ exports.addEstimateController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, isExlusiveTax, expiryDate, notes, labourCharge} = request.body
+    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, isExlusiveTax, expiryDate, notes, labourCharge, totalCharge} = request.body
 
     if (_.isEmpty(materialCharge)) {
       return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
@@ -373,6 +373,9 @@ exports.addEstimateController = async (request, response) => {
     if (_.isEmpty(expiryDate)) {
       return sendHTTPResponse.error(response, 'expiryDate is required', null, 400)
     }
+    if (_.isEmpty(totalCharge)) {
+      return sendHTTPResponse.error(response, 'Total amount is required', null, 400)
+    }
     const isEstimateAlreadyGenerated = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
     if(!_.isEmpty(isEstimateAlreadyGenerated)) return sendHTTPResponse.error(response, 'Estimate already generated for this issue', null, 400)
 
@@ -394,6 +397,7 @@ exports.addEstimateController = async (request, response) => {
     const estimateData = {
       material_charge: materialCharge,
       issue_id: issueID,
+      total_charge: totalCharge,
       labour_charge: labourCharge,
       is_18_percent_gst_applied: !!is18PercentGSTApplied ? 1 : 0,
       is_inclusive_tax: !!isInclusiveTax ? 1 : 0,

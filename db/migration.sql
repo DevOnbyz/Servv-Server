@@ -333,7 +333,7 @@ CREATE TABLE `agent_assignment` (
     CONSTRAINT `fk_agent_assignment_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE,
     CONSTRAINT `fk_agent_assignment_ibfk_2` FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE
 );
-
+DROP TABLE estimate;
 CREATE TABLE `estimate` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `issue_id` INT NOT NULL,
@@ -342,6 +342,7 @@ CREATE TABLE `estimate` (
     `status` TINYINT DEFAULT 0,
     `expiry_date` DATETIME,
     `other_charge` INT DEFAULT 0,
+    `total_charge` INT NOT NULL,
     `is_18_percent_gst_applied` TINYINT DEFAULT 0,
     `is_inclusive_tax` TINYINT DEFAULT 0,
     `is_exclusive_tax` TINYINT DEFAULT 0,
