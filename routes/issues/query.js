@@ -107,7 +107,8 @@ module.exports = {
   getWorkOrderUnderIssue(database) {
     return `SELECT 
         IE.issue_id, 
-        IE.event_type, 
+        IE.event_type,
+        I.description,
         CONCAT(A.firstname, ' ', A.lastname) AS assignee, 
         I.due_date,
         CASE 
