@@ -11,6 +11,7 @@ const { addIssueEvent } = require('../../db/query')
 const { generateOTP } = require('../../lib/function')
 const moment = require('moment')
 const runQueryOne = require('../../db/runQueryOne')
+const Fn = require('./functions')
 
 exports.getIssuesController = async (request, response) => {
   const orgID = request.orgID
@@ -41,17 +42,6 @@ exports.getIssueStatController = async (request, response) => {
     Log.error(`[${domain} | OrganisationID:${orgID}] | getIssueStatController | Error in fetching issue stat | Error: ${error.message}`)
     return sendHTTPResponse.error(response, error.message, null, 400)
   }
-}
-const saveFileToDisk = (file, destination) => {
-  return new Promise((resolve, reject) => {
-    const filePath = path.join(destination, file.fieldname + '-' + uuidv4() + '-' + file.originalname)
-    fs.writeFile(filePath, file.buffer, (err) => {
-      if (err) {
-        return reject(err)
-      }
-      resolve(filePath)
-    })
-  })
 }
 
 exports.getIssuesUnderResidentController = async (request, response) => {
@@ -102,7 +92,7 @@ exports.addIssueController = async (request, response) => {
       const destination = 'uploads/issues/'
       request.body.imgSrcPaths = []
       for (const file of request.files) {
-        const savedFilePath = await saveFileToDisk(file, destination)
+        const savedFilePath = await Fn.saveFileToDisk(file, destination)
         request.body.imgSrcPaths.push(savedFilePath)
       }
     }
@@ -359,7 +349,7 @@ exports.addEstimateController = async (request, response) => {
       
     if (request.file) {
       const destination = 'uploads/estimates/'
-      const savedFilePath = await saveFileToDisk(request.file, destination)
+      const savedFilePath = await Fn.saveFileToDisk(request.file, destination)
       request.body.estimateSRC = savedFilePath
     }
 
