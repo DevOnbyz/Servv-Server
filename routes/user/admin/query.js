@@ -1,6 +1,6 @@
 module.exports = {
   getAllAdminsUnderOrg(database) {
-    return `SELECT id, firstname, lastname, email, ph_num, username, org_id, project_id, status, reports_to, role_id, created_at FROM ${database}.admin WHERE org_id = ?`;
+    return `SELECT id, firstname, lastname, email, ph_num, username, org_id, project_id, status, reports_to, role_id, created_at FROM ${database}.admin WHERE org_id = ? order by id desc`;
   },
   addAdmin(database) {
     return `INSERT INTO ${database}.admin SET ?`
