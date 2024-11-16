@@ -571,3 +571,18 @@ exports.addInvoiceController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while adding invoice', error.message)
   }
 }
+
+exports.getIssueHistoryController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const issueHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueHistory(CONSTANTS.BUILDING_DATABASE), [issueID])
+    console.log(issueHistory)
+    Log.info(`[${domain} | OrganisationID:${orgID}] | getIssueHistoryController | Issue history fetched successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Issue history fetched successfully', issueHistory)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getIssueHistoryController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while fetching issue history', error.message)
+  }
+}

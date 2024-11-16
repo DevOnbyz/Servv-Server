@@ -52,5 +52,6 @@ router.post('/:issueID/invoice',
     })
   }
 )
+router.get('/:issueID/history', controller.getIssueHistoryController)
 
 module.exports = router

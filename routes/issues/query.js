@@ -1,4 +1,4 @@
-const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, ESTIMATE_STATUS } = require("../../lib/constants");
+const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, ESTIMATE_STATUS, SERVV_USER_TYPE_NUM } = require("../../lib/constants");
 
 module.exports = {
   addIssue(database) {
@@ -198,6 +198,34 @@ module.exports = {
   },
   addInvoice(database) {
     return `INSERT INTO ${database}.invoice SET ?`;
+  },
+  getIssueHistory(database) {
+    return `SELECT id, issue_id, event_type, created_at,
+    CASE
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.CREATED} THEN 'Created'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED} THEN 'Agent Assigned'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN 'Site Visit Completed'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.REVISIT_REQUIRED} THEN 'Revisit Required'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_GENERATED} THEN 'Estimate Generated'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 'Estimate Approved'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} THEN 'Estimate Rejected'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 'Estimate Approved'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN 'Work Assigned'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 'Work Completed'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.RE_WORK_REQUIRED} THEN 'Re Work Required'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED} THEN 'Invoice Generated'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.PAID} THEN 'Paid'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ON_HOLD} THEN 'On Hold'
+    ELSE 'created' END as event_type,
+    CASE
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = creator_id LIMIT 1)
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = creator_id LIMIT 1)
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.resident WHERE id = creator_id LIMIT 1) END as name,
+    CASE
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN 'Admin'
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN 'Agent'
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN 'Resident' END as userType
+    FROM ${database}.issue_event where issue_id = ? ORDER BY created_at ASC`;
   }
 
 };
