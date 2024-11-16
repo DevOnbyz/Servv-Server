@@ -185,6 +185,20 @@ module.exports = {
   },
   getActiveEstimateByIssueID(database) {
     return `SELECT * FROM ${database}.estimate where issue_id = ? AND status = ${ESTIMATE_STATUS.CREATED} LIMIT 1`;
+  },
+  getInvoice(database) {
+    return `SELECT id, issue_id, material_charge, labour_charge, total_charge, is_18_percent_gst_applied, is_inclusive_tax, is_exclusive_tax, expiry_date, notes, created_at, src, 
+    CASE
+    WHEN status = ${ESTIMATE_STATUS.APPROVED} THEN 'approved' 
+    WHEN status = ${ESTIMATE_STATUS.REJECTED} THEN 'rejected' 
+    ELSE 'pending' END as status 
+    FROM ${database}.invoice where issue_id = ? order by created_at desc`;
+  },
+  getInvoiceByIssueID(database) {
+    return `SELECT * FROM ${database}.invoice where issue_id = ?`;
+  },
+  addInvoice(database) {
+    return `INSERT INTO ${database}.invoice SET ?`;
   }
 
 };

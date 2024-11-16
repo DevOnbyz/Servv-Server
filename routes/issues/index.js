@@ -33,12 +33,24 @@ router.post('/:issueID/estimate',
   (req, res, next) => {
     Fn.uploadImageAndFile(req, res, (err) => {
       if (err instanceof multer.MulterError || err) {
-        return sendHTTPResponse.error(res, 'Error while uploading image', err.message)
+        return sendHTTPResponse.error(res, 'Error while uploading file', err.message)
       }
       controller.addEstimateController(req, res, next)
     })
   }
 )
 router.patch('/:issueID/close', controller.closeIssueController)
+
+router.get('/:issueID/invoice', controller.getInvoiceController)
+router.post('/:issueID/invoice', 
+  (req, res, next) => {
+    Fn.uploadImageAndFile(req, res, (err) => {
+      if (err instanceof multer.MulterError || err) {
+        return sendHTTPResponse.error(res, 'Error while uploading file', err.message)
+      }
+      controller.addInvoiceController(req, res, next)
+    })
+  }
+)
 
 module.exports = router

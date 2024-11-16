@@ -333,7 +333,6 @@ CREATE TABLE `agent_assignment` (
     CONSTRAINT `fk_agent_assignment_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE,
     CONSTRAINT `fk_agent_assignment_ibfk_2` FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE
 );
-DROP TABLE estimate;
 CREATE TABLE `estimate` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `issue_id` INT NOT NULL,
@@ -352,6 +351,25 @@ CREATE TABLE `estimate` (
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_estimate_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE
+);
+CREATE TABLE `invoice` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `issue_id` INT NOT NULL,
+    `material_charge` INT,
+    `labour_charge` INT DEFAULT 0,
+    `status` TINYINT DEFAULT 0,
+    `expiry_date` DATETIME,
+    `other_charge` INT DEFAULT 0,
+    `total_charge` INT NOT NULL,
+    `is_18_percent_gst_applied` TINYINT DEFAULT 0,
+    `is_inclusive_tax` TINYINT DEFAULT 0,
+    `is_exclusive_tax` TINYINT DEFAULT 0,
+    `estimate_created_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `notes` TEXT,
+    `src` TEXT,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_invoice_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE
 );
 
 CREATE TABLE `announcement` (

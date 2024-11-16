@@ -479,3 +479,96 @@ exports.approveEstimateController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while approving estimate', error.message)
   }
 }
+
+
+exports.getInvoiceController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getInvoice(CONSTANTS.BUILDING_DATABASE), [issueID])
+    Log.info(`[${domain} | OrganisationID:${orgID}] | getInvoiceController | Invoice fetched successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Invoice fetched successfully', estimate)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getInvoiceController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while fetching invoice', error.message)
+  }
+}
+
+exports.addInvoiceController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, expiryDate, notes, labourCharge, totalCharge} = request.body
+
+    if (_.isEmpty(materialCharge)) {
+      return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
+    }
+    if (_.isEmpty(labourCharge)) {
+      return sendHTTPResponse.error(response, 'labourCharge is required', null, 400)
+    }
+  
+    if (_.isEmpty(is18PercentGSTApplied)) {
+      return sendHTTPResponse.error(response, 'is18PercentGSTApplied is required', null, 400)
+    }
+  
+    if (_.isEmpty(isInclusiveTax)) {
+      return sendHTTPResponse.error(response, 'isInclusiveTax is required', null, 400)
+    }
+
+    if (_.isEmpty(totalCharge)) {
+      return sendHTTPResponse.error(response, 'Total amount is required', null, 400)
+    }
+
+    const isInvoiceAlreadyGenerated = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getInvoiceByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    if(!_.isEmpty(isInvoiceAlreadyGenerated)) return sendHTTPResponse.error(response, 'Invoice already generated for this issue', null, 400)
+
+    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED]
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for invoice')
+      
+    if (request.file) {
+      const destination = 'uploads/invoices/'
+      const savedFilePath = await Fn.saveFileToDisk(request.file, destination)
+      request.body.estimateSRC = savedFilePath
+    }
+
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED
+    }
+
+    const invoiceData = {
+      material_charge: materialCharge,
+      issue_id: issueID,
+      total_charge: totalCharge,
+      labour_charge: labourCharge,
+      is_18_percent_gst_applied: !!is18PercentGSTApplied ? 1 : 0,
+      is_inclusive_tax: !!isInclusiveTax ? 1 : 0,
+      expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
+      notes: notes ?? null,
+      src: request.body.invoiceSRC
+    }
+
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
+    const entityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addInvoice(CONSTANTS.BUILDING_DATABASE), [ invoiceData, issueID ]))?.insertId
+
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_GENERATED,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED,
+      entity_id: entityID,
+      description : notes,
+      creator_id : request.userID,
+      creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addInvoiceController | Invoice added successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Invoice added successfully', {logID})
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | addInvoiceController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while adding invoice', error.message)
+  }
+}
