@@ -18,7 +18,6 @@ const addIssueSchema = Joi.object({
   }),
   description: Joi.string().optional().allow(null),
   preferred_time: Joi.string().optional().allow(null),
-  preferred_date: Joi.string().optional().allow(null),
   img_src: Joi.array().optional().allow(null),
 })
 

@@ -109,7 +109,6 @@ exports.addIssueController = async (request, response) => {
       issue_type: '',
       status: CONSTANTS.ISSUE_STATUS.OPEN,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.CREATED,
-      preferred_date: _.isEmpty(request.body.preferredDate) ? null : request.body.preferredDate,
       preferred_time: _.isEmpty(request.body.preferredTime) ? null : request.body.preferredTime,
       due_date: null,
       img_src: _.isEmpty(request.body.imgSrcPaths) ? null : (request.body.imgSrcPaths)?.join(','),
