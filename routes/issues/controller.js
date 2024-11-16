@@ -343,7 +343,19 @@ exports.cancelSiteVisitController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while canceling issue site visit', error.message)
   }
 }
-
+exports.getEstimatesController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimates(CONSTANTS.BUILDING_DATABASE), [issueID])
+    Log.info(`[${domain} | OrganisationID:${orgID}] | getEstimatesController | Estimates fetched successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Estimate fetched successfully', estimate)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getEstimatesController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while fetching estimates', error.message)
+  }
+}
 exports.addEstimateController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain

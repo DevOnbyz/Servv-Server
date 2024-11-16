@@ -171,6 +171,14 @@ module.exports = {
   },
   getEstimateByIssueID(database) {
     return `SELECT * FROM ${database}.estimate where issue_id = ?`;
+  },
+  getEstimates(database) {
+    return `SELECT id, issue_id, material_charge, labour_charge, total_charge, is_18_percent_gst_applied, is_inclusive_tax, is_exclusive_tax, expiry_date, notes, created_at, src, 
+    CASE
+    WHEN status = ${ESTIMATE_STATUS.APPROVED} THEN 'approved' 
+    WHEN status = ${ESTIMATE_STATUS.REJECTED} THEN 'rejected' 
+    ELSE 'pending' END as status 
+    FROM ${database}.estimate where issue_id = ? order by created_at desc`;
   }
 
 };
