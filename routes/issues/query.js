@@ -34,7 +34,7 @@ module.exports = {
              COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_GENERATED} THEN 1 END) AS estimateGenerated,
              COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 1 END) AS workCompleted,
              COUNT(CASE WHEN due_date = CURDATE() THEN 1 END) AS dueToday 
-             FROM ${database}.issue
+             FROM ${database}.issue WHERE org_id = ?
              `
   },
   getIssuesEvent(database) {
@@ -179,6 +179,12 @@ module.exports = {
     WHEN status = ${ESTIMATE_STATUS.REJECTED} THEN 'rejected' 
     ELSE 'pending' END as status 
     FROM ${database}.estimate where issue_id = ? order by created_at desc`;
+  },
+  updateEstimate(database) {
+    return `UPDATE ${database}.estimate SET ? WHERE id = ?`;
+  },
+  getActiveEstimateByIssueID(database) {
+    return `SELECT * FROM ${database}.estimate where issue_id = ? AND status = ${ESTIMATE_STATUS.CREATED} LIMIT 1`;
   }
 
 };
