@@ -578,7 +578,6 @@ exports.getIssueHistoryController = async (request, response) => {
   const issueID = request.params.issueID
   try {
     const issueHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueHistory(CONSTANTS.BUILDING_DATABASE), [issueID])
-    console.log(issueHistory)
     Log.info(`[${domain} | OrganisationID:${orgID}] | getIssueHistoryController | Issue history fetched successfully | IssueID: ${issueID}`)
     return sendHTTPResponse.success(response, 'Issue history fetched successfully', issueHistory)
   } catch (error) {
