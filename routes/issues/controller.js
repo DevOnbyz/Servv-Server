@@ -35,7 +35,7 @@ exports.getIssueStatController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
   try {
-    const issueStat = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueStat(CONSTANTS.BUILDING_DATABASE),[orgID])
+    const issueStat = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueStat(CONSTANTS.BUILDING_DATABASE),[orgID])
     Log.info(`[${domain} | OrganisationID:${orgID}] | getIssueStatController | Issue stat fetched successfully`)
     return sendHTTPResponse.success(response, 'Issue stat fetched successfully', issueStat)
   } catch (error) {
