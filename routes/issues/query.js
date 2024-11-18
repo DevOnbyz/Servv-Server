@@ -76,9 +76,17 @@ module.exports = {
         (
             SELECT AA.assigned_time 
             FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id 
+            WHERE AA.agent_id = A.id and AA.status=0
+            order by AA.created_at desc
             LIMIT 1
         ) AS assigned_time,
+        (
+            SELECT AA.visit_scheduled_time 
+            FROM ${database}.agent_assignment AA 
+            WHERE AA.agent_id = A.id and AA.status=0
+            order by AA.created_at desc
+            LIMIT 1
+        ) AS site_visit_time,
         (
             SELECT AA.agent_inferences 
             FROM ${database}.agent_assignment AA 
@@ -117,9 +125,17 @@ module.exports = {
         (
             SELECT AA.assigned_time 
             FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id 
+            WHERE AA.agent_id = A.id and AA.status=0
+            order by AA.created_at desc
             LIMIT 1
         ) AS assigned_time,
+        (
+            SELECT AA.visit_scheduled_time 
+            FROM ${database}.agent_assignment AA 
+            WHERE AA.agent_id = A.id and AA.status=0
+            order by AA.created_at desc
+            LIMIT 1
+        ) AS site_visit_time,
         (
             SELECT AA.agent_inferences 
             FROM ${database}.agent_assignment AA 
