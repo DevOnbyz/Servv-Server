@@ -231,7 +231,7 @@ module.exports = {
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.RE_WORK_REQUIRED} THEN 'Re Work Required'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED} THEN 'Invoice Generated'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.PAID} THEN 'Paid'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ON_HOLD} THEN 'On Hold'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ONHOLD} THEN 'On Hold'
     ELSE 'created' END as event_type,
     CASE
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = creator_id LIMIT 1)

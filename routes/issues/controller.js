@@ -585,3 +585,32 @@ exports.getIssueHistoryController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while fetching issue history', error.message)
   }
 }
+
+exports.holdIssueController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.ONHOLD,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ONHOLD
+    }
+
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
+
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.ONHOLD,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.ONHOLD,
+      description : notes,
+      creator_id : request.userID,
+      creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+    Log.info(`[${domain} | OrganisationID:${orgID}] | holdIssueController | Issue hold successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Issue hold successfully')
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | holdIssueController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while holding issue', error.message)
+  }
+}
