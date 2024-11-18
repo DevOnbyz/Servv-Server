@@ -53,6 +53,8 @@ router.post('/:issueID/invoice',
     })
   }
 )
+router.patch('/:issueID/invoice/approve', controller.approveInvoiceController) //an issue has only only one invoice
+
 router.get('/:issueID/history', controller.getIssueHistoryController)
 router.post('/:issueID/hold', controller.holdIssueController)
 

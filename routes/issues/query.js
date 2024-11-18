@@ -1,4 +1,4 @@
-const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, ESTIMATE_STATUS, SERVV_USER_TYPE_NUM } = require("../../lib/constants");
+const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, QUOTATION_STATUS, SERVV_USER_TYPE_NUM } = require("../../lib/constants");
 
 module.exports = {
   addIssue(database) {
@@ -182,7 +182,7 @@ module.exports = {
     return `SELECT * FROM ${database}.issue where id = ? AND sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED}`;
   },
   cancelEstimateByIssueID(database) {
-    return `UPDATE ${database}.estimate SET status = ${ESTIMATE_STATUS.CANCELLED} WHERE issue_id = ?`;
+    return `UPDATE ${database}.estimate SET status = ${QUOTATION_STATUS.CANCELLED} WHERE issue_id = ?`;
   },
   getEstimateByIssueID(database) {
     return `SELECT * FROM ${database}.estimate where issue_id = ?`;
@@ -190,8 +190,8 @@ module.exports = {
   getEstimates(database) {
     return `SELECT id, issue_id, material_charge, labour_charge, total_charge, is_18_percent_gst_applied, is_inclusive_tax, is_exclusive_tax, expiry_date, notes, created_at, src, 
     CASE
-    WHEN status = ${ESTIMATE_STATUS.APPROVED} THEN 'approved' 
-    WHEN status = ${ESTIMATE_STATUS.REJECTED} THEN 'rejected' 
+    WHEN status = ${QUOTATION_STATUS.APPROVED} THEN 'approved' 
+    WHEN status = ${QUOTATION_STATUS.REJECTED} THEN 'rejected' 
     ELSE 'pending' END as status 
     FROM ${database}.estimate where issue_id = ? order by created_at desc`;
   },
@@ -199,13 +199,13 @@ module.exports = {
     return `UPDATE ${database}.estimate SET ? WHERE id = ?`;
   },
   getActiveEstimateByIssueID(database) {
-    return `SELECT * FROM ${database}.estimate where issue_id = ? AND status = ${ESTIMATE_STATUS.CREATED} LIMIT 1`;
+    return `SELECT * FROM ${database}.estimate where issue_id = ? AND status = ${QUOTATION_STATUS.CREATED} LIMIT 1`;
   },
   getInvoice(database) {
     return `SELECT id, issue_id, material_charge, labour_charge, total_charge, is_18_percent_gst_applied, is_inclusive_tax, is_exclusive_tax, expiry_date, notes, created_at, src, 
     CASE
-    WHEN status = ${ESTIMATE_STATUS.APPROVED} THEN 'approved' 
-    WHEN status = ${ESTIMATE_STATUS.REJECTED} THEN 'rejected' 
+    WHEN status = ${QUOTATION_STATUS.APPROVED} THEN 'approved' 
+    WHEN status = ${QUOTATION_STATUS.REJECTED} THEN 'rejected' 
     ELSE 'pending' END as status 
     FROM ${database}.invoice where issue_id = ? order by created_at desc`;
   },
@@ -242,7 +242,13 @@ module.exports = {
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN 'Agent'
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN 'Resident' END as userType
     FROM ${database}.issue_event where issue_id = ? ORDER BY created_at ASC`;
-  }
+  },
+  getActiveInvoiceByIssueID(database) {
+    return `SELECT * FROM ${database}.invoice where issue_id = ? AND status = ${QUOTATION_STATUS.CREATED} LIMIT 1`;
+  },
+  updateInvoice(database) {
+    return `UPDATE ${database}.invoice SET ? WHERE id = ?`;
+  },
 
 };
 

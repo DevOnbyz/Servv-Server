@@ -486,7 +486,7 @@ exports.approveEstimateController = async (request, response) => {
     if(_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
 
     const estimateData = {
-      status: CONSTANTS.ESTIMATE_STATUS.APPROVED
+      status: CONSTANTS.QUOTATION_STATUS.APPROVED
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [ estimateData, estimate.id ])
     const newIssueData = {
@@ -499,7 +499,6 @@ exports.approveEstimateController = async (request, response) => {
       issue_id : issueID,
       event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_APPROVED,
       sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED,
-      entity_id: issueID,
       creator_id : request.userID,
       creator_type : request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
@@ -603,6 +602,44 @@ exports.addInvoiceController = async (request, response) => {
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | addInvoiceController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while adding invoice', error.message)
+  }
+}
+
+exports.approveInvoiceController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED]
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status to approve invoice')
+    const invoice = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveInvoiceByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(_.isEmpty(invoice)) return sendHTTPResponse.error(response, 'No active invoice found for this issue', null, 400)
+
+    const invoiceData = {
+      status: CONSTANTS.QUOTATION_STATUS.APPROVED
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateInvoice(CONSTANTS.BUILDING_DATABASE), [ invoiceData, invoice.id ])
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ]) 
+
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_APPROVED,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED,
+      creator_id : request.userID,
+      creator_type : request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
+    Log.info(`[${domain} | OrganisationID:${orgID}] | approveInvoiceController | Invoice approved successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Invoice approved successfully', {logID})
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | approveInvoiceController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while approving invoice', error.message)
   }
 }
 
