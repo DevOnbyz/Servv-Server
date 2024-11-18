@@ -296,6 +296,16 @@ exports.closeIssueController = async (request, response) => {
     if(!_.isEmpty(hasPendingInvoice)) return sendHTTPResponse.error(response, 'Invoice is pending for this issue')
     
     await Fn.closeIssueQueries(issueID)
+    // adding log for closing issue
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.CLOSED,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED,
+      creator_id : request.userID,
+      creator_type : request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN ? CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN : CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER
+    }
+
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
     Log.info(`[${domain} | OrganisationID:${orgID}] | closeIssueController | Issue closed successfully | IssueID: ${issueID}`)
     return sendHTTPResponse.success(response, 'Issue closed successfully')
   } catch (error) {
