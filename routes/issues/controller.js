@@ -684,3 +684,41 @@ exports.holdIssueController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while holding issue', error.message)
   }
 }
+
+exports.cancelWorkOrderController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ORDER_CANCELLED
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
+    const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+
+    if(_.isEmpty(activeSiteVisit)) return sendHTTPResponse.error(response, 'There is no active work order for this issue', null, 400)
+
+    const activeWorkOrderID = activeSiteVisit.id
+    const updatedAgentAssignmentData = {
+      status: CONSTANTS.AGENT_ASSIGNMENT_STATUS.CANCELLED
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentAssignmentByID(CONSTANTS.BUILDING_DATABASE), [ updatedAgentAssignmentData, activeWorkOrderID ])
+
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.WORK_ORDER_CANCELLED,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ORDER_CANCELLED,
+      entity_id: activeWorkOrderID, //since it have multiple workorders
+      creator_id : request.userID,
+      creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+    Log.info(`[${domain} | OrganisationID:${orgID}] | cancelWorkOrderController | Work order cancelled successfully | IssueID: ${issueID} | LogID: ${logID}`)
+    return sendHTTPResponse.success(response, 'Work order site visit cancelled successfully')
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | cancelWorkOrderController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while canceling Work order', error.message)
+  }
+}
