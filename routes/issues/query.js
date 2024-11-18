@@ -1,4 +1,4 @@
-const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, ESTIMATE_STATUS } = require("../../lib/constants");
+const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, ESTIMATE_STATUS, SERVV_USER_TYPE_NUM } = require("../../lib/constants");
 
 module.exports = {
   addIssue(database) {
@@ -11,7 +11,7 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
-    I.created_at, RI.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, I.preferred_time as time, I.preferred_date as date,
+    I.created_at, RI.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, I.preferred_time as time,
     I.img_src
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
@@ -34,7 +34,7 @@ module.exports = {
              COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_GENERATED} THEN 1 END) AS estimateGenerated,
              COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 1 END) AS workCompleted,
              COUNT(CASE WHEN due_date = CURDATE() THEN 1 END) AS dueToday 
-             FROM ${database}.issue
+             FROM ${database}.issue WHERE org_id = ?
              `
   },
   getIssuesEvent(database) {
@@ -47,8 +47,7 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status,
-     I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.preferred_time as time, I.preferred_date as date,
-    I.img_src
+     I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.preferred_time as time,
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
     left join ${database}.project P on A.project_id = P.id
@@ -77,9 +76,17 @@ module.exports = {
         (
             SELECT AA.assigned_time 
             FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id 
+            WHERE AA.agent_id = A.id
+            order by AA.created_at desc
             LIMIT 1
         ) AS assigned_time,
+        (
+            SELECT AA.visit_scheduled_time 
+            FROM ${database}.agent_assignment AA 
+            WHERE AA.agent_id = A.id
+            order by AA.created_at desc
+            LIMIT 1
+        ) AS site_visit_time,
         (
             SELECT AA.agent_inferences 
             FROM ${database}.agent_assignment AA 
@@ -118,9 +125,17 @@ module.exports = {
         (
             SELECT AA.assigned_time 
             FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id 
+            WHERE AA.agent_id = A.id
+            order by AA.created_at desc
             LIMIT 1
         ) AS assigned_time,
+        (
+            SELECT AA.visit_scheduled_time 
+            FROM ${database}.agent_assignment AA 
+            WHERE AA.agent_id = A.id
+            order by AA.created_at desc
+            LIMIT 1
+        ) AS site_visit_time,
         (
             SELECT AA.agent_inferences 
             FROM ${database}.agent_assignment AA 
@@ -171,6 +186,62 @@ module.exports = {
   },
   getEstimateByIssueID(database) {
     return `SELECT * FROM ${database}.estimate where issue_id = ?`;
+  },
+  getEstimates(database) {
+    return `SELECT id, issue_id, material_charge, labour_charge, total_charge, is_18_percent_gst_applied, is_inclusive_tax, is_exclusive_tax, expiry_date, notes, created_at, src, 
+    CASE
+    WHEN status = ${ESTIMATE_STATUS.APPROVED} THEN 'approved' 
+    WHEN status = ${ESTIMATE_STATUS.REJECTED} THEN 'rejected' 
+    ELSE 'pending' END as status 
+    FROM ${database}.estimate where issue_id = ? order by created_at desc`;
+  },
+  updateEstimate(database) {
+    return `UPDATE ${database}.estimate SET ? WHERE id = ?`;
+  },
+  getActiveEstimateByIssueID(database) {
+    return `SELECT * FROM ${database}.estimate where issue_id = ? AND status = ${ESTIMATE_STATUS.CREATED} LIMIT 1`;
+  },
+  getInvoice(database) {
+    return `SELECT id, issue_id, material_charge, labour_charge, total_charge, is_18_percent_gst_applied, is_inclusive_tax, is_exclusive_tax, expiry_date, notes, created_at, src, 
+    CASE
+    WHEN status = ${ESTIMATE_STATUS.APPROVED} THEN 'approved' 
+    WHEN status = ${ESTIMATE_STATUS.REJECTED} THEN 'rejected' 
+    ELSE 'pending' END as status 
+    FROM ${database}.invoice where issue_id = ? order by created_at desc`;
+  },
+  getInvoiceByIssueID(database) {
+    return `SELECT * FROM ${database}.invoice where issue_id = ?`;
+  },
+  addInvoice(database) {
+    return `INSERT INTO ${database}.invoice SET ?`;
+  },
+  getIssueHistory(database) {
+    return `SELECT id, issue_id, event_type, created_at,
+    CASE
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.CREATED} THEN 'Created'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED} THEN 'Agent Assigned'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN 'Site Visit Completed'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.REVISIT_REQUIRED} THEN 'Revisit Required'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_GENERATED} THEN 'Estimate Generated'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 'Estimate Approved'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} THEN 'Estimate Rejected'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 'Estimate Approved'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN 'Work Assigned'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 'Work Completed'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.RE_WORK_REQUIRED} THEN 'Re Work Required'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED} THEN 'Invoice Generated'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.PAID} THEN 'Paid'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ON_HOLD} THEN 'On Hold'
+    ELSE 'created' END as event_type,
+    CASE
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = creator_id LIMIT 1)
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = creator_id LIMIT 1)
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.resident WHERE id = creator_id LIMIT 1) END as name,
+    CASE
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN 'Admin'
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN 'Agent'
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN 'Resident' END as userType
+    FROM ${database}.issue_event where issue_id = ? ORDER BY created_at ASC`;
   }
 
 };

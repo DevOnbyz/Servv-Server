@@ -35,7 +35,7 @@ exports.getIssueStatController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
   try {
-    const issueStat = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueStat(CONSTANTS.BUILDING_DATABASE),[orgID])
+    const issueStat = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueStat(CONSTANTS.BUILDING_DATABASE),[orgID])
     Log.info(`[${domain} | OrganisationID:${orgID}] | getIssueStatController | Issue stat fetched successfully`)
     return sendHTTPResponse.success(response, 'Issue stat fetched successfully', issueStat)
   } catch (error) {
@@ -109,7 +109,6 @@ exports.addIssueController = async (request, response) => {
       issue_type: '',
       status: CONSTANTS.ISSUE_STATUS.OPEN,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.CREATED,
-      preferred_date: _.isEmpty(request.body.preferredDate) ? null : request.body.preferredDate,
       preferred_time: _.isEmpty(request.body.preferredTime) ? null : request.body.preferredTime,
       due_date: null,
       img_src: _.isEmpty(request.body.imgSrcPaths) ? null : (request.body.imgSrcPaths)?.join(','),
@@ -343,7 +342,19 @@ exports.cancelSiteVisitController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while canceling issue site visit', error.message)
   }
 }
-
+exports.getEstimatesController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimates(CONSTANTS.BUILDING_DATABASE), [issueID])
+    Log.info(`[${domain} | OrganisationID:${orgID}] | getEstimatesController | Estimates fetched successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Estimate fetched successfully', estimate)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getEstimatesController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while fetching estimates', error.message)
+  }
+}
 exports.addEstimateController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
@@ -381,7 +392,7 @@ exports.addEstimateController = async (request, response) => {
 
     const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for work order')
+    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for estimate')
       
     if (request.file) {
       const destination = 'uploads/estimates/'
@@ -426,5 +437,151 @@ exports.addEstimateController = async (request, response) => {
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | addEstimateController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while adding estimate', error.message)
+  }
+}
+
+exports.approveEstimateController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED]
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status to approve estimate')
+    const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
+
+    const estimateData = {
+      status: CONSTANTS.ESTIMATE_STATUS.APPROVED
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [ estimateData, estimate.id ])
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ]) 
+
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_APPROVED,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED,
+      entity_id: issueID,
+      creator_id : request.userID,
+      creator_type : request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
+    Log.info(`[${domain} | OrganisationID:${orgID}] | approveEstimateController | Estimate approved successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Estimate approved successfully', {logID})
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | approveEstimateController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while approving estimate', error.message)
+  }
+}
+
+
+exports.getInvoiceController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getInvoice(CONSTANTS.BUILDING_DATABASE), [issueID])
+    Log.info(`[${domain} | OrganisationID:${orgID}] | getInvoiceController | Invoice fetched successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Invoice fetched successfully', estimate)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getInvoiceController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while fetching invoice', error.message)
+  }
+}
+
+exports.addInvoiceController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, expiryDate, notes, labourCharge, totalCharge} = request.body
+
+    if (_.isEmpty(materialCharge)) {
+      return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
+    }
+    if (_.isEmpty(labourCharge)) {
+      return sendHTTPResponse.error(response, 'labourCharge is required', null, 400)
+    }
+  
+    if (_.isEmpty(is18PercentGSTApplied)) {
+      return sendHTTPResponse.error(response, 'is18PercentGSTApplied is required', null, 400)
+    }
+  
+    if (_.isEmpty(isInclusiveTax)) {
+      return sendHTTPResponse.error(response, 'isInclusiveTax is required', null, 400)
+    }
+
+    if (_.isEmpty(totalCharge)) {
+      return sendHTTPResponse.error(response, 'Total amount is required', null, 400)
+    }
+
+    const isInvoiceAlreadyGenerated = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getInvoiceByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    if(!_.isEmpty(isInvoiceAlreadyGenerated)) return sendHTTPResponse.error(response, 'Invoice already generated for this issue', null, 400)
+
+    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED]
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for invoice')
+      
+    if (request.file) {
+      const destination = 'uploads/invoices/'
+      const savedFilePath = await Fn.saveFileToDisk(request.file, destination)
+      request.body.estimateSRC = savedFilePath
+    }
+
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED
+    }
+
+    const invoiceData = {
+      material_charge: materialCharge,
+      issue_id: issueID,
+      total_charge: totalCharge,
+      labour_charge: labourCharge,
+      is_18_percent_gst_applied: !!is18PercentGSTApplied ? 1 : 0,
+      is_inclusive_tax: !!isInclusiveTax ? 1 : 0,
+      expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
+      notes: notes ?? null,
+      src: request.body.invoiceSRC
+    }
+
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
+    const entityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addInvoice(CONSTANTS.BUILDING_DATABASE), [ invoiceData, issueID ]))?.insertId
+
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_GENERATED,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED,
+      entity_id: entityID,
+      description : notes,
+      creator_id : request.userID,
+      creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addInvoiceController | Invoice added successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Invoice added successfully', {logID})
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | addInvoiceController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while adding invoice', error.message)
+  }
+}
+
+exports.getIssueHistoryController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const issueHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueHistory(CONSTANTS.BUILDING_DATABASE), [issueID])
+    Log.info(`[${domain} | OrganisationID:${orgID}] | getIssueHistoryController | Issue history fetched successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Issue history fetched successfully', issueHistory)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getIssueHistoryController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while fetching issue history', error.message)
   }
 }

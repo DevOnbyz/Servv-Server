@@ -7,9 +7,7 @@ const addAgentSchema = Joi.object({
   lastname: Joi.string().required().messages({
     'string.empty': 'Lastname is required',
   }),
-  email: Joi.string().required().messages({
-    'string.empty': 'Email is required',
-  }),
+  email: Joi.string().optional().allow(null),
   phNum: Joi.string().required().messages({
     'string.empty': 'Phone Number is required',
   }),

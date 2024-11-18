@@ -48,7 +48,7 @@ exports.uploadImageAndFile = multer({
     }
     cb(new Error('Only .pdf, .jpeg, .jpg, and .png files are allowed!'))
   },
-}).single('estimateFile')
+}).single('file')
 
 exports.closeIssueQueries = async (issueID) => {
   // if a site visit is assigned to issue then make to cancelled OR if a workorder is assigned to issue then make to cancelled

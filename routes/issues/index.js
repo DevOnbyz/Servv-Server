@@ -27,16 +27,31 @@ router.patch('/:issueID/site-visit/cancel', controller.cancelSiteVisitController
 router.get('/:issueID/site-visit', controller.getSiteVisitUnderIssueController)
 router.get('/:issueID/work-order', controller.getWorkOrderUnderIssueController)
 router.post('/:issueID/work-order', validateRequest(scheduleSiteVisitSchema), controller.workOrderIssueController)
+router.get('/:issueID/estimate', controller.getEstimatesController)
+router.patch('/:issueID/estimate/approve', controller.approveEstimateController) //an issue has only only one estimate 
 router.post('/:issueID/estimate', 
   (req, res, next) => {
     Fn.uploadImageAndFile(req, res, (err) => {
       if (err instanceof multer.MulterError || err) {
-        return sendHTTPResponse.error(res, 'Error while uploading image', err.message)
+        return sendHTTPResponse.error(res, 'Error while uploading file', err.message)
       }
       controller.addEstimateController(req, res, next)
     })
   }
 )
 router.patch('/:issueID/close', controller.closeIssueController)
+
+router.get('/:issueID/invoice', controller.getInvoiceController)
+router.post('/:issueID/invoice', 
+  (req, res, next) => {
+    Fn.uploadImageAndFile(req, res, (err) => {
+      if (err instanceof multer.MulterError || err) {
+        return sendHTTPResponse.error(res, 'Error while uploading file', err.message)
+      }
+      controller.addInvoiceController(req, res, next)
+    })
+  }
+)
+router.get('/:issueID/history', controller.getIssueHistoryController)
 
 module.exports = router
