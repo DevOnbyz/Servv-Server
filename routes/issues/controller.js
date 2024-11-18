@@ -602,7 +602,6 @@ exports.holdIssueController = async (request, response) => {
       issue_id : issueID,
       event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.ONHOLD,
       sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.ONHOLD,
-      description : notes,
       creator_id : request.userID,
       creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
