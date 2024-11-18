@@ -225,6 +225,40 @@ exports.workOrderIssueController = async (request, response) => {
   }
 }
 
+
+exports.reAssignWorkOrderController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  const agentID = request.body.agentID
+  const modifiedVisit = request.body.modifiedVisit
+  const modifiedNote = request.body.modifiedNote
+  const modifiedDate = request.body.modifiedDate
+  try {
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      agent_id: agentID,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED
+    }
+
+    const newAgentAssignmentData = {
+      agent_id: agentID,
+      otp_code: generateOTP(),
+    }
+    if(modifiedVisit){
+      newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
+      newAgentAssignmentData.notes = modifiedNote
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentIDInAgentAssignmentofActiveIssue(CONSTANTS.BUILDING_DATABASE), [ newAgentAssignmentData, issueID ])
+    Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignWorkOrderController | Work order re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
+    return sendHTTPResponse.success(response, 'Work order re-assigned successfully')
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | reAssignWorkOrderController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while re-assigning work order', error.message)
+  }
+}
+
 exports.getSiteVisitUnderIssueController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain

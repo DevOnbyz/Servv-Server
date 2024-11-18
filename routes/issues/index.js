@@ -27,6 +27,7 @@ router.patch('/:issueID/site-visit/cancel', controller.cancelSiteVisitController
 router.get('/:issueID/site-visit', controller.getSiteVisitUnderIssueController)
 router.get('/:issueID/work-order', controller.getWorkOrderUnderIssueController)
 router.post('/:issueID/work-order', validateRequest(scheduleSiteVisitSchema), controller.workOrderIssueController)
+router.patch('/:issueID/work-order/re-assign',validateRequest(reAssignAgentSchema), controller.reAssignWorkOrderController )
 router.get('/:issueID/estimate', controller.getEstimatesController)
 router.patch('/:issueID/estimate/approve', controller.approveEstimateController) //an issue has only only one estimate 
 router.post('/:issueID/estimate', 
