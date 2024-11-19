@@ -27,8 +27,11 @@ router.patch('/:issueID/site-visit/cancel', controller.cancelSiteVisitController
 router.get('/:issueID/site-visit', controller.getSiteVisitUnderIssueController)
 router.get('/:issueID/work-order', controller.getWorkOrderUnderIssueController)
 router.post('/:issueID/work-order', validateRequest(scheduleSiteVisitSchema), controller.workOrderIssueController)
+router.patch('/:issueID/work-order/re-assign',validateRequest(reAssignAgentSchema), controller.reAssignWorkOrderController )
+router.patch('/:issueID/work-order/cancel', controller.cancelWorkOrderController)
 router.get('/:issueID/estimate', controller.getEstimatesController)
 router.patch('/:issueID/estimate/approve', controller.approveEstimateController) //an issue has only only one estimate 
+router.patch('/:issueID/estimate/send', controller.sendEstimateController) //an issue has only only one estimate 
 router.post('/:issueID/estimate', 
   (req, res, next) => {
     Fn.uploadImageAndFile(req, res, (err) => {
@@ -52,6 +55,9 @@ router.post('/:issueID/invoice',
     })
   }
 )
+router.patch('/:issueID/invoice/approve', controller.approveInvoiceController) //an issue has only only one invoice
+
 router.get('/:issueID/history', controller.getIssueHistoryController)
+router.post('/:issueID/hold', controller.holdIssueController)
 
 module.exports = router
