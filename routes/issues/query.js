@@ -191,7 +191,9 @@ module.exports = {
     return `SELECT id, issue_id, material_charge, labour_charge, total_charge, is_18_percent_gst_applied, is_inclusive_tax, is_exclusive_tax, expiry_date, notes, created_at, src, 
     CASE
     WHEN status = ${QUOTATION_STATUS.APPROVED} THEN 'approved' 
-    WHEN status = ${QUOTATION_STATUS.REJECTED} THEN 'rejected' 
+    WHEN status = ${QUOTATION_STATUS.REJECTED} THEN 'rejected'
+    WHEN status = ${QUOTATION_STATUS.CANCELLED} THEN 'cancelled'
+    WHEN status = ${QUOTATION_STATUS.SEND} THEN 'sent'
     ELSE 'pending' END as status 
     FROM ${database}.estimate where issue_id = ? order by created_at desc`;
   },
@@ -205,7 +207,9 @@ module.exports = {
     return `SELECT id, issue_id, material_charge, labour_charge, total_charge, is_18_percent_gst_applied, is_inclusive_tax, is_exclusive_tax, expiry_date, notes, created_at, src, 
     CASE
     WHEN status = ${QUOTATION_STATUS.APPROVED} THEN 'approved' 
-    WHEN status = ${QUOTATION_STATUS.REJECTED} THEN 'rejected' 
+    WHEN status = ${QUOTATION_STATUS.REJECTED} THEN 'rejected'
+    WHEN status = ${QUOTATION_STATUS.CANCELLED} THEN 'cancelled'
+    WHEN status = ${QUOTATION_STATUS.SEND} THEN 'sent'
     ELSE 'pending' END as status 
     FROM ${database}.invoice where issue_id = ? order by created_at desc`;
   },
@@ -232,7 +236,13 @@ module.exports = {
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED} THEN 'Invoice Generated'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.PAID} THEN 'Paid'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ONHOLD} THEN 'On Hold'
-    ELSE 'created' END as event_type,
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.CLOSED} THEN 'Closed'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED} THEN 'Site Visit Cancelled'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED} THEN 'Invoice Approved'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ORDER_CANCELLED} THEN 'Work Order Cancelled'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN 'Estimate Sent'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN 'Invoive Sent'
+    ELSE 'Unknown Event' END as event_type,
     CASE
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = creator_id LIMIT 1)
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = creator_id LIMIT 1)

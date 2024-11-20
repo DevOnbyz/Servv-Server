@@ -38,7 +38,7 @@ router.post('/:issueID/estimate',
       if (err instanceof multer.MulterError || err) {
         return sendHTTPResponse.error(res, 'Error while uploading file', err.message)
       }
-      controller.addEstimateController(req, res, next)
+      controller.addAndSendEstimateController(req, res, next)
     })
   }
 )
@@ -51,7 +51,7 @@ router.post('/:issueID/invoice',
       if (err instanceof multer.MulterError || err) {
         return sendHTTPResponse.error(res, 'Error while uploading file', err.message)
       }
-      controller.addInvoiceController(req, res, next)
+      controller.addAndSentInvoiceController(req, res, next)
     })
   }
 )

@@ -399,7 +399,7 @@ exports.getEstimatesController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while fetching estimates', error.message)
   }
 }
-exports.addEstimateController = async (request, response) => {
+exports.addAndSendEstimateController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
   const issueID = request.params.issueID
@@ -446,7 +446,7 @@ exports.addEstimateController = async (request, response) => {
 
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
-      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_GENERATED
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT
     }
 
     const estimateData = {
@@ -459,7 +459,8 @@ exports.addEstimateController = async (request, response) => {
       is_exclusive_tax: !!isExlusiveTax ? 1 : 0,  
       expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
       notes: notes ?? null,
-      src: request.body.estimateSRC
+      src: request.body.estimateSRC,
+      status: CONSTANTS.QUOTATION_STATUS.SEND
     }
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
@@ -467,8 +468,8 @@ exports.addEstimateController = async (request, response) => {
 
     const issueLogData = {
       issue_id : issueID,
-      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_GENERATED,
-      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_GENERATED,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
       entity_id: entityID,
       description : notes,
       creator_id : request.userID,
@@ -476,10 +477,10 @@ exports.addEstimateController = async (request, response) => {
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
-    Log.info(`[${domain} | OrganisationID:${orgID}] | addEstimateController | Estimate added successfully | IssueID: ${issueID}`)
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | Estimate added successfully | IssueID: ${issueID}`)
     return sendHTTPResponse.success(response, 'Estimate added successfully', {logID})
   } catch (error) {
-    Log.error(`[${domain} | OrganisationID:${orgID}] | addEstimateController | ${error.message}`)
+    Log.error(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while adding estimate', error.message)
   }
 }
@@ -574,7 +575,7 @@ exports.getInvoiceController = async (request, response) => {
   }
 }
 
-exports.addInvoiceController = async (request, response) => {
+exports.addAndSentInvoiceController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
   const issueID = request.params.issueID
@@ -615,7 +616,7 @@ exports.addInvoiceController = async (request, response) => {
 
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
-      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT
     }
 
     const invoiceData = {
@@ -627,7 +628,8 @@ exports.addInvoiceController = async (request, response) => {
       is_inclusive_tax: !!isInclusiveTax ? 1 : 0,
       expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
       notes: notes ?? null,
-      src: request.body.invoiceSRC
+      src: request.body.invoiceSRC,
+      status: CONSTANTS.QUOTATION_STATUS.SEND
     }
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
@@ -635,8 +637,8 @@ exports.addInvoiceController = async (request, response) => {
 
     const issueLogData = {
       issue_id : issueID,
-      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_GENERATED,
-      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_SENT,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT,
       entity_id: entityID,
       description : notes,
       creator_id : request.userID,
@@ -644,10 +646,10 @@ exports.addInvoiceController = async (request, response) => {
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
-    Log.info(`[${domain} | OrganisationID:${orgID}] | addInvoiceController | Invoice added successfully | IssueID: ${issueID}`)
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | Invoice added successfully | IssueID: ${issueID}`)
     return sendHTTPResponse.success(response, 'Invoice added successfully', {logID})
   } catch (error) {
-    Log.error(`[${domain} | OrganisationID:${orgID}] | addInvoiceController | ${error.message}`)
+    Log.error(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while adding invoice', error.message)
   }
 }
