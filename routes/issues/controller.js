@@ -460,7 +460,8 @@ exports.addAndSendEstimateController = async (request, response) => {
       expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
       notes: notes ?? null,
       src: request.body.estimateSRC,
-      status: CONSTANTS.QUOTATION_STATUS.SEND
+      status: CONSTANTS.QUOTATION_STATUS.SEND,
+      created_by: request.userID
     }
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
@@ -557,6 +558,132 @@ exports.sendEstimateController = async (request, response) => {
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | sendEstimateController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while sending estimate', error.message)
+  }
+}
+exports.editEstimateController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  const estimateID = request.params.estimateID
+  try {
+    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, isExlusiveTax, expiryDate, notes, labourCharge, totalCharge} = request.body
+
+    if (_.isEmpty(materialCharge)) {
+      return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
+    }
+    if (_.isEmpty(labourCharge)) {
+      return sendHTTPResponse.error(response, 'labourCharge is required', null, 400)
+    }
+  
+    if (_.isEmpty(is18PercentGSTApplied)) {
+      return sendHTTPResponse.error(response, 'is18PercentGSTApplied is required', null, 400)
+    }
+  
+    if (_.isEmpty(isInclusiveTax)) {
+      return sendHTTPResponse.error(response, 'isInclusiveTax is required', null, 400)
+    }
+
+    if (_.isEmpty(isExlusiveTax)) {
+      return sendHTTPResponse.error(response, 'isExlusiveTax is required', null, 400)
+    }
+  
+    if (_.isEmpty(expiryDate)) {
+      return sendHTTPResponse.error(response, 'expiryDate is required', null, 400)
+    }
+    if (_.isEmpty(totalCharge)) {
+      return sendHTTPResponse.error(response, 'Total amount is required', null, 400)
+    }
+
+    const notAllowedSubStatusForSendEstimate = [CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED]
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(notAllowedSubStatusForSendEstimate.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status to edit estimate')
+    
+    const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
+
+    if (request.file) {
+      const destination = 'uploads/estimates/'
+      if(estimate.src)
+        await Fn.deleteFileFromDisk(estimate.src)
+      const savedFilePath = await Fn.saveFileToDisk(request.file, destination)
+      request.body.estimateSRC = savedFilePath
+    }
+
+    const estimateData = {
+      material_charge: materialCharge,
+      issue_id: issueID,
+      total_charge: totalCharge,
+      labour_charge: labourCharge,
+      is_18_percent_gst_applied: is18PercentGSTApplied =='true' ? 1 : 0,
+      is_inclusive_tax: isInclusiveTax == 'true' ? 1 : 0,
+      is_exclusive_tax: isExlusiveTax == 'true' ? 1 : 0,  
+      expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
+      notes: notes ?? null,
+      src: request.body.estimateSRC,
+      status: CONSTANTS.QUOTATION_STATUS.SEND,
+      updated_by: request.userID
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [ estimateData, estimate.id ])
+
+    Log.info(`[${domain} | OrganisationID:${orgID}] | editEstimateController | Estimate updated successfully | estimateID: ${estimate.id}`)
+    return sendHTTPResponse.success(response, 'Estimate updated successfully')
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | editEstimateController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while updating estimate', error.message)
+  }
+}
+
+exports.rejectEstimateController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
+
+      const estimateData = {
+        status: CONSTANTS.QUOTATION_STATUS.REJECTED
+      }
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [ estimateData, estimate.id ])
+
+      const newIssueData = {
+        status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+        sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED,
+      }
+
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ]) 
+  
+      const issueLogData = {
+        issue_id : issueID,
+        event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_REJECTED,
+        sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED,
+        creator_id : request.userID,
+        creator_type : request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      }
+      const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+      Log.info(`[${domain} | OrganisationID:${orgID}] | rejectEstimateController | Estimate rejected successfully | estimateID: ${estimate.id} | logID: ${logID}`)
+      return sendHTTPResponse.success(response, 'Estimate rejected successfully')
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | rejectEstimateController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while rejecting estimate', error.message)
+  }
+}
+
+exports.deleteEstimateController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
+
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.deleteEstimate(CONSTANTS.BUILDING_DATABASE), [estimate.id])
+
+    Log.info(`[${domain} | OrganisationID:${orgID}] | deleteEstimateController | Estimate deleted successfully | estimateID: ${estimate.id}`)
+    return sendHTTPResponse.success(response, 'Estimate deleted successfully')
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | deleteEstimateController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while deleting estimate', error.message)
   }
 }
 

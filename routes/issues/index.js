@@ -42,6 +42,19 @@ router.post('/:issueID/estimate',
     })
   }
 )
+router.patch('/:issueID/estimate/edit',
+  (req, res, next) => {
+    Fn.uploadImageAndFile(req, res, (err) => {
+      if (err instanceof multer.MulterError || err) {
+        return sendHTTPResponse.error(res, 'Error while uploading file', err.message)
+      }
+      controller.editEstimateController(req, res, next)
+    })
+  }
+)
+router.patch('/:issueID/estimate/reject', controller.rejectEstimateController)
+router.delete('/:issueID/estimate', controller.deleteEstimateController)
+
 router.patch('/:issueID/close', controller.closeIssueController)
 
 router.get('/:issueID/invoice', controller.getInvoiceController)

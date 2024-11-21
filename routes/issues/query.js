@@ -38,7 +38,29 @@ module.exports = {
              `
   },
   getIssuesEvent(database) {
-    return `SELECT * FROM ${database}.issue_event where issue_id = ? ORDER BY created_at DESC`;
+    return `SELECT id, issue_id,event_type,
+    CASE
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.CREATED} THEN 'Created'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED} THEN 'Agent Assigned'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN 'Site Visit Completed'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.REVISIT_REQUIRED} THEN 'Revisit Required'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.RE_WORK_REQUIRED} THEN 'Re Work Required'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_GENERATED} THEN 'Estimate Generated'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 'Estimate Approved'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} THEN 'Estimate Rejected'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED} THEN 'Invoice Generated'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN 'Work Assigned'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ORDER_CANCELLED} THEN 'Work Order Cancelled'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED} THEN 'Site Visit Cancelled'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED} THEN 'Invoice Approved'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN 'Invoice Sent'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN 'Estimate Sent'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.PAID} THEN 'Paid'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 'Work Completed'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ONHOLD} THEN 'ON HOLD'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.CLOSED} THEN 'ON CLOSED'
+    END as event_type_string,
+    sub_status, created_at, creator_id, entity_id, creator_type, event_time, created_at  FROM ${database}.issue_event where issue_id = ? ORDER BY created_at DESC`;
   },
   getIssuesUnderResident(database, limit, offset) {
     return `SELECT I.id, A.name as doorNo, P.name as projectName, CONCAT(R.firstname, ' ', R.lastname) as name,
@@ -254,11 +276,17 @@ module.exports = {
     FROM ${database}.issue_event where issue_id = ? ORDER BY created_at ASC`;
   },
   getActiveInvoiceByIssueID(database) {
-    return `SELECT * FROM ${database}.invoice where issue_id = ? AND status = ${QUOTATION_STATUS.CREATED} LIMIT 1`;
+    return `SELECT * FROM ${database}.invoice where issue_id = ? AND status in (${QUOTATION_STATUS.SEND}, ${QUOTATION_STATUS.CREATED}) LIMIT 1`;
   },
   updateInvoice(database) {
     return `UPDATE ${database}.invoice SET ? WHERE id = ?`;
   },
+  getEstimateByID(database) {
+    return `SELECT * FROM ${database}.estimate where id = ?`;
+  },
+  deleteEstimate(database) {
+    return `DELETE FROM ${database}.estimate WHERE id = ?`;
+  }
 
 };
 

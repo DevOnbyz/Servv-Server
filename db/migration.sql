@@ -347,9 +347,13 @@ CREATE TABLE `estimate` (
     `estimate_created_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `notes` TEXT,
     `src` TEXT,
+    `created_by` INT DEFAULT NULL,
+    `updated_by` INT DEFAULT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_estimate_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE
+    CONSTRAINT `fk_estimate_ibfk_2` FOREIGN KEY (created_by) REFERENCES admin (id) ON DELETE CASCADE
+    CONSTRAINT `fk_estimate_ibfk_3` FOREIGN KEY (updated_by) REFERENCES admin (id) ON DELETE CASCADE
 );
 CREATE TABLE `invoice` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,

@@ -20,6 +20,17 @@ exports.saveFileToDisk = (file, destination) => {
   })
 }
 
+exports.deleteFileFromDisk = (src) =>{
+  return new Promise((resolve, reject) => {
+    fs.unlink(src, (err) => {
+      if (err) {
+        return reject(err)
+      }
+      resolve()
+    })
+  })
+}
+
 exports.uploadImage = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 2 * 1024 * 1024 },

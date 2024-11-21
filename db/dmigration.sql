@@ -41,3 +41,10 @@ ALTER TABLE agent_assignment DROP COLUMN `job_type`;
 ALTER TABLE agent_assignment ADD COLUMN `agent_inferences` TEXT AFTER `otp_code`;
 ALTER TABLE agent_assignment ADD COLUMN `agent_uploads` TEXT AFTER `agent_inferences`;
 ALTER TABLE issue_event CHANGE COLUMN `status` `sub_status` TINYINT DEFAULT NULL;
+
+-- 21-11-2024
+ALTER TABLE estimate ADD COLUMN `created_by` INT DEFAULT NULL;
+ALTER TABLE estimate ADD CONSTRAINT fk_estimate_ibfk_2 FOREIGN KEY (`created_by`) REFERENCES `admin`(`id`);
+
+ALTER TABLE estimate ADD COLUMN `updated_by` INT DEFAULT NULL;
+ALTER TABLE estimate ADD CONSTRAINT fk_estimate_ibfk_3 FOREIGN KEY (`updated_by`) REFERENCES `admin`(`id`);
