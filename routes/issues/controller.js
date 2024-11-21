@@ -434,9 +434,9 @@ exports.addAndSendEstimateController = async (request, response) => {
     const isEstimateAlreadyGenerated = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
     if(!_.isEmpty(isEstimateAlreadyGenerated)) return sendHTTPResponse.error(response, 'Estimate already generated for this issue', null, 400)
 
-    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED]
+    const notAllowedSubStatusForSendEstimate = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for estimate')
+    if(notAllowedSubStatusForSendEstimate.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for estimate')
       
     if (request.file) {
       const destination = 'uploads/estimates/'
@@ -454,9 +454,9 @@ exports.addAndSendEstimateController = async (request, response) => {
       issue_id: issueID,
       total_charge: totalCharge,
       labour_charge: labourCharge,
-      is_18_percent_gst_applied: !!is18PercentGSTApplied ? 1 : 0,
-      is_inclusive_tax: !!isInclusiveTax ? 1 : 0,
-      is_exclusive_tax: !!isExlusiveTax ? 1 : 0,  
+      is_18_percent_gst_applied: is18PercentGSTApplied =='true' ? 1 : 0,
+      is_inclusive_tax: isInclusiveTax == 'true' ? 1 : 0,
+      is_exclusive_tax: isExlusiveTax == 'true' ? 1 : 0,  
       expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
       notes: notes ?? null,
       src: request.body.estimateSRC,
@@ -624,14 +624,13 @@ exports.addAndSentInvoiceController = async (request, response) => {
       issue_id: issueID,
       total_charge: totalCharge,
       labour_charge: labourCharge,
-      is_18_percent_gst_applied: !!is18PercentGSTApplied ? 1 : 0,
-      is_inclusive_tax: !!isInclusiveTax ? 1 : 0,
+      is_18_percent_gst_applied: is18PercentGSTApplied =='true' ? 1 : 0,
+      is_inclusive_tax: isInclusiveTax == 'true' ? 1 : 0,
       expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
       notes: notes ?? null,
       src: request.body.invoiceSRC,
       status: CONSTANTS.QUOTATION_STATUS.SEND
     }
-
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
     const entityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addInvoice(CONSTANTS.BUILDING_DATABASE), [ invoiceData, issueID ]))?.insertId
 
