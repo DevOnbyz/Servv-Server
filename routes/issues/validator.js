@@ -39,7 +39,7 @@ const reAssignAgentSchema = Joi.object({
     'string.empty': 'modifiedVisit is required',
   }),
   modifiedDate: Joi.string().optional().allow(null),
-  modifiedNote: Joi.string().optional().allow(null),
+  modifiedNote: Joi.string().optional().allow(null, ''),
 })
 
 const addEstimateSchema = Joi.object({

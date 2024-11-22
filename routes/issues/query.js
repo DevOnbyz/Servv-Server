@@ -12,7 +12,7 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
     I.created_at, RI.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, I.preferred_time as time,
-    I.img_src
+    I.img_src, AA.assigned_time, AA.visit_scheduled_time, AA.notes as agentNotes
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
     left join ${database}.project P on A.project_id = P.id
@@ -20,6 +20,7 @@ module.exports = {
     left join ${database}.resident_identity RI on R.identity_id = RI.id
     left join ${database}.service S on I.service_type = S.id
     left join ${database}.agent AG on I.agent_id = AG.id
+    left join ${database}.agent_assignment AA on I.id = AA.issue_id
     where I.org_id = ?
     ORDER BY I.created_at DESC`;
   },
