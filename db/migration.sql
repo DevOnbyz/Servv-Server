@@ -270,7 +270,7 @@ CREATE TABLE `issue` (
     `service_type` INT,
     `service_subtype` INT,
     `issue_type` VARCHAR(255),
-    `preferred_time` DATETIME,
+    `scheduled_time` DATETIME,
     `due_date` DATETIME,
     `rating` INT,
     `payment_id` INT,
@@ -327,10 +327,14 @@ CREATE TABLE `agent_assignment` (
     `otp_code` VARCHAR(10),
     `agent_inferences` TEXT,
     `agent_uploads` TEXT,
+    `created_by` INT DEFAULT NULL,
+    `updated_by` INT DEFAULT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_agent_assignment_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE,
-    CONSTRAINT `fk_agent_assignment_ibfk_2` FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE
+    CONSTRAINT `fk_agent_assignment_ibfk_2` FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_agent_assignment_ibfk_3` FOREIGN KEY (created_by) REFERENCES admin (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_agent_assignment_ibfk_4` FOREIGN KEY (updated_by) REFERENCES admin (id) ON DELETE CASCADE
 );
 CREATE TABLE `estimate` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
@@ -347,6 +351,7 @@ CREATE TABLE `estimate` (
     `estimate_created_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `notes` TEXT,
     `src` TEXT,
+    `filename` TEXT DEFAULT NULL,
     `created_by` INT DEFAULT NULL,
     `updated_by` INT DEFAULT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -370,6 +375,7 @@ CREATE TABLE `invoice` (
     `estimate_created_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `notes` TEXT,
     `src` TEXT,
+    `filename` TEXT DEFAULT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_invoice_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE

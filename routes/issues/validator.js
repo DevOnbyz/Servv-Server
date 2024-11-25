@@ -17,7 +17,7 @@ const addIssueSchema = Joi.object({
     'string.empty': 'subServiceID is required',
   }),
   description: Joi.string().optional().allow(null),
-  preferred_time: Joi.string().optional().allow(null),
+  scheduled_time: Joi.string().optional().allow(null),
   img_src: Joi.array().optional().allow(null),
 })
 

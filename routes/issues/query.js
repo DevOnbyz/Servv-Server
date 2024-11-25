@@ -11,8 +11,8 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
-    I.created_at, RI.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, I.preferred_time as time,
-    I.img_src, AA.assigned_time, AA.visit_scheduled_time, AA.notes as agentNotes
+    I.created_at, RI.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, I.scheduled_time as time,
+    I.img_src
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
     left join ${database}.project P on A.project_id = P.id
@@ -20,7 +20,6 @@ module.exports = {
     left join ${database}.resident_identity RI on R.identity_id = RI.id
     left join ${database}.service S on I.service_type = S.id
     left join ${database}.agent AG on I.agent_id = AG.id
-    left join ${database}.agent_assignment AA on I.id = AA.issue_id
     where I.org_id = ?
     ORDER BY I.created_at DESC`;
   },
@@ -28,28 +27,26 @@ module.exports = {
     return `SELECT 
              COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 1 END) AS estimateApproved,
              COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} THEN 1 END) AS estimateRejected,
-             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED} THEN 1 END) AS invoiceGenerated,
+             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED} THEN 1 END) AS invoiceGenerated,
              COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN 1 END) AS siteVisitCompleted,
-             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.REVISIT_REQUIRED} THEN 1 END) AS revisitRequired,
              COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.RE_WORK_REQUIRED} THEN 1 END) AS reWorkRequired,
              COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_GENERATED} THEN 1 END) AS estimateGenerated,
              COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 1 END) AS workCompleted,
-             COUNT(CASE WHEN due_date = CURDATE() THEN 1 END) AS dueToday 
+             COUNT(CASE WHEN scheduled_time = CURDATE() THEN 1 END) AS dueToday 
              FROM ${database}.issue WHERE org_id = ?
              `
   },
   getIssuesEvent(database) {
     return `SELECT id, issue_id,event_type,
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.CREATED} THEN 'Created'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED} THEN 'Agent Assigned'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.OPEN} THEN 'OPEN'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN 'SITE VISIT ASSIGNED'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN 'Site Visit Completed'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.REVISIT_REQUIRED} THEN 'Revisit Required'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.RE_WORK_REQUIRED} THEN 'Re Work Required'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_GENERATED} THEN 'Estimate Generated'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 'Estimate Approved'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} THEN 'Estimate Rejected'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED} THEN 'Invoice Generated'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED} THEN 'Invoice Drafted'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN 'Work Assigned'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ORDER_CANCELLED} THEN 'Work Order Cancelled'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED} THEN 'Site Visit Cancelled'
@@ -70,7 +67,7 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status,
-     I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.preferred_time as time
+     I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.scheduled_time as time
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
     left join ${database}.project P on A.project_id = P.id
@@ -91,9 +88,9 @@ module.exports = {
         IE.issue_id, 
         IE.event_type, 
         CONCAT(A.firstname, ' ', A.lastname) AS assignee, 
-        I.due_date,
+        I.scheduled_time,
         CASE 
-            WHEN I.due_date < CURDATE() THEN DATEDIFF(CURDATE(), I.due_date)
+            WHEN I.scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), I.scheduled_time)
             ELSE 0
         END AS over_due_date,
         (
@@ -129,7 +126,7 @@ module.exports = {
     LEFT JOIN 
         ${database}.agent A ON A.id = I.agent_id
     WHERE 
-        IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.REVISIT_REQUIRED}) 
+        IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}) 
         AND I.id = ? 
     ORDER BY 
         I.created_at DESC;`
@@ -140,9 +137,9 @@ module.exports = {
         IE.event_type,
         I.description,
         CONCAT(A.firstname, ' ', A.lastname) AS assignee, 
-        I.due_date,
+        I.scheduled_time,
         CASE 
-            WHEN I.due_date < CURDATE() THEN DATEDIFF(CURDATE(), I.due_date)
+            WHEN I.scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), I.scheduled_time)
             ELSE 0
         END AS over_due_date,
         (
@@ -202,7 +199,7 @@ module.exports = {
     return `UPDATE ${database}.issue SET status = ${ISSUE_STATUS.CLOSED} WHERE id = ?`;
   },
   hasPendingInvoice(database) {
-    return `SELECT * FROM ${database}.issue where id = ? AND sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED}`;
+    return `SELECT * FROM ${database}.issue where id = ? AND sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}`;
   },
   cancelEstimateByIssueID(database) {
     return `UPDATE ${database}.estimate SET status = ${QUOTATION_STATUS.CANCELLED} WHERE issue_id = ?`;
@@ -211,8 +208,9 @@ module.exports = {
     return `SELECT * FROM ${database}.estimate where issue_id = ?`;
   },
   getEstimates(database) {
-    return `SELECT id, issue_id, material_charge, labour_charge, total_charge, is_18_percent_gst_applied, is_inclusive_tax, is_exclusive_tax, expiry_date, notes, created_at, src, 
+    return `SELECT id, issue_id, material_charge, labour_charge, total_charge, is_18_percent_gst_applied, is_inclusive_tax, is_exclusive_tax, expiry_date, notes, filename, created_at, src, 
     CASE
+    WHEN status = ${QUOTATION_STATUS.DRAFTED} THEN 'drafted'
     WHEN status = ${QUOTATION_STATUS.APPROVED} THEN 'approved' 
     WHEN status = ${QUOTATION_STATUS.REJECTED} THEN 'rejected'
     WHEN status = ${QUOTATION_STATUS.CANCELLED} THEN 'cancelled'
@@ -227,7 +225,7 @@ module.exports = {
     return `SELECT * FROM ${database}.estimate where issue_id = ? AND status = ${QUOTATION_STATUS.SEND} LIMIT 1`;
   },
   getInvoice(database) {
-    return `SELECT id, issue_id, material_charge, labour_charge, total_charge, is_18_percent_gst_applied, is_inclusive_tax, is_exclusive_tax, expiry_date, notes, created_at, src, 
+    return `SELECT id, issue_id, material_charge, labour_charge, total_charge, is_18_percent_gst_applied, is_inclusive_tax, is_exclusive_tax, expiry_date, notes, filename, created_at, src, 
     CASE
     WHEN status = ${QUOTATION_STATUS.APPROVED} THEN 'approved' 
     WHEN status = ${QUOTATION_STATUS.REJECTED} THEN 'rejected'
@@ -245,10 +243,9 @@ module.exports = {
   getIssueHistory(database) {
     return `SELECT id, issue_id, event_type, created_at,
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.CREATED} THEN 'Created'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED} THEN 'Agent Assigned'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.OPEN} THEN 'OPEN'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN 'Agent Assigned'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN 'Site Visit Completed'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.REVISIT_REQUIRED} THEN 'Revisit Required'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_GENERATED} THEN 'Estimate Generated'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 'Estimate Approved'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} THEN 'Estimate Rejected'
@@ -256,7 +253,7 @@ module.exports = {
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN 'Work Assigned'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 'Work Completed'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.RE_WORK_REQUIRED} THEN 'Re Work Required'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED} THEN 'Invoice Generated'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED} THEN 'Invoice Drafted'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.PAID} THEN 'Paid'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ONHOLD} THEN 'On Hold'
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.CLOSED} THEN 'Closed'
@@ -277,7 +274,7 @@ module.exports = {
     FROM ${database}.issue_event where issue_id = ? ORDER BY created_at ASC`;
   },
   getActiveInvoiceByIssueID(database) {
-    return `SELECT * FROM ${database}.invoice where issue_id = ? AND status in (${QUOTATION_STATUS.SEND}, ${QUOTATION_STATUS.CREATED}) LIMIT 1`;
+    return `SELECT * FROM ${database}.invoice where issue_id = ? AND status in (${QUOTATION_STATUS.SEND}, ${QUOTATION_STATUS.DRAFTED}) LIMIT 1`;
   },
   updateInvoice(database) {
     return `UPDATE ${database}.invoice SET ? WHERE id = ?`;

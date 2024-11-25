@@ -8,7 +8,7 @@ const fs = require('fs')
 const path = require('path')
 const { v4: uuidv4 } = require('uuid')
 const { addIssueEvent } = require('../../db/query')
-const { generateOTP } = require('../../lib/function')
+const { generateOTP, getSubStatusStringById } = require('../../lib/function')
 const moment = require('moment')
 const runQueryOne = require('../../db/runQueryOne')
 const Fn = require('./functions')
@@ -108,19 +108,18 @@ exports.addIssueController = async (request, response) => {
       service_subtype: subServiceID,
       issue_type: '',
       status: CONSTANTS.ISSUE_STATUS.OPEN,
-      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.CREATED,
-      preferred_time: _.isEmpty(request.body.preferredTime) ? null : request.body.preferredTime,
-      due_date: null,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.OPEN,
+      scheduled_time: _.isEmpty(request.body.scheduledTime) ? null : request.body.scheduledTime,
       img_src: _.isEmpty(request.body.imgSrcPaths) ? null : (request.body.imgSrcPaths)?.join(','),
     }
     const insertID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addIssue(CONSTANTS.BUILDING_DATABASE), [issueData]))?.insertId
     const issueLogData = {
       issue_id : insertID,
-      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.CREATED,
-      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.CREATED,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.OPEN,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.OPEN,
       description : '',
       creator_id : request.userID,
-      creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type : request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN ? CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN : CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData])
     Log.info(`[${domain} | OrganisationID:${orgID}] | addIssueController | Issue added successfully | IssueID: ${insertID}`)
@@ -138,10 +137,15 @@ exports.scheduleVisitIssueController = async (request, response) => {
   const issueID = request.params.issueID
   try {
     const { agentID, notes, scheduleTime } = request.body
+
+    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, `You can't schedule visit for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`, null, 400)
+    
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
       agent_id: agentID,
-      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
 
@@ -153,14 +157,15 @@ exports.scheduleVisitIssueController = async (request, response) => {
       visit_scheduled_time : scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null,
       otp_sent_time: null,
       otp_code : generateOTP(),
-      notes
+      notes,
+      created_by: request.userID
     }
     const entityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAgentAssignment(CONSTANTS.BUILDING_DATABASE), [ agentAssignmentData, issueID ]))?.insertId
 
     const issueLogData = {
       issue_id : issueID,
-      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.AGENT_ASSIGNED,
-      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.SITE_VISIT_ASSIGNED,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED,
       entity_id: entityID,
       description : notes,
       creator_id : request.userID,
@@ -183,14 +188,15 @@ exports.workOrderIssueController = async (request, response) => {
   const issueID = request.params.issueID
   try {
     const { agentID, notes, scheduleTime } = request.body
-    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED]
+    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for work order')
+    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, `You can't add a work order for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
 
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
       agent_id: agentID,
-      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED,
+      scheduled_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
 
@@ -235,6 +241,9 @@ exports.reAssignWorkOrderController = async (request, response) => {
   const modifiedNote = request.body.modifiedNote
   const modifiedDate = request.body.modifiedDate
   try {
+    const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    if(_.isEmpty(activeSiteVisit)) return sendHTTPResponse.error(response, 'No active work order found for this issue')
+
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
       agent_id: agentID,
@@ -246,7 +255,7 @@ exports.reAssignWorkOrderController = async (request, response) => {
       otp_code: generateOTP(),
     }
     if(modifiedVisit){
-      newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
+      newAgentAssignmentData.scheduled_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.notes = modifiedNote
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
@@ -323,18 +332,25 @@ exports.reAssignSiteVisitController = async (request, response) => {
   const modifiedNote = request.body.modifiedNote
   const modifiedDate = request.body.modifiedDate
   try {
+
+    // there should be an active site visit to re-assign
+    const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    if(_.isEmpty(activeSiteVisit)) return sendHTTPResponse.error(response, 'No active site visit found for this issue')
+
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
       agent_id: agentID,
-      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED,
+      updated_by: request.userID
     }
 
     const newAgentAssignmentData = {
       agent_id: agentID,
       otp_code: generateOTP(),
     }
+    // sent notification to the agent regarding the issue
     if(modifiedVisit){
-      newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
+      newAgentAssignmentData.scheduled_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.notes = modifiedNote
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
@@ -352,18 +368,23 @@ exports.cancelSiteVisitController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
+
+    const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    if(_.isEmpty(activeSiteVisit)) return sendHTTPResponse.error(response, 'There is no active site visit for this issue', null, 400)
+    
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
-      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED,
+      scheduled_time: null,
+      updated_by: request.userID
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
-    const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
-
-    if(_.isEmpty(activeSiteVisit)) return sendHTTPResponse.error(response, 'There is no active site visit for this issue', null, 400)
 
     const activeSiteVisitID = activeSiteVisit.id
     const updatedAgentAssignmentData = {
-      status: CONSTANTS.AGENT_ASSIGNMENT_STATUS.CANCELLED
+      status: CONSTANTS.AGENT_ASSIGNMENT_STATUS.CANCELLED,
+      otp_code: null,
+      updated_by: request.userID
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentAssignmentByID(CONSTANTS.BUILDING_DATABASE), [ updatedAgentAssignmentData, activeSiteVisitID ])
 
@@ -404,7 +425,7 @@ exports.addAndSendEstimateController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, isExlusiveTax, expiryDate, notes, labourCharge, totalCharge} = request.body
+    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, isExlusiveTax, expiryDate, notes, labourCharge, totalCharge, isDraft} = request.body
 
     if (_.isEmpty(materialCharge)) {
       return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
@@ -431,22 +452,23 @@ exports.addAndSendEstimateController = async (request, response) => {
     if (_.isEmpty(totalCharge)) {
       return sendHTTPResponse.error(response, 'Total amount is required', null, 400)
     }
-    const isEstimateAlreadyGenerated = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
-    if(!_.isEmpty(isEstimateAlreadyGenerated)) return sendHTTPResponse.error(response, 'Estimate already generated for this issue', null, 400)
+    const estimateDetails = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    if(!_.isEmpty(estimateDetails) && estimateDetails.status!= CONSTANTS.QUOTATION_STATUS.DRAFTED) return sendHTTPResponse.error(response, 'Estimate already generated for this issue', null, 400)
 
-    const notAllowedSubStatusForSendEstimate = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED]
+    const notAllowedSubStatusForSendEstimate = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusForSendEstimate.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for estimate')
+    if(notAllowedSubStatusForSendEstimate.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, `You can't send estimate for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
       
     if (request.file) {
       const destination = 'uploads/estimates/'
       const savedFilePath = await Fn.saveFileToDisk(request.file, destination)
+      request.body.fileName = request.file.originalname
       request.body.estimateSRC = savedFilePath
     }
 
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
-      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT
+      sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT
     }
 
     const estimateData = {
@@ -460,22 +482,28 @@ exports.addAndSendEstimateController = async (request, response) => {
       expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
       notes: notes ?? null,
       src: request.body.estimateSRC,
-      status: CONSTANTS.QUOTATION_STATUS.SEND,
+      fileName: request.body.fileName ?? null,
+      status: isDraft ? CONSTANTS.QUOTATION_STATUS.DRAFTED : CONSTANTS.QUOTATION_STATUS.SEND,
       created_by: request.userID
     }
-
-    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
-    const entityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addEstimate(CONSTANTS.BUILDING_DATABASE), [ estimateData, issueID ]))?.insertId
-
     const issueLogData = {
       issue_id : issueID,
-      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
-      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
-      entity_id: entityID,
+      event_type : isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
       description : notes,
       creator_id : request.userID,
       creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
+
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
+    if(_.isEmpty(estimateDetails)){
+      const entityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addEstimate(CONSTANTS.BUILDING_DATABASE), [ estimateData, issueID ]))?.insertId
+      issueLogData.entity_id = entityID
+    }
+    else{ // already existing estimate will be in drafted status
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [ {status: isDraft ? CONSTANTS.QUOTATION_STATUS.DRAFTED : CONSTANTS.QUOTATION_STATUS.SEND}, estimateDetails.id ])
+      issueLogData.entity_id = estimateDetails.id
+    }
+
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
     Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | Estimate added successfully | IssueID: ${issueID}`)
@@ -491,9 +519,9 @@ exports.approveEstimateController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED]
+    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status to approve estimate')
+    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, `You can't approve estimae for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
     const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if(_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
 
@@ -528,7 +556,7 @@ exports.sendEstimateController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED]
+    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status to send estimate')
     const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
@@ -607,6 +635,7 @@ exports.editEstimateController = async (request, response) => {
         await Fn.deleteFileFromDisk(estimate.src)
       const savedFilePath = await Fn.saveFileToDisk(request.file, destination)
       request.body.estimateSRC = savedFilePath
+      request.body.fileName = request.file.originalname
     }
 
     const estimateData = {
@@ -620,6 +649,7 @@ exports.editEstimateController = async (request, response) => {
       expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
       notes: notes ?? null,
       src: request.body.estimateSRC,
+      fileName: request.body.fileName ?? null,
       status: CONSTANTS.QUOTATION_STATUS.SEND,
       updated_by: request.userID
     }
@@ -707,7 +737,7 @@ exports.addAndSentInvoiceController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, expiryDate, notes, labourCharge, totalCharge} = request.body
+    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, expiryDate, notes, labourCharge, totalCharge, isDraft} = request.body
 
     if (_.isEmpty(materialCharge)) {
       return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
@@ -728,22 +758,23 @@ exports.addAndSentInvoiceController = async (request, response) => {
       return sendHTTPResponse.error(response, 'Total amount is required', null, 400)
     }
 
-    const isInvoiceAlreadyGenerated = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getInvoiceByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
-    if(!_.isEmpty(isInvoiceAlreadyGenerated)) return sendHTTPResponse.error(response, 'Invoice already generated for this issue', null, 400)
+    const exsitingInvoiceDetails = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getInvoiceByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    if(!_.isEmpty(exsitingInvoiceDetails) && exsitingInvoiceDetails.status!= CONSTANTS.QUOTATION_STATUS.DRAFTED) return sendHTTPResponse.error(response, 'Invoice already generated for this issue', null, 400)
 
-    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_GENERATED]
+    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for invoice')
       
     if (request.file) {
       const destination = 'uploads/invoices/'
       const savedFilePath = await Fn.saveFileToDisk(request.file, destination)
-      request.body.estimateSRC = savedFilePath
+      request.body.invoiceSRC = savedFilePath
+      request.body.fileName = request.file.originalname
     }
 
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
-      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT
+      sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT
     }
 
     const invoiceData = {
@@ -756,24 +787,34 @@ exports.addAndSentInvoiceController = async (request, response) => {
       expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
       notes: notes ?? null,
       src: request.body.invoiceSRC,
-      status: CONSTANTS.QUOTATION_STATUS.SEND
+      fileName: request.body.fileName ?? null,
+      status: isDraft ? CONSTANTS.QUOTATION_STATUS.DRAFTED : CONSTANTS.QUOTATION_STATUS.SEND
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
-    const entityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addInvoice(CONSTANTS.BUILDING_DATABASE), [ invoiceData, issueID ]))?.insertId
 
     const issueLogData = {
       issue_id : issueID,
-      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_SENT,
-      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT,
-      entity_id: entityID,
+      event_type : isDraft ? CONSTANTS.ISSUE_EVENT_TYPE_NUM.INVOICE_DRAFTED : CONSTANTS.ISSUE_EVENT_TYPE_NUM.INVOICE_SENT,
+      sub_status : isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT,
       description : notes,
       creator_id : request.userID,
       creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
+
+    if(_.isEmpty(exsitingInvoiceDetails)){
+      const entityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addInvoice(CONSTANTS.BUILDING_DATABASE), [ invoiceData, issueID ]))?.insertId
+      issueLogData.entity_id = entityID
+    }
+    else{
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateInvoice(CONSTANTS.BUILDING_DATABASE), [ {status: isDraft ? CONSTANTS.QUOTATION_STATUS.DRAFTED : CONSTANTS.QUOTATION_STATUS.SEND}, estimateDetails.id ])
+      issueLogData.entity_id = exsitingInvoiceDetails.id
+    }
+
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
-    Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | Invoice added successfully | IssueID: ${issueID}`)
-    return sendHTTPResponse.success(response, 'Invoice added successfully', {logID})
+
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | Invoice ${isDraft ? 'drafted' : 'sent'} successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, `Invoice ${isDraft ? 'drafted' : 'sent'} successfully`, {logID})
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while adding invoice', error.message)
@@ -785,7 +826,7 @@ exports.approveInvoiceController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED]
+    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status to approve invoice')
     const invoice = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveInvoiceByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])

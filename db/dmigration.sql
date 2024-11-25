@@ -48,3 +48,14 @@ ALTER TABLE estimate ADD CONSTRAINT fk_estimate_ibfk_2 FOREIGN KEY (`created_by`
 
 ALTER TABLE estimate ADD COLUMN `updated_by` INT DEFAULT NULL;
 ALTER TABLE estimate ADD CONSTRAINT fk_estimate_ibfk_3 FOREIGN KEY (`updated_by`) REFERENCES `admin`(`id`);
+
+ALTER TABLE agent_assignment ADD COLUMN `created_by` INT DEFAULT NULL;
+ALTER TABLE agent_assignment ADD COLUMN `updated_by` INT DEFAULT NULL;
+ALTER TABLE agent_assignment ADD CONSTRAINT `fk_agent_assignment_ibfk_3` FOREIGN KEY (`created_by`) REFERENCES `admin`(`id`);
+ALTER TABLE agent_assignment ADD CONSTRAINT `fk_agent_assignment_ibfk_4` FOREIGN KEY (`updated_by`) REFERENCES `admin`(`id`);
+
+ALTER TABLE estimate ADD COLUMN `filename` TEXT DEFAULT NULL AFTER `src`;
+ALTER TABLE invoice ADD COLUMN `filename` TEXT DEFAULT NULL AFTER `src`;
+ALTER TABLE issue CHANGE COLUMN `preferred_time` `scheduled_time` DATETIME DEFAULT NULL;
+
+ALTER TABLE issue DROP COLUMN due_date;

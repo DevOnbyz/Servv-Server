@@ -44,7 +44,7 @@ module.exports = {
     return `DELETE FROM ${database}.agent_service_rel WHERE agent_id = ? AND service_id in (?)`;
   },
   getActiveSiteVisitCountByAgentID(database) {
-    return `SELECT count(*) as activeSiteVisit FROM ${database}.issue WHERE agent_id = ? AND status = ${ISSUE_SUB_STATUS_NUM.AGENT_ASSIGNED}`;
+    return `SELECT count(*) as activeSiteVisit FROM ${database}.issue WHERE agent_id = ? AND status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}`;
   },
   getActiveWorkLoadByCountAgentID(database) {
     return `SELECT count(*) as activeWorkLoad FROM ${database}.issue WHERE agent_id = ? AND status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}`;
