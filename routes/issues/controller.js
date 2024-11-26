@@ -523,9 +523,9 @@ exports.approveEstimateController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
+    const notAllowedSubStatusForApproveEstimate = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, `You can't approve estimae for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
+    if(notAllowedSubStatusForApproveEstimate.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, `You can't approve estimae for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
     const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if(_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
 
@@ -560,9 +560,9 @@ exports.sendEstimateController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT]
+    const notAllowedSubStatusForSendEstimate = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status to send estimate')
+    if(notAllowedSubStatusForSendEstimate.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status to send estimate')
     const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if(_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
 
@@ -778,9 +778,9 @@ exports.addAndSentInvoiceController = async (request, response) => {
     const exsitingInvoiceDetails = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getInvoiceByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
     if(!_.isEmpty(exsitingInvoiceDetails) && exsitingInvoiceDetails.status!= CONSTANTS.QUOTATION_STATUS.DRAFTED) return sendHTTPResponse.error(response, 'Invoice already generated for this issue', null, 400)
 
-    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT]
+    const notAllowedSubStatusToAddInvoice = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for invoice')
+    if(notAllowedSubStatusToAddInvoice.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for invoice')
       
     if (request.file) {
       const destination = 'uploads/invoices/'
@@ -843,9 +843,9 @@ exports.approveInvoiceController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED]
+    const notAllowedSubStatusForApproveEstimate = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status to approve invoice')
+    if(notAllowedSubStatusForApproveEstimate.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status to approve invoice')
     const invoice = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveInvoiceByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if(_.isEmpty(invoice)) return sendHTTPResponse.error(response, 'No active invoice found for this issue', null, 400)
 
