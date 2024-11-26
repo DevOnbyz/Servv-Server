@@ -600,7 +600,8 @@ exports.editEstimateController = async (request, response) => {
     const {materialCharge, is18PercentGSTApplied, isInclusiveTax, isExlusiveTax, expiryDate, notes, labourCharge, totalCharge} = request.body
     Log.info(`[${domain} | OrganisationID:${orgID} | userID:${request.userID}] | editEstimateController | Data: ${JSON.stringify(request.body)}`)
     const hasFileChanged = request.body.hasFileChanged == 'true' ? true : false
-    
+    const isDraft = request.body.isDraft == 'true' ? true : false
+
     if (_.isEmpty(materialCharge)) {
       return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
     }
@@ -653,13 +654,19 @@ exports.editEstimateController = async (request, response) => {
       is_exclusive_tax: isExlusiveTax == 'true' ? 1 : 0,  
       expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
       notes: notes ?? null,
-      status: CONSTANTS.QUOTATION_STATUS.SEND,
+      status: isDraft ? CONSTANTS.QUOTATION_STATUS.DRAFTED : CONSTANTS.QUOTATION_STATUS.SEND,
       updated_by: request.userID
     }
     if(hasFileChanged){
       estimateData.src = request.body.estimateSRC ?? null
       estimateData.fileName = request.body.fileName ?? null
     }
+
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ]) 
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [ estimateData, estimate.id ])
 
