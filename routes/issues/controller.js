@@ -425,8 +425,8 @@ exports.addAndSendEstimateController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, isExlusiveTax, expiryDate, notes, labourCharge, totalCharge, isDraft} = request.body
-
+    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, isExlusiveTax, expiryDate, notes, labourCharge, totalCharge} = request.body
+    const isDraft = request.body.isDraft == 'true' ? true : false
     if (_.isEmpty(materialCharge)) {
       return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
     }
@@ -737,8 +737,8 @@ exports.addAndSentInvoiceController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, expiryDate, notes, labourCharge, totalCharge, isDraft} = request.body
-
+    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, expiryDate, notes, labourCharge, totalCharge} = request.body
+    const isDraft = request.body.isDraft == 'true' ? true : false
     if (_.isEmpty(materialCharge)) {
       return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
     }
