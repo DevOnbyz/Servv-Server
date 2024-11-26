@@ -595,10 +595,11 @@ exports.editEstimateController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
   const issueID = request.params.issueID
-  const estimateID = request.params.estimateID
   try {
     const {materialCharge, is18PercentGSTApplied, isInclusiveTax, isExlusiveTax, expiryDate, notes, labourCharge, totalCharge} = request.body
-
+    Log.info(`[${domain} | OrganisationID:${orgID} | userID:${request.userID}] | editEstimateController | Data: ${JSON.stringify(request.body)}`)
+    const hasFileChanged = request.body.hasFileChanged == 'true' ? true : false
+    
     if (_.isEmpty(materialCharge)) {
       return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
     }
@@ -632,7 +633,7 @@ exports.editEstimateController = async (request, response) => {
     const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if(_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
 
-    if (request.file) {
+    if (request.file && hasFileChanged) {
       const destination = 'uploads/estimates/'
       if(estimate.src)
         await Fn.deleteFileFromDisk(estimate.src)
@@ -651,11 +652,14 @@ exports.editEstimateController = async (request, response) => {
       is_exclusive_tax: isExlusiveTax == 'true' ? 1 : 0,  
       expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
       notes: notes ?? null,
-      src: request.body.estimateSRC,
-      fileName: request.body.fileName ?? null,
       status: CONSTANTS.QUOTATION_STATUS.SEND,
       updated_by: request.userID
     }
+    if(hasFileChanged){
+      estimateData.src = request.body.estimateSRC ?? null
+      estimateData.fileName = request.body.fileName ?? null
+    }
+
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [ estimateData, estimate.id ])
 
     Log.info(`[${domain} | OrganisationID:${orgID}] | editEstimateController | Estimate updated successfully | estimateID: ${estimate.id}`)
