@@ -71,6 +71,7 @@ exports.addIssueController = async (request, response) => {
   const userType = request.userType
   try {
     const { projectID, residentID, apartmentID, serviceID, subServiceID } = request.body
+    Log.info(`[${domain} | OrganisationID:${orgID} | UserID:${request.userID}] | addIssueController | Data: ${JSON.stringify(request.body)}`)
 
     if (_.isEmpty(projectID)) {
       return sendHTTPResponse.error(response, 'project cannot be empty', null, 400)
@@ -426,6 +427,8 @@ exports.addAndSendEstimateController = async (request, response) => {
   const issueID = request.params.issueID
   try {
     const {materialCharge, is18PercentGSTApplied, isInclusiveTax, isExlusiveTax, expiryDate, notes, labourCharge, totalCharge} = request.body
+    Log.info(`[${domain} | OrganisationID:${orgID} | userID:${request.userID}] | addAndSendEstimateController | Data: ${JSON.stringify(request.body)}`)
+
     const isDraft = request.body.isDraft == 'true' ? true : false
     if (_.isEmpty(materialCharge)) {
       return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
@@ -738,6 +741,8 @@ exports.addAndSentInvoiceController = async (request, response) => {
   const issueID = request.params.issueID
   try {
     const {materialCharge, is18PercentGSTApplied, isInclusiveTax, expiryDate, notes, labourCharge, totalCharge} = request.body
+    Log.info(`[${domain} | OrganisationID:${orgID} | userID:${request.userID}] | addAndSentInvoiceController | Data: ${JSON.stringify(request.body)}`)
+
     const isDraft = request.body.isDraft == 'true' ? true : false
     if (_.isEmpty(materialCharge)) {
       return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
