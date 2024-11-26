@@ -523,7 +523,7 @@ exports.approveEstimateController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
+    const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, `You can't approve estimae for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
     const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
