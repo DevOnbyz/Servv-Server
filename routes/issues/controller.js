@@ -840,6 +840,86 @@ exports.addAndSentInvoiceController = async (request, response) => {
   }
 }
 
+exports.editInvoiceController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const {materialCharge, is18PercentGSTApplied, isInclusiveTax, expiryDate, notes, labourCharge, totalCharge} = request.body
+    Log.info(`[${domain} | OrganisationID:${orgID} | userID:${request.userID}] | editInvoiceController | Data: ${JSON.stringify(request.body)}`)
+
+    const hasFileChanged = request.body.hasFileChanged == 'true' ? true : false
+    const isDraft = request.body.isDraft == 'true' ? true : false
+
+    if (_.isEmpty(materialCharge)) {
+      return sendHTTPResponse.error(response, 'materialCharge is required', null, 400)
+    }
+    if (_.isEmpty(labourCharge)) {
+      return sendHTTPResponse.error(response, 'labourCharge is required', null, 400)
+    }
+  
+    if (_.isEmpty(is18PercentGSTApplied)) {
+      return sendHTTPResponse.error(response, 'is18PercentGSTApplied is required', null, 400)
+    }
+  
+    if (_.isEmpty(isInclusiveTax)) {
+      return sendHTTPResponse.error(response, 'isInclusiveTax is required', null, 400)
+    }
+
+    if (_.isEmpty(totalCharge)) {
+      return sendHTTPResponse.error(response, 'Total amount is required', null, 400)
+    }
+
+
+    const notAllowedSubStatusForEditInvoice = [CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED]
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(notAllowedSubStatusForEditInvoice.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status to edit invoice')
+    
+    const invoiceData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getInvoiceByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    if(_.isEmpty(invoiceData)) return sendHTTPResponse.error(response, 'No active invoice found for this issue', null, 400)
+
+    if (request.file && hasFileChanged) {
+      const destination = 'uploads/invoices/'
+      if(invoiceData.src)
+        await Fn.deleteFileFromDisk(invoiceData.src)
+      const savedFilePath = await Fn.saveFileToDisk(request.file, destination)
+      request.body.estimateSRC = savedFilePath
+      request.body.fileName = request.file.originalname
+    }
+
+    const invoiceDBData = {
+      material_charge: materialCharge,
+      issue_id: issueID,
+      total_charge: totalCharge,
+      labour_charge: labourCharge,
+      is_18_percent_gst_applied: is18PercentGSTApplied == 'true' ? 1 : 0,
+      is_inclusive_tax: isInclusiveTax == 'true' ? 1 : 0,
+      expiry_date: moment(expiryDate, 'YYYY-MM-DD').format('YYYY-MM-DD'),
+      notes: notes ?? null,
+      status: isDraft ? CONSTANTS.QUOTATION_STATUS.DRAFTED : CONSTANTS.QUOTATION_STATUS.SEND,
+      updated_by: request.userID
+    }
+    if(hasFileChanged){
+      invoiceDBData.src = request.body.invoiceSRC ?? null
+      invoiceDBData.fileName = request.body.fileName ?? null
+    }
+
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT,
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ]) 
+
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateInvoice(CONSTANTS.BUILDING_DATABASE), [ invoiceDBData, invoiceData.id ])
+
+    Log.info(`[${domain} | OrganisationID:${orgID}] | editInvoiceController | Invoice updated successfully | invoiceID: ${invoiceData.id}`)
+    return sendHTTPResponse.success(response, 'Invoice updated successfully')
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | editInvoiceController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while updating invoice', error.message)
+  }
+}
+
 exports.approveInvoiceController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain

@@ -69,6 +69,17 @@ router.post('/:issueID/invoice',
     })
   }
 )
+router.patch('/:issueID/invoice/edit',
+  (req, res, next) => {
+    Fn.uploadImageAndFile(req, res, (err) => {
+      if (err instanceof multer.MulterError || err) {
+        return sendHTTPResponse.error(res, 'Error while uploading file', err.message)
+      }
+      controller.editInvoiceController(req, res, next)
+    })
+  }
+)
+
 router.patch('/:issueID/invoice/approve', controller.approveInvoiceController) //an issue has only only one invoice
 
 router.get('/:issueID/history', controller.getIssueHistoryController)
