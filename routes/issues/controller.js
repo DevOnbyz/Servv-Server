@@ -825,7 +825,7 @@ exports.addAndSentInvoiceController = async (request, response) => {
       issueLogData.entity_id = entityID
     }
     else{
-      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateInvoice(CONSTANTS.BUILDING_DATABASE), [ {status: isDraft ? CONSTANTS.QUOTATION_STATUS.DRAFTED : CONSTANTS.QUOTATION_STATUS.SEND}, estimateDetails.id ])
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateInvoice(CONSTANTS.BUILDING_DATABASE), [ {status: isDraft ? CONSTANTS.QUOTATION_STATUS.DRAFTED : CONSTANTS.QUOTATION_STATUS.SEND}, exsitingInvoiceDetails.id ])
       issueLogData.entity_id = exsitingInvoiceDetails.id
     }
 
