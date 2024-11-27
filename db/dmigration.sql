@@ -66,7 +66,7 @@ ALTER TABLE invoice ADD COLUMN `updated_by` INT DEFAULT NULL;
 ALTER TABLE invoice ADD CONSTRAINT fk_invoice_ibfk_3 FOREIGN KEY (`updated_by`) REFERENCES `admin`(`id`);
 
 --27-11-2024 
-ALTER TABLE estimate ADD COLUMN `approved_rejected_by_id` INT DEFAULT NULL;-
+ALTER TABLE estimate ADD COLUMN `approved_rejected_by_id` INT DEFAULT NULL;
 ALTER TABLE estimate ADD COLUMN `approved_rejected_by_type` TINYINT DEFAULT 0;
 ALTER TABLE invoice ADD COLUMN `approved_rejected_by_id` INT DEFAULT NULL;
 ALTER TABLE invoice ADD COLUMN `approved_rejected_by_type` TINYINT DEFAULT 0;
