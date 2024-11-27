@@ -29,6 +29,21 @@ module.exports = {
         env_production: {
             NODE_ENV: 'production'
         }
+      },
+      {
+        name: 'Socket Server',
+        script: 'services/socketService/index.js',
+        instances: 1,
+        autorestart: true,
+        exec_mode: 'cluster',
+        watch: false,
+        max_memory_restart: '1G',
+        env: {
+            NODE_ENV: 'dev'
+        },
+        env_production: {
+            NODE_ENV: 'production'
+        }
       }
   ]
 }
