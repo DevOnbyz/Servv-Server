@@ -534,7 +534,9 @@ exports.approveEstimateController = async (request, response) => {
     if(_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
 
     const estimateData = {
-      status: CONSTANTS.QUOTATION_STATUS.APPROVED
+      status: CONSTANTS.QUOTATION_STATUS.APPROVED,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [ estimateData, estimate.id ])
     const newIssueData = {
@@ -691,7 +693,9 @@ exports.rejectEstimateController = async (request, response) => {
     if(_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
 
       const estimateData = {
-        status: CONSTANTS.QUOTATION_STATUS.REJECTED
+        status: CONSTANTS.QUOTATION_STATUS.REJECTED,
+        approved_rejected_by: request.userID,
+        approved_rejected_by_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
       }
       await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [ estimateData, estimate.id ])
 
@@ -934,7 +938,9 @@ exports.approveInvoiceController = async (request, response) => {
     if(_.isEmpty(invoice)) return sendHTTPResponse.error(response, 'No active invoice found for this issue', null, 400)
 
     const invoiceData = {
-      status: CONSTANTS.QUOTATION_STATUS.APPROVED
+      status: CONSTANTS.QUOTATION_STATUS.APPROVED,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateInvoice(CONSTANTS.BUILDING_DATABASE), [ invoiceData, invoice.id ])
     const newIssueData = {

@@ -60,11 +60,11 @@ module.exports = {
   },
   getIssuesUnderResident(database, limit, offset) {
     return `SELECT I.id, A.name as doorNo, P.name as projectName, CONCAT(R.firstname, ' ', R.lastname) as name,
-    CONCAT(P.city, ', ', P.district, ', ', P.state, ', ', P.country) as location,
+    CONCAT(P.city, ', ', P.district, ', ', P.state, ', ', P.country) as location, SOR.name as serviceSubTypeName,
     CASE WHEN I.status = ${ISSUE_STATUS.OPEN} THEN '${ISSUE_STATUS_STRING.OPEN}' 
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
-    WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
-    WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status,
+    WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}'
+    WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
      I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.scheduled_time as time
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
@@ -72,6 +72,7 @@ module.exports = {
     left join ${database}.resident R on I.resident_id = R.id
     left join ${database}.resident_identity RI on R.identity_id = RI.id
     left join ${database}.service S on I.service_type = S.id
+    left join ${database}.service_organisation_rel SOR on I.service_subtype = SOR.id
     where I.resident_id = ? AND I.org_id = ?
     ORDER BY I.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
   },
