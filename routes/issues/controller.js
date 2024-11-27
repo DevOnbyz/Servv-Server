@@ -48,12 +48,14 @@ exports.getIssuesUnderResidentController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
   const residentID = parseInt(request.params.id)
-  const itemsPerPage = 3
+  const itemsPerPage = request.query.itemsPerPage ? parseInt(request.query.itemsPerPage) : 3
   const pageNumber = request.query.pageNumber ? parseInt(request.query.pageNumber) : 0
   const offset = (pageNumber - 1) * itemsPerPage
   try {
     const issues = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesUnderResident(CONSTANTS.BUILDING_DATABASE, itemsPerPage, offset),[residentID, orgID])
     for (const issue of issues) {
+      const activeAgentAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE),[issue.id])
+      issue.agentOTP = activeAgentAssignment ? activeAgentAssignment.otp_code : null
       issue.img_src = issue.img_src?.split(',')
       const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE),[issue.id])
       issue.issuesEvents = issuesEvents
