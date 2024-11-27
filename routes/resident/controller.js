@@ -20,6 +20,8 @@ exports.getResidentController = async (request, response) => {
       if (!resident) {
         resident = {
           id,
+          firstname,
+          lastname,
           name: fullName,
           phNum: ph_num,
           email: email_id,
