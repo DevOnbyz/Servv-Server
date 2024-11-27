@@ -883,7 +883,7 @@ exports.editInvoiceController = async (request, response) => {
       if(invoiceData.src)
         await Fn.deleteFileFromDisk(invoiceData.src)
       const savedFilePath = await Fn.saveFileToDisk(request.file, destination)
-      request.body.estimateSRC = savedFilePath
+      request.body.invoiceSRC = savedFilePath
       request.body.fileName = request.file.originalname
     }
 
