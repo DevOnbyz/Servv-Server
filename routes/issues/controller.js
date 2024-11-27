@@ -61,7 +61,7 @@ exports.getIssuesUnderResidentController = async (request, response) => {
       issue.issuesEvents = issuesEvents
     }
     Log.info(`[${domain} | OrganisationID:${orgID} | residentID:${residentID}] | getIssuesUnderResidentController | Issues fetched for resident successfully`)
-    return sendHTTPResponse.success(response, issues)
+    return sendHTTPResponse.success(response, 'Issues fetched for resident successfully', issues)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID} | residentID:${residentID}] | getIssuesUnderResidentController | Error in fetching issues | Error: ${error.message}`)
     return sendHTTPResponse.error(response, error.message, null, 400)
