@@ -70,3 +70,4 @@ ALTER TABLE estimate ADD COLUMN `approved_rejected_by_id` INT DEFAULT NULL;
 ALTER TABLE estimate ADD COLUMN `approved_rejected_by_type` TINYINT DEFAULT 0;
 ALTER TABLE invoice ADD COLUMN `approved_rejected_by_id` INT DEFAULT NULL;
 ALTER TABLE invoice ADD COLUMN `approved_rejected_by_type` TINYINT DEFAULT 0;
+ALTER TABLE issue CHANGE COLUMN `preferred_date` `customer_preferred_time` DATETIME DEFAULT NULL;

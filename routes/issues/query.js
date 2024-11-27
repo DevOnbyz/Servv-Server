@@ -207,15 +207,18 @@ module.exports = {
     return `SELECT * FROM ${database}.estimate where issue_id = ?`;
   },
   getEstimates(database) {
-    return `SELECT id, issue_id, material_charge, labour_charge, total_charge, is_18_percent_gst_applied, is_inclusive_tax, is_exclusive_tax, expiry_date, notes, filename, created_at, src, 
+    return `SELECT E.id, E.issue_id, E.material_charge, E.labour_charge, E.total_charge, E.is_18_percent_gst_applied, E.is_inclusive_tax, E.is_exclusive_tax, E.expiry_date, E.notes, E.filename, E.created_at, E.src,
     CASE
-    WHEN status = ${QUOTATION_STATUS.DRAFTED} THEN 'drafted'
-    WHEN status = ${QUOTATION_STATUS.APPROVED} THEN 'approved' 
-    WHEN status = ${QUOTATION_STATUS.REJECTED} THEN 'rejected'
-    WHEN status = ${QUOTATION_STATUS.CANCELLED} THEN 'cancelled'
-    WHEN status = ${QUOTATION_STATUS.SEND} THEN 'sent'
-    ELSE 'pending' END as status 
-    FROM ${database}.estimate where issue_id = ? order by created_at desc`;
+    WHEN E.status = ${QUOTATION_STATUS.DRAFTED} THEN 'drafted'
+    WHEN E.status = ${QUOTATION_STATUS.APPROVED} THEN 'approved' 
+    WHEN E.status = ${QUOTATION_STATUS.REJECTED} THEN 'rejected'
+    WHEN E.status = ${QUOTATION_STATUS.CANCELLED} THEN 'cancelled'
+    WHEN E.status = ${QUOTATION_STATUS.SEND} THEN 'sent'
+    ELSE 'pending' END as status,
+    admin.id as created_by, admin.firstname as created_by_firstname, admin.lastname as created_by_lastname
+    FROM ${database}.estimate E
+    left join ${database}.admin on E.created_by = admin.id
+    where E.issue_id = ? order by E.created_at desc`;
   },
   updateEstimate(database) {
     return `UPDATE ${database}.estimate SET ? WHERE id = ?`;
