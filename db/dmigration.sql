@@ -59,3 +59,8 @@ ALTER TABLE invoice ADD COLUMN `filename` TEXT DEFAULT NULL AFTER `src`;
 ALTER TABLE issue CHANGE COLUMN `preferred_time` `scheduled_time` DATETIME DEFAULT NULL;
 
 ALTER TABLE issue DROP COLUMN due_date;
+ALTER TABLE invoice ADD COLUMN `created_by` INT DEFAULT NULL;
+ALTER TABLE invoice ADD CONSTRAINT fk_invoice_ibfk_2 FOREIGN KEY (`created_by`) REFERENCES `admin`(`id`);
+
+ALTER TABLE invoice ADD COLUMN `updated_by` INT DEFAULT NULL;
+ALTER TABLE invoice ADD CONSTRAINT fk_invoice_ibfk_3 FOREIGN KEY (`updated_by`) REFERENCES `admin`(`id`);

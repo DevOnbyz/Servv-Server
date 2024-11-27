@@ -356,8 +356,8 @@ CREATE TABLE `estimate` (
     `updated_by` INT DEFAULT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_estimate_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE
-    CONSTRAINT `fk_estimate_ibfk_2` FOREIGN KEY (created_by) REFERENCES admin (id) ON DELETE CASCADE
+    CONSTRAINT `fk_estimate_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_estimate_ibfk_2` FOREIGN KEY (created_by) REFERENCES admin (id) ON DELETE CASCADE,
     CONSTRAINT `fk_estimate_ibfk_3` FOREIGN KEY (updated_by) REFERENCES admin (id) ON DELETE CASCADE
 );
 CREATE TABLE `invoice` (
@@ -376,9 +376,13 @@ CREATE TABLE `invoice` (
     `notes` TEXT,
     `src` TEXT,
     `filename` TEXT DEFAULT NULL,
+    `created_by` INT DEFAULT NULL,
+    `updated_by` INT DEFAULT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_invoice_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE
+    CONSTRAINT `fk_invoice_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_invoice_ibfk_2` FOREIGN KEY (created_by) REFERENCES admin (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_invoice_ibfk_3` FOREIGN KEY (updated_by) REFERENCES admin (id) ON DELETE CASCADE
 );
 
 CREATE TABLE `announcement` (
@@ -404,6 +408,16 @@ CREATE TABLE `announcement_interest` (
     CONSTRAINT `fk_announcement_interest_ibfk_1` FOREIGN KEY (announcement_id) REFERENCES announcement (id) ON DELETE CASCADE,
     CONSTRAINT `fk_announcement_interest_ibfk_2` FOREIGN KEY (resident_id) REFERENCES resident (id) ON DELETE CASCADE
 );
+CREATE TABLE `notification` (
+    `id` SERIAL PRIMARY KEY,
+    `user_id` INT NOT NULL,
+    `user_type` TINYINT NOT NULL,
+    `message` TEXT NOT NULL,
+    `status` TINYINT DEFAULT 0,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
 
 INSERT INTO `service` SET name='plumbing';
 INSERT INTO `service` SET name='electrical';

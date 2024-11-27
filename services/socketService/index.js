@@ -19,7 +19,6 @@ io.on(CONSTANTS.SOCKET_EVENT_CONNECT, async (socket) => {
   try {
     Log.info(`Socket connected: ${socket.id}`)
     socket.on("test", (data) => {
-      Log.info(data)
       console.log("Ring event received:", data);
     });
   } catch (error) {
