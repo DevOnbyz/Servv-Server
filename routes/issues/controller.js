@@ -56,7 +56,7 @@ exports.getIssuesUnderResidentController = async (request, response) => {
     for (const issue of issues) {
       const activeAgentAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE),[issue.id])
       issue.agentOTP = activeAgentAssignment ? activeAgentAssignment.otp_code : null
-      issue.img_src = issue.img_src?.split(',')
+      issue.img_src = issue.img_src ? issue.img_src.split(',') : null
       const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE),[issue.id])
       issue.issuesEvents = issuesEvents
     }
