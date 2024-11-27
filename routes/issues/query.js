@@ -225,6 +225,7 @@ module.exports = {
   getInvoice(database) {
     return `SELECT id, issue_id, material_charge, labour_charge, total_charge, is_18_percent_gst_applied, is_inclusive_tax, is_exclusive_tax, expiry_date, notes, filename, created_at, src, 
     CASE
+    WHEN status = ${QUOTATION_STATUS.DRAFTED} THEN 'drafted'
     WHEN status = ${QUOTATION_STATUS.APPROVED} THEN 'approved' 
     WHEN status = ${QUOTATION_STATUS.REJECTED} THEN 'rejected'
     WHEN status = ${QUOTATION_STATUS.CANCELLED} THEN 'cancelled'
