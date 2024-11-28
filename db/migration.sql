@@ -169,6 +169,7 @@ CREATE TABLE `apartment_resident_rel` (
     `apartment_id` INT,
     `resident_id` INT,
     `status` TINYINT DEFAULT 1,
+    `type` TINYINT DEFAULT NULL,
     `created_by` INT,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_by` INT,

@@ -162,6 +162,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
       otp_sent_time: null,
       otp_code : generateOTP(),
       notes,
+      type: CONSTANTS.AGENT_ASSIGNMENT_TYPE.SITE_VISIT,
       created_by: request.userID
     }
     const entityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAgentAssignment(CONSTANTS.BUILDING_DATABASE), [ agentAssignmentData, issueID ]))?.insertId
@@ -212,7 +213,9 @@ exports.workOrderIssueController = async (request, response) => {
       visit_scheduled_time : scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null,
       otp_sent_time: null,
       otp_code : generateOTP(),
-      notes
+      notes,
+      type: CONSTANTS.AGENT_ASSIGNMENT_TYPE.WORK_ORDER,
+      created_by: request.userID
     }
     const entityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAgentAssignment(CONSTANTS.BUILDING_DATABASE), [ agentAssignmentData, issueID ]))?.insertId
 

@@ -71,3 +71,6 @@ ALTER TABLE estimate ADD COLUMN `approved_rejected_by_type` TINYINT DEFAULT 0;
 ALTER TABLE invoice ADD COLUMN `approved_rejected_by_id` INT DEFAULT NULL;
 ALTER TABLE invoice ADD COLUMN `approved_rejected_by_type` TINYINT DEFAULT 0;
 ALTER TABLE issue CHANGE COLUMN `preferred_date` `customer_preferred_time` DATETIME DEFAULT NULL;
+
+-- 28-11-2024
+ALTER TABLE `agent_assignment` ADD COLUMN `type` TINYINT DEFAULT NULL AFTER status;
