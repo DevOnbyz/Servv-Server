@@ -878,9 +878,9 @@ exports.editInvoiceController = async (request, response) => {
     }
 
 
-    const notAllowedSubStatusForEditInvoice = [CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED]
+    const notAllowedSubStatusForEditInvoice = [CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusForEditInvoice.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status to edit invoice')
+    if(notAllowedSubStatusForEditInvoice.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status == CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, 'You can\'t edit invoice for this issue as the issue is already in ' + getSubStatusStringById(issueDetails[0]?.sub_status))
     
     const invoiceData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getInvoiceByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if(_.isEmpty(invoiceData)) return sendHTTPResponse.error(response, 'No active invoice found for this issue', null, 400)
