@@ -1,17 +1,17 @@
 module.exports = {
   getAllServicesByOrgID(database) {
-    return `SELECT s.id, sor.name as name, sor.id as relID, s.name as type, sor.description, sor.status as status, s.created_at
+    return `SELECT s.id, sor.name as name, sor.id as relID, s.name as type, sor.description, sor.status as status, sor.created_at
     FROM ${database}.service s
     JOIN ${database}.service_organisation_rel sor 
     ON s.id = sor.service_type
-    WHERE sor.org_id = ? order by s.created_at desc`;
+    WHERE sor.org_id = ? order by sor.created_at desc`;
   },
   getAllActiveServicesByOrgID(database) {
-    return `SELECT s.id, sor.name as name, sor.id as relID, s.name as type, sor.description, s.created_at
+    return `SELECT s.id, sor.name as name, sor.id as relID, s.name as type, sor.description, sor.created_at
     FROM ${database}.service s
     JOIN ${database}.service_organisation_rel sor 
     ON s.id = sor.service_type
-    WHERE sor.org_id = ? AND sor.status = 1 order by s.created_at desc`;
+    WHERE sor.org_id = ? AND sor.status = 1 order by sor.created_at desc`;
   },
   getServiceByID(database) {
     return `SELECT * FROM ${database}.service WHERE id = ?`;
