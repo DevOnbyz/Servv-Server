@@ -144,7 +144,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
 
     const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status != CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, `You can't schedule visit for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`, null, 400)
+    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status == CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, `You can't schedule visit for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`, null, 400)
     
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
@@ -194,7 +194,7 @@ exports.workOrderIssueController = async (request, response) => {
     const { agentID, notes, scheduleTime } = request.body
     const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status != CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, `You can't add a work order for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
+    if(notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status == CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, `You can't add a work order for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
 
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
@@ -465,7 +465,7 @@ exports.addAndSendEstimateController = async (request, response) => {
 
     const notAllowedSubStatusForSendEstimate = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusForSendEstimate.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status != CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, `You can't send estimate for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
+    if(notAllowedSubStatusForSendEstimate.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status == CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, `You can't send estimate for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
       
     if (request.file) {
       const destination = 'uploads/estimates/'
@@ -530,7 +530,7 @@ exports.approveEstimateController = async (request, response) => {
   try {
     const notAllowedSubStatusForApproveEstimate = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusForApproveEstimate.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, `You can't approve estimae for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
+    if(notAllowedSubStatusForApproveEstimate.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status == CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, `You can't approve estimae for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
     const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if(_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
 
