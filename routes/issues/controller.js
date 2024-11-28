@@ -693,6 +693,10 @@ exports.rejectEstimateController = async (request, response) => {
     const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if(_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
 
+      const notAllowedSubStatusForRejectEstimate = [CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED]
+      const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+      if(notAllowedSubStatusForRejectEstimate.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status == CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, `You can't reject estimate for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
+
       const estimateData = {
         status: CONSTANTS.QUOTATION_STATUS.REJECTED,
         approved_rejected_by: request.userID,
