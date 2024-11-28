@@ -158,13 +158,15 @@ module.exports = {
         (
             SELECT AA.notes 
             FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id AND AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING}
+            WHERE AA.agent_id = A.id
+            order by AA.created_at desc
             LIMIT 1
         ) AS note_for_agent,
         (
             SELECT AA.agent_inferences 
             FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id 
+            WHERE AA.agent_id = A.id
+            order by AA.created_at desc
             LIMIT 1
         ) AS agent_inferences,
         (
