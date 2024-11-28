@@ -787,7 +787,7 @@ exports.addAndSentInvoiceController = async (request, response) => {
     const exsitingInvoiceDetails = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getInvoiceByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
     if(!_.isEmpty(exsitingInvoiceDetails) && exsitingInvoiceDetails.status!= CONSTANTS.QUOTATION_STATUS.DRAFTED) return sendHTTPResponse.error(response, 'Invoice already generated for this issue', null, 400)
 
-    const notAllowedSubStatusToAddInvoice = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT]
+    const notAllowedSubStatusToAddInvoice = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if(notAllowedSubStatusToAddInvoice.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for invoice')
       
