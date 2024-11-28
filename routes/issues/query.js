@@ -156,6 +156,12 @@ module.exports = {
             LIMIT 1
         ) AS site_visit_time,
         (
+            SELECT AA.notes 
+            FROM ${database}.agent_assignment AA 
+            WHERE AA.agent_id = A.id AND AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING}
+            LIMIT 1
+        ) AS note_for_agent,
+        (
             SELECT AA.agent_inferences 
             FROM ${database}.agent_assignment AA 
             WHERE AA.agent_id = A.id 
