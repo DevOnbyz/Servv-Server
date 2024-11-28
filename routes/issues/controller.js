@@ -789,7 +789,7 @@ exports.addAndSentInvoiceController = async (request, response) => {
 
     const notAllowedSubStatusToAddInvoice = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if(notAllowedSubStatusToAddInvoice.includes(issueDetails[0]?.sub_status)) return sendHTTPResponse.error(response, 'Invalid issue status for invoice')
+    if(notAllowedSubStatusToAddInvoice.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status == CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, `You can't ${isDraft ? 'add draft ' : 'sent'} invoice for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`, null, 400)
       
     if (request.file) {
       const destination = 'uploads/invoices/'
