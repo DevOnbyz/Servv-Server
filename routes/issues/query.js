@@ -195,7 +195,7 @@ module.exports = {
     return `UPDATE ${database}.agent_assignment SET ? WHERE id = ?`;
   },
   closeIssueByID(database) {
-    return `UPDATE ${database}.issue SET status = ${ISSUE_STATUS.CLOSED} WHERE id = ?`;
+    return `UPDATE ${database}.issue SET status = ${ISSUE_STATUS.CLOSED}, sub_status = ${ISSUE_SUB_STATUS_NUM.CLOSED} WHERE id = ?`;
   },
   hasPendingInvoice(database) {
     return `SELECT * FROM ${database}.issue where id = ? AND sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}`;
