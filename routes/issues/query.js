@@ -83,7 +83,7 @@ module.exports = {
     return `INSERT INTO ${database}.agent_assignment SET ?`;
   },
   getSiteVisitUnderIssue(database) {
-    return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', A.lastname) as assigne, AA.assigned_time as assigned_time, AA.visit_scheduled_time as site_visit_time,
+    return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.assigned_time as assigned_time, AA.visit_scheduled_time as site_visit_time,
     CASE
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
