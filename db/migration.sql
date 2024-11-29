@@ -303,7 +303,7 @@ CREATE TABLE `issue_event` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `issue_id` INT,
     `event_type` VARCHAR(50) NOT NULL,
-    `⁠sub_status ⁠` TINYINT DEFAULT NULL,
+    `sub_status` TINYINT DEFAULT NULL,
     `entity_id` INT DEFAULT NULL, -- Can be agent_assignment_id, estimate_id wrt to the substatus added
     `event_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `description` TEXT,
@@ -311,7 +311,7 @@ CREATE TABLE `issue_event` (
     `creator_type` TINYINT,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    KEY `⁠sub_status ⁠` (`⁠sub_status ⁠`),
+    KEY `sub_status` (`sub_status`),
     CONSTRAINT `fk_issue_event_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE
 );
 

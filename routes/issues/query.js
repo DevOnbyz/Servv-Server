@@ -1,4 +1,4 @@
-const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, QUOTATION_STATUS, SERVV_USER_TYPE_NUM } = require("../../lib/constants");
+const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, QUOTATION_STATUS, SERVV_USER_TYPE_NUM, AGENT_ASSIGNMENT_TYPE } = require("../../lib/constants");
 
 module.exports = {
   addIssue(database) {
@@ -83,109 +83,44 @@ module.exports = {
     return `INSERT INTO ${database}.agent_assignment SET ?`;
   },
   getSiteVisitUnderIssue(database) {
-    return `SELECT 
-        IE.issue_id, 
-        IE.event_type, 
-        CONCAT(A.firstname, ' ', A.lastname) AS assignee, 
-        I.scheduled_time,
-        CASE 
-            WHEN I.scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), I.scheduled_time)
-            ELSE 0
-        END AS over_due_date,
-        (
-            SELECT AA.assigned_time 
-            FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id
-            order by AA.created_at desc
-            LIMIT 1
-        ) AS assigned_time,
-        (
-            SELECT AA.visit_scheduled_time 
-            FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id
-            order by AA.created_at desc
-            LIMIT 1
-        ) AS site_visit_time,
-        (
-            SELECT AA.agent_inferences 
-            FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id 
-            LIMIT 1
-        ) AS agent_inferences,
-        (
-            SELECT AA.agent_uploads 
-            FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id 
-            LIMIT 1
-        ) AS agent_uploads
-    FROM 
-        ${database}.issue_event IE
-    LEFT JOIN 
-        ${database}.issue I ON I.id = IE.issue_id
-    LEFT JOIN 
-        ${database}.agent A ON A.id = I.agent_id
-    WHERE 
-        IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}) 
-        AND I.id = ? 
-    ORDER BY 
-        I.created_at DESC;`
+    return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', A.lastname) as assigne, AA.assigned_time as assigned_time, AA.visit_scheduled_time as site_visit_time,
+    CASE
+    WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
+    ELSE 0
+    END AS over_due_date,
+    AA.notes as note_for_agent,
+    AA.agent_inferences as agent_inferences,
+    AA.agent_uploads as agent_uploads,
+    CASE
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING} THEN 'PENDING'
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
+    END as status,
+    CONCAT(B.firstname, ' ', B.lastname) as created_by
+    FROM ${database}.agent_assignment AA
+    LEFT JOIN ${database}.agent A ON A.id = AA.agent_id
+    LEFT JOIN ${database}.admin B ON B.id = AA.created_by
+    where issue_id = ? and type = ${AGENT_ASSIGNMENT_TYPE.SITE_VISIT}`;
   },
   getWorkOrderUnderIssue(database) {
-    return `SELECT 
-        IE.issue_id, 
-        IE.event_type,
-        I.description,
-        CONCAT(A.firstname, ' ', A.lastname) AS assignee, 
-        I.scheduled_time,
-        CASE 
-            WHEN I.scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), I.scheduled_time)
-            ELSE 0
-        END AS over_due_date,
-        (
-            SELECT AA.assigned_time 
-            FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id
-            order by AA.created_at desc
-            LIMIT 1
-        ) AS assigned_time,
-        (
-            SELECT AA.visit_scheduled_time 
-            FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id
-            order by AA.created_at desc
-            LIMIT 1
-        ) AS site_visit_time,
-        (
-            SELECT AA.notes 
-            FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id
-            order by AA.created_at desc
-            LIMIT 1
-        ) AS note_for_agent,
-        (
-            SELECT AA.agent_inferences 
-            FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id
-            order by AA.created_at desc
-            LIMIT 1
-        ) AS agent_inferences,
-        (
-            SELECT AA.agent_uploads 
-            FROM ${database}.agent_assignment AA 
-            WHERE AA.agent_id = A.id 
-            LIMIT 1
-        ) AS agent_uploads
-    FROM 
-        ${database}.issue_event IE
-    LEFT JOIN 
-        ${database}.issue I ON I.id = IE.issue_id
-    LEFT JOIN 
-        ${database}.agent A ON A.id = I.agent_id
-    WHERE 
-        IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}) 
-        AND I.id = ? 
-    ORDER BY 
-        I.created_at DESC;`
+    return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', A.lastname) as assigne, AA.assigned_time as assigned_time, AA.visit_scheduled_time as site_visit_time,
+    CASE 
+    WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
+    ELSE 0
+    END AS over_due_date,
+    AA.notes as note_for_agent,
+    AA.agent_inferences as agent_inferences,
+    AA.agent_uploads as agent_uploads,
+    CASE
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING} THEN 'PENDING'
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
+    END as status,
+    CONCAT(B.firstname, ' ', B.lastname) as created_by
+    FROM ${database}.agent_assignment AA
+    LEFT JOIN ${database}.agent A ON A.id = AA.agent_id
+    LEFT JOIN ${database}.admin B ON B.id = AA.created_by
+    where issue_id = ? and type = ${AGENT_ASSIGNMENT_TYPE.WORK_ORDER}`;
   },
   updateAgentIDInAgentAssignmentofActiveIssue(database) {
     return `UPDATE ${database}.agent_assignment SET ? WHERE issue_id = ? AND status = ${AGENT_ASSIGNMENT_STATUS.PENDING}`;
@@ -297,9 +232,3 @@ module.exports = {
   }
 
 };
-
-
-
-
-
-
