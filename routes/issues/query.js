@@ -100,7 +100,7 @@ module.exports = {
     FROM ${database}.agent_assignment AA
     LEFT JOIN ${database}.agent A ON A.id = AA.agent_id
     LEFT JOIN ${database}.admin B ON B.id = AA.created_by
-    where issue_id = ? and type = ${AGENT_ASSIGNMENT_TYPE.SITE_VISIT}`;
+    where issue_id = ? and type = ${AGENT_ASSIGNMENT_TYPE.SITE_VISIT} ORDER BY AA.created_at DESC`;
   },
   getWorkOrderUnderIssue(database) {
     return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.assigned_time as assigned_time, AA.visit_scheduled_time as site_visit_time,
@@ -120,7 +120,7 @@ module.exports = {
     FROM ${database}.agent_assignment AA
     LEFT JOIN ${database}.agent A ON A.id = AA.agent_id
     LEFT JOIN ${database}.admin B ON B.id = AA.created_by
-    where issue_id = ? and type = ${AGENT_ASSIGNMENT_TYPE.WORK_ORDER}`;
+    where issue_id = ? and type = ${AGENT_ASSIGNMENT_TYPE.WORK_ORDER} ORDER BY AA.created_at DESC`;
   },
   updateAgentIDInAgentAssignmentofActiveIssue(database) {
     return `UPDATE ${database}.agent_assignment SET ? WHERE issue_id = ? AND status = ${AGENT_ASSIGNMENT_STATUS.PENDING}`;
