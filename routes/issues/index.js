@@ -24,6 +24,18 @@ router.post('/',
 router.post('/:issueID/schedule-visit', validateRequest(scheduleSiteVisitSchema), controller.scheduleVisitIssueController)
 router.patch('/:issueID/site-visit/re-assign',validateRequest(reAssignAgentSchema), controller.reAssignSiteVisitController)
 router.patch('/:issueID/site-visit/cancel', controller.cancelSiteVisitController)
+
+router.patch('/:issueID/site-visit/complete', 
+  (req, res, next) => {
+    Fn.uploadImage(req, res, (err) => {
+      if (err instanceof multer.MulterError || err) {
+        return sendHTTPResponse.error(res, 'Error while uploading image', err.message)
+      }
+      controller.completeSiteVisitController(req, res, next)
+    })
+  }
+)
+
 router.get('/:issueID/site-visit', controller.getSiteVisitUnderIssueController)
 router.get('/:issueID/work-order', controller.getWorkOrderUnderIssueController)
 router.post('/:issueID/work-order', validateRequest(scheduleSiteVisitSchema), controller.workOrderIssueController)

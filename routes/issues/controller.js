@@ -416,6 +416,69 @@ exports.cancelSiteVisitController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while canceling issue site visit', error.message)
   }
 }
+
+exports.completeSiteVisitController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const { OTP, agentInference } = request.body
+    Log.info(`[${domain} | OrganisationID:${orgID}] | completeSiteVisitController | body: ${JSON.stringify(request.body)}`)
+
+    if (_.isEmpty(OTP)) {
+      return sendHTTPResponse.error(response, 'OTP is required', null, 400)
+    }
+
+    const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    if(_.isEmpty(activeSiteVisit)) return sendHTTPResponse.error(response, 'There is no active site visit for this issue', null, 400)
+    const generatedOTP = activeSiteVisit.otp_code
+
+    if(OTP != generatedOTP) return sendHTTPResponse.error(response, 'Invalid OTP', null, 400)
+
+    if (request.files && request.files.length > 0) {
+      const destination = 'uploads/agent-uploads/'
+      request.body.imgSrcPaths = []
+      for (const file of request.files) {
+        const savedFilePath = await Fn.saveFileToDisk(file, destination)
+        request.body.imgSrcPaths.push(savedFilePath)
+      }
+    }
+
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED,
+      updated_by: request.userID
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
+    
+    const activeSiteVisitID = activeSiteVisit.id
+    const updatedAgentAssignmentData = {
+      status: CONSTANTS.AGENT_ASSIGNMENT_STATUS.COMPLETED,
+      agent_inferences: agentInference ?? null,
+      agent_uploads: _.isEmpty(request.body.imgSrcPaths) ? null : request.body.imgSrcPaths?.join(', '),
+      updated_by: request.userID
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentAssignmentByID(CONSTANTS.BUILDING_DATABASE), [ updatedAgentAssignmentData, activeSiteVisitID ])
+
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.SITE_VISIT_COMPLETED,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED,
+      entity_id: activeSiteVisitID,
+      creator_id : request.userID,
+      creator_type : request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.AGENT ? CONSTANTS.SERVV_USER_TYPE_NUM.AGENT : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
+    Log.info(`[${domain} | OrganisationID:${orgID}] | completeSiteVisitController | Issue site visit completed successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Issue site visit completed successfully', {logID})
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | completeSiteVisitController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while completing issue site visit', error.message)
+  }
+}
+
 exports.getEstimatesController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
