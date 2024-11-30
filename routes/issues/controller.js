@@ -248,7 +248,7 @@ exports.reAssignWorkOrderController = async (request, response) => {
   const modifiedNote = request.body.modifiedNote
   const modifiedDate = request.body.modifiedDate
   try {
-    const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
     if(_.isEmpty(activeSiteVisit)) return sendHTTPResponse.error(response, 'No active work order found for this issue')
 
     const newIssueData = {
@@ -1089,7 +1089,7 @@ exports.cancelWorkOrderController = async (request, response) => {
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ORDER_CANCELLED
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
-    const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
 
     if(_.isEmpty(activeSiteVisit)) return sendHTTPResponse.error(response, 'There is no active work order for this issue', null, 400)
 
