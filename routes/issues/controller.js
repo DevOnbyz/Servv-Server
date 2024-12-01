@@ -743,8 +743,8 @@ exports.editEstimateController = async (request, response) => {
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [ estimateData, estimate.id ])
 
-    Log.info(`[${domain} | OrganisationID:${orgID}] | editEstimateController | Estimate updated successfully | estimateID: ${estimate.id}`)
-    return sendHTTPResponse.success(response, 'Estimate updated successfully')
+    Log.info(`[${domain} | OrganisationID:${orgID}] | editEstimateController | Estimate ${isDraft? 'drafted' : 'sent'} successfully | estimateID: ${estimate.id}`)
+    return sendHTTPResponse.success(response, `Estimate ${isDraft ? 'drafted' : 'sent'} successfully`)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | editEstimateController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while updating estimate', error.message)
