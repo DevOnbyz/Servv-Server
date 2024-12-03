@@ -10,6 +10,6 @@ const logger = winston.createLogger({
     printf((info) => `${info.level}: [${(info.timestamp)}] ${(info.message)?.trim()} ${(info.stack) ? info.stack : ''}`)
   ),
   transports: [new winston.transports.Console()],
-});
+})
 
 module.exports = logger
