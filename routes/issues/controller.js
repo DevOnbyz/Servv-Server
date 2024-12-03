@@ -112,8 +112,8 @@ exports.addIssueController = async (request, response) => {
       issue_type: '',
       status: CONSTANTS.ISSUE_STATUS.OPEN,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.OPEN,
-      scheduled_time: _.isEmpty(request.body.scheduledTime) ? null : request.body.scheduledTime,
-      customer_preferred_time: userType === CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? _.isEmpty(request.body.scheduledTime) ? null : request.body.scheduledTime : null,
+      initial_activity_time: _.isEmpty(request.body.scheduledTime) ? null : request.body.scheduledTime,
+      customer_preferred_time: _.isEmpty(request.body.scheduledTime) ? null : request.body.scheduledTime,
       img_src: _.isEmpty(request.body.imgSrcPaths) ? null : (request.body.imgSrcPaths)?.join(','),
     }
     const insertID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addIssue(CONSTANTS.BUILDING_DATABASE), [issueData]))?.insertId
@@ -201,7 +201,7 @@ exports.workOrderIssueController = async (request, response) => {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
       agent_id: agentID,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED,
-      scheduled_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null
+      customer_preferred_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
 
@@ -262,7 +262,7 @@ exports.reAssignWorkOrderController = async (request, response) => {
       otp_code: generateOTP(),
     }
     if(modifiedVisit){
-      newIssueData.scheduled_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
+      newIssueData.customer_preferred_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.notes = modifiedNote
     }
@@ -358,7 +358,7 @@ exports.reAssignSiteVisitController = async (request, response) => {
     }
     // sent notification to the agent regarding the issue
     if(modifiedVisit){
-      newIssueData.scheduled_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
+      newIssueData.customer_preferred_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.notes = modifiedNote
     }
@@ -384,7 +384,7 @@ exports.cancelSiteVisitController = async (request, response) => {
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED,
-      scheduled_time: null,
+      customer_preferred_time: null,
       updated_by: request.userID
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
