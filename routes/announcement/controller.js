@@ -50,7 +50,6 @@ const saveFileToDisk = (file, destination) => {
   })
 }
 exports.addAnnouncementController = async (request, response) => {
-  console.log(request.body);
   const orgID = request.orgID
   try {
     const title = request.body.title
@@ -58,24 +57,39 @@ exports.addAnnouncementController = async (request, response) => {
     const projectList = request.body.project
     const expiryDate = request.body.expiryDate ? moment(request.body.expiryDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') : null
 
-    if(_.isEmpty(title))
+    if (_.isEmpty(title))
       return sendHTTPResponse.error(response, 'Title cannot be empty', null, 400)
-    if(_.isEmpty(projectList)) 
+    if (_.isEmpty(projectList))
       return sendHTTPResponse.error(response, 'Please select atleast one project', null, 400)
-    if(_.isEmpty(expiryDate))
+    if (_.isEmpty(expiryDate))
       return sendHTTPResponse.error(response, 'Please select expire date', null, 400)
-    if(expiryDate == 'Invalid date')
+    if (expiryDate == 'Invalid date')
       return sendHTTPResponse.error(response, 'Please select expire date', null, 400)
-    if(expiryDate < moment().format('YYYY-MM-DD HH:mm:ss'))
+    if (expiryDate < moment().format('YYYY-MM-DD HH:mm:ss'))
       return sendHTTPResponse.error(response, 'Please select expire date greater than current date', null, 400)
-    
+
+    const allAnnouncements = await runQuery(
+      CONSTANTS.BUILDING_DATABASE,
+      queryBuilder.getAllAnnouncementsByOrgID(CONSTANTS.BUILDING_DATABASE),
+      [orgID]
+    )
+
+    const duplicateTitle = allAnnouncements.some(
+      (announcement) => announcement.title === title
+    )
+
+    if (duplicateTitle) {
+      return sendHTTPResponse.error(response, 'Title already exists for another announcement', null, 400)
+    }
+
+
     if (request.file) {
-     
       const destination = 'uploads/announcement/'
       const savedFilePath = await saveFileToDisk(request.file, destination)
       request.body.imgSrcPath = savedFilePath
+      request.body.filename = request.file.originalname
     }
-   
+
     const announcementData = {
       title,
       description,
@@ -83,6 +97,7 @@ exports.addAnnouncementController = async (request, response) => {
       project_id: JSON.stringify(projectList),
       expire_date: expiryDate,
       img_src: request.file ? request.body.imgSrcPath : null,
+      filename: request.body.filename ?? null,
       created_by: request.userID
     }
     const insertID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAnnouncementToOrg(CONSTANTS.BUILDING_DATABASE), [announcementData]))?.insertId
@@ -91,4 +106,82 @@ exports.addAnnouncementController = async (request, response) => {
     Log.error(`[Servv | OrganisationID:${orgID}] | addAnnouncementController | Error in adding announcement | Error: ${error.message}`)
     sendHTTPResponse.error(response, 'Error on adding announcement', error.message)
   }
-} 
+}
+
+exports.editAnnouncementController = async (request, response) => {
+
+
+  const orgID = request.orgID
+  const announcementId = request.params.id
+
+  try {
+    const title = request.body.title
+    const description = request.body.description
+    const projectList = request.body.project
+    const expiryDate = request.body.expiryDate ? moment(request.body.expiryDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') : null
+    const isImageEdit = request.body.isImageEdit === 'true'
+
+    if (_.isEmpty(title))
+      return sendHTTPResponse.error(response, 'Title cannot be empty', null, 400)
+    if (_.isEmpty(projectList))
+      return sendHTTPResponse.error(response, 'Please select atleast one project', null, 400)
+    if (_.isEmpty(expiryDate))
+      return sendHTTPResponse.error(response, 'Please select expire date', null, 400)
+    if (expiryDate == 'Invalid date')
+      return sendHTTPResponse.error(response, 'Please select expire date', null, 400)
+
+    const allAnnouncements = await runQuery(
+      CONSTANTS.BUILDING_DATABASE,
+      queryBuilder.getAllAnnouncementsByOrgID(CONSTANTS.BUILDING_DATABASE),
+      [orgID]
+    )
+
+    const duplicateTitle = allAnnouncements.some(
+      (announcement) => announcement.title === title && announcement.id != announcementId
+    )
+
+    if (duplicateTitle)
+      return sendHTTPResponse.error(response, 'Title already exists for another announcement', null, 400)
+
+
+    const oldAnnouncement = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAnnouncementById(CONSTANTS.BUILDING_DATABASE), [announcementId])
+
+    let imgSrcPath = oldAnnouncement[0].img_src
+    let filename = oldAnnouncement[0].filename
+
+    if (isImageEdit) {
+      if (imgSrcPath) {
+        fs.unlink(imgSrcPath, (err) => {
+          if (err) {
+            Log.error(`Failed to delete old image: ${imgSrcPath}. Error: ${err.message}`)
+          }
+        })
+      }
+
+      if (request.file) {
+        const destination = 'uploads/announcement/'
+        const savedFilePath = await saveFileToDisk(request.file, destination)
+        imgSrcPath = savedFilePath
+        filename = request.file.originalname
+      }
+    }
+
+    const announcementData = {
+      title,
+      description,
+      project_id: JSON.stringify(projectList),
+      expire_date: expiryDate,
+      img_src: imgSrcPath,
+      filename: filename,
+      created_by: request.userID,
+      updated_at: moment().format('YYYY-MM-DD HH:mm:ss')
+    }
+
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAnnouncement(CONSTANTS.BUILDING_DATABASE), [announcementData, announcementId])
+    return sendHTTPResponse.success(response, 'Announcement updated successfully')
+
+  } catch (error) {
+    Log.error(`[Servv | OrganisationID:${orgID}] | editAnnouncementController | Error in updating announcement | Error: ${error.message}`)
+    sendHTTPResponse.error(response, 'Error on updating announcement', error.message)
+  }
+}
