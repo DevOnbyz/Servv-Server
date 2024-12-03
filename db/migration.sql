@@ -373,6 +373,8 @@ CREATE TABLE `invoice` (
     `expiry_date` DATETIME,
     `other_charge` INT DEFAULT 0,
     `total_charge` INT NOT NULL,
+    `collected_by` VARCHAR(255),
+    `payment_mode` TINYINT DEFAULT NULL,
     `is_18_percent_gst_applied` TINYINT DEFAULT 0,
     `is_inclusive_tax` TINYINT DEFAULT 0,
     `is_exclusive_tax` TINYINT DEFAULT 0,

@@ -1037,6 +1037,55 @@ exports.approveInvoiceController = async (request, response) => {
   }
 }
 
+exports.recordPaymentController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const {amount, paymentMode, notes, collectedBy} = request.body
+    const paymentDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getInvoiceByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]) 
+    if(_.isEmpty(paymentDetails)) return sendHTTPResponse.error(response, 'No invoice found for this issue', null, 400)
+    
+    const totalCharge = paymentDetails.total_charge
+    if(amount > totalCharge) return sendHTTPResponse.error(response, 'Amount is greater than total charge', null, 400)
+    if(amount < totalCharge) return sendHTTPResponse.error(response, 'Partial Payment is not allowed', null, 400)
+
+    const updateInvoiceDetails = {
+      status: CONSTANTS.QUOTATION_STATUS.PAID,
+      collected_by: collectedBy,
+      notes,
+      payment_mode: paymentMode,
+      status: CONSTANTS.QUOTATION_STATUS.PAID
+    }
+
+    const newIssueData = {
+      status: CONSTANTS.ISSUE_STATUS.CLOSED,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ]) 
+
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateInvoice(CONSTANTS.BUILDING_DATABASE), [ updateInvoiceDetails, issueID ]) 
+
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : CONSTANTS.ISSUE_SUB_STATUS_STRING.PAID,
+      sub_status : CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID,
+      creator_id : request.userID,
+      creator_type : request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN 
+    }
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
+    Log.info(`[${domain} | OrganisationID:${orgID}] | recordPaymentController | Payment recorded successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Payment recorded successfully', {logID})
+  }
+  catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | recordPaymentController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while recording payment', error.message)
+  }
+}
+
+
+
 exports.getIssueHistoryController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
