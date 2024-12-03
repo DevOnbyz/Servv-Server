@@ -2,7 +2,7 @@ const router = require('express').Router()
 const sendHTTPResponse = require('../../lib/sendHTTPResponse')
 const validateRequest = require('../../middleware/validateRequest')
 const controller = require('./controller')
-const { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema } = require('./validator')
+const { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, recordPaymentSchema } = require('./validator')
 const multer = require('multer')
 const path = require('path')
 const Fn = require('./functions')
@@ -93,6 +93,7 @@ router.patch('/:issueID/invoice/edit',
 )
 
 router.patch('/:issueID/invoice/approve', controller.approveInvoiceController) //an issue has only only one invoice
+router.patch('/:issueID/invoice/record-payment', validateRequest(recordPaymentSchema), controller.recordPaymentController)
 
 router.get('/:issueID/history', controller.getIssueHistoryController)
 router.post('/:issueID/hold', controller.holdIssueController)

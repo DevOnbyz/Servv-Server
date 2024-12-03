@@ -78,3 +78,5 @@ ALTER TABLE `agent_assignment` ADD COLUMN `type` TINYINT DEFAULT NULL AFTER stat
 ALTER TABLE issue DROP COLUMN scheduled_time;
 ALTER TABLE `issue` ADD COLUMN `initial_activity_time` DATETIME AFTER customer_preferred_time;
 ALTER TABLE announcement ADD COLUMN `filename` TEXT DEFAULT NULL AFTER `img_src`;
+ALTER TABLE invoice ADD COLUMN `collected_by` VARCHAR(255) DEFAULT NULL AFTER `total_charge`;
+ALTER TABLE invoice ADD COLUMN `payment_mode` TINYINT DEFAULT NULL AFTER `collected_by`;

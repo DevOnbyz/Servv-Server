@@ -180,6 +180,7 @@ module.exports = {
     WHEN status = ${QUOTATION_STATUS.REJECTED} THEN 'rejected'
     WHEN status = ${QUOTATION_STATUS.CANCELLED} THEN 'cancelled'
     WHEN status = ${QUOTATION_STATUS.SEND} THEN 'sent'
+    WHEN status = ${QUOTATION_STATUS.PAID} THEN 'paid'
     ELSE 'pending' END as status 
     FROM ${database}.invoice where issue_id = ? order by created_at desc`;
   },

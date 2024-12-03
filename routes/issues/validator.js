@@ -25,7 +25,8 @@ const scheduleSiteVisitSchema = Joi.object({
   notes: Joi.string().optional().allow(null),
   agentID: Joi.number().required().messages({
     'string.empty': 'agentID is required',
-  })
+  }),
+  scheduleTime: Joi.string().optional().allow(null),
 })
 
 const reAssignAgentSchema = Joi.object({
@@ -64,4 +65,19 @@ const addEstimateSchema = Joi.object({
   notes: Joi.string().optional().allow(null)
 })
 
-module.exports = { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, addEstimateSchema }
+const recordPaymentSchema = Joi.object({
+  amount: Joi.number().required().messages({
+    'string.empty': 'amount is required',
+  }),
+  paymentMode: Joi.number().required().messages({
+    'string.empty': 'paymentMode is required',
+  }),
+  collectedBy: Joi.string().required().messages({
+    'string.empty': 'collectedBy is required',
+  }),
+  notes: Joi.string().required().messages({
+    'string.empty': 'notes is required',
+  }),
+})
+
+module.exports = { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, addEstimateSchema, recordPaymentSchema }
