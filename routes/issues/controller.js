@@ -113,7 +113,7 @@ exports.addIssueController = async (request, response) => {
       status: CONSTANTS.ISSUE_STATUS.OPEN,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.OPEN,
       initial_activity_time: _.isEmpty(request.body.scheduledTime) ? null : request.body.scheduledTime,
-      customer_preferred_time: userType === CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? _.isEmpty(request.body.scheduledTime) ? null : request.body.scheduledTime : null,
+      customer_preferred_time: _.isEmpty(request.body.scheduledTime) ? null : request.body.scheduledTime,
       img_src: _.isEmpty(request.body.imgSrcPaths) ? null : (request.body.imgSrcPaths)?.join(','),
     }
     const insertID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addIssue(CONSTANTS.BUILDING_DATABASE), [issueData]))?.insertId
