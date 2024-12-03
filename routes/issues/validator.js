@@ -22,9 +22,6 @@ const addIssueSchema = Joi.object({
 })
 
 const scheduleSiteVisitSchema = Joi.object({
-  scheduleTime: Joi.string().required().messages({
-    'string.empty': 'date is required',
-  }),
   notes: Joi.string().optional().allow(null),
   agentID: Joi.number().required().messages({
     'string.empty': 'agentID is required',

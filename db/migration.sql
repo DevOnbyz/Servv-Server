@@ -272,6 +272,7 @@ CREATE TABLE `issue` (
     `service_subtype` INT,
     `issue_type` VARCHAR(255),
     `scheduled_time` DATETIME,
+    `customer_preferred_time` DATETIME,
     `due_date` DATETIME,
     `rating` INT,
     `payment_id` INT,

@@ -33,5 +33,15 @@ router.post('/', (req, res, next) => {
     controller.addAnnouncementController(req, res, next)
   })
 })
+router.patch('/:id', (req, res, next) => {
+  upload(req, res, (err) => {
+    if (err instanceof multer.MulterError) {
+      return sendHTTPResponse.error(res, 'Error while uploading image', err.message)
+    } else if (err) {
+      return sendHTTPResponse.error(res, 'Error while uploading image', err.message)
+    }
+    controller.editAnnouncementController(req, res, next)
+  })
+})
 
 module.exports = router
