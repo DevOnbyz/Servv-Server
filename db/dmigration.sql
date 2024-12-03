@@ -74,3 +74,6 @@ ALTER TABLE issue CHANGE COLUMN `preferred_date` `customer_preferred_time` DATET
 
 -- 28-11-2024
 ALTER TABLE `agent_assignment` ADD COLUMN `type` TINYINT DEFAULT NULL AFTER status;
+-- 03-12-2024
+ALTER TABLE issue DROP COLUMN scheduled_time;
+ALTER TABLE `issue` ADD COLUMN `initial_activity_time` DATETIME AFTER customer_preferred_time;

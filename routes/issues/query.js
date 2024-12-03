@@ -11,7 +11,7 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
-    I.created_at, RI.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, I.scheduled_time as scheduledTime,
+    I.created_at, RI.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, I.customer_preferred_time as scheduledTime,
     I.img_src
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
@@ -31,7 +31,7 @@ module.exports = {
              COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN 1 END) AS siteVisitCompleted,
              COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT} THEN 1 END) AS estimateDraft,
              COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 1 END) AS workCompleted,
-             COUNT(CASE WHEN scheduled_time = CURDATE() THEN 1 END) AS dueToday 
+             COUNT(CASE WHEN customer_preferred_time = CURDATE() THEN 1 END) AS dueToday 
              FROM ${database}.issue WHERE org_id = ?
              `
   },
@@ -65,7 +65,7 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}'
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
-     I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.scheduled_time as time
+     I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.customer_preferred_time as time
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
     left join ${database}.project P on A.project_id = P.id
