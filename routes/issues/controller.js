@@ -1055,7 +1055,6 @@ exports.recordPaymentController = async (request, response) => {
       collected_by: collectedBy,
       notes,
       payment_mode: paymentMode,
-      status: CONSTANTS.QUOTATION_STATUS.PAID
     }
 
     const newIssueData = {
@@ -1064,7 +1063,7 @@ exports.recordPaymentController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ]) 
 
-    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateInvoice(CONSTANTS.BUILDING_DATABASE), [ updateInvoiceDetails, issueID ]) 
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateInvoice(CONSTANTS.BUILDING_DATABASE), [ updateInvoiceDetails, paymentDetails.id ]) 
 
     const issueLogData = {
       issue_id : issueID,
