@@ -399,6 +399,7 @@ CREATE TABLE `announcement` (
     `description` TEXT,
     `status` TINYINT DEFAULT 1,
     `img_src` VARCHAR(255),
+    `filename` TEXT DEFAULT NULL,
     `expire_date` DATETIME,
     `created_by` INT,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
