@@ -11,6 +11,18 @@ const fs = require('fs')
 const { v4: uuidv4 } = require('uuid')
 const { getAllProjectsByOrgID } = require('../../db/query')
 
+const formDataLogger = (formData) => {
+  if (formData) {
+    const loggableData = { ...formData };
+    if (loggableData.file) delete loggableData.file;
+    if (loggableData.password) delete loggableData.password;
+    console.log("Form Data:", JSON.stringify(loggableData, null, 2));
+  } else {
+    console.log("Form Data Logger: No data provided.");
+  }
+};
+
+
 exports.getAnnouncemntsController = async (request, response) => {
   const orgID = request.orgID
   try {
@@ -50,6 +62,8 @@ const saveFileToDisk = (file, destination) => {
   })
 }
 exports.addAnnouncementController = async (request, response) => {
+  formDataLogger(request.body)
+
   const orgID = request.orgID
   try {
     const title = request.body.title
@@ -68,20 +82,10 @@ exports.addAnnouncementController = async (request, response) => {
     if (expiryDate < moment().format('YYYY-MM-DD HH:mm:ss'))
       return sendHTTPResponse.error(response, 'Please select expire date greater than current date', null, 400)
 
-    const allAnnouncements = await runQuery(
-      CONSTANTS.BUILDING_DATABASE,
-      queryBuilder.getAllAnnouncementsByOrgID(CONSTANTS.BUILDING_DATABASE),
-      [orgID]
-    )
-
-    const duplicateTitle = allAnnouncements.some(
-      (announcement) => announcement.title === title
-    )
-
-    if (duplicateTitle) {
+    const allAnnouncements = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAnnouncementsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
+    const duplicateTitle = allAnnouncements.some((announcement) => announcement.title === title)
+    if (duplicateTitle)
       return sendHTTPResponse.error(response, 'Title already exists for another announcement', null, 400)
-    }
-
 
     if (request.file) {
       const destination = 'uploads/announcement/'
@@ -109,11 +113,10 @@ exports.addAnnouncementController = async (request, response) => {
 }
 
 exports.editAnnouncementController = async (request, response) => {
-
+  formDataLogger(request.body)
 
   const orgID = request.orgID
   const announcementId = request.params.id
-
   try {
     const title = request.body.title
     const description = request.body.description
@@ -130,40 +133,23 @@ exports.editAnnouncementController = async (request, response) => {
     if (expiryDate == 'Invalid date')
       return sendHTTPResponse.error(response, 'Please select expire date', null, 400)
 
-    const allAnnouncements = await runQuery(
-      CONSTANTS.BUILDING_DATABASE,
-      queryBuilder.getAllAnnouncementsByOrgID(CONSTANTS.BUILDING_DATABASE),
-      [orgID]
-    )
-
-    const duplicateTitle = allAnnouncements.some(
-      (announcement) => announcement.title === title && announcement.id != announcementId
-    )
+    const allAnnouncements = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAnnouncementsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
+    const duplicateTitle = allAnnouncements.some((announcement) => announcement.title === title && announcement.id != announcementId)
 
     if (duplicateTitle)
       return sendHTTPResponse.error(response, 'Title already exists for another announcement', null, 400)
 
-
     const oldAnnouncement = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAnnouncementById(CONSTANTS.BUILDING_DATABASE), [announcementId])
-
     let imgSrcPath = oldAnnouncement[0].img_src
     let filename = oldAnnouncement[0].filename
 
-    if (isImageEdit) {
-      if (imgSrcPath) {
-        fs.unlink(imgSrcPath, (err) => {
-          if (err) {
-            Log.error(`Failed to delete old image: ${imgSrcPath}. Error: ${err.message}`)
-          }
-        })
-      }
-
-      if (request.file) {
-        const destination = 'uploads/announcement/'
-        const savedFilePath = await saveFileToDisk(request.file, destination)
-        imgSrcPath = savedFilePath
-        filename = request.file.originalname
-      }
+    if (isImageEdit && request.file) {
+      if (imgSrcPath)
+        fs.unlink(imgSrcPath, (err) => err && Log.error(`Failed to delete old image: ${imgSrcPath}. Error: ${err.message}`))
+      
+      const destination = 'uploads/announcement/';
+      imgSrcPath = await saveFileToDisk(request.file, destination);
+      filename = request.file.originalname;
     }
 
     const announcementData = {
@@ -176,10 +162,8 @@ exports.editAnnouncementController = async (request, response) => {
       created_by: request.userID,
       updated_at: moment().format('YYYY-MM-DD HH:mm:ss')
     }
-
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAnnouncement(CONSTANTS.BUILDING_DATABASE), [announcementData, announcementId])
     return sendHTTPResponse.success(response, 'Announcement updated successfully')
-
   } catch (error) {
     Log.error(`[Servv | OrganisationID:${orgID}] | editAnnouncementController | Error in updating announcement | Error: ${error.message}`)
     sendHTTPResponse.error(response, 'Error on updating announcement', error.message)
