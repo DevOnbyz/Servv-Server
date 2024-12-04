@@ -10,12 +10,6 @@ const bcrypt = require('bcrypt')
 const { jwtDecode } = require('../../lib/jwtFn')
 const admin = require('firebase-admin')
 
-const serviceAccount = require('../../firebase/adminConfig.json');
-
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount)
-});
-
 exports.loginController = async (request, response) => {
   const {username, password, userType, token, fcmToken} = request.body
   console.log(request.body);
