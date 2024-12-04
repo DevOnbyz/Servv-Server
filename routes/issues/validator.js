@@ -75,9 +75,7 @@ const recordPaymentSchema = Joi.object({
   collectedBy: Joi.string().required().messages({
     'string.empty': 'collectedBy is required',
   }),
-  notes: Joi.string().required().messages({
-    'string.empty': 'notes is required',
-  }),
+  notes: Joi.string().optional().allow(null),
 })
 
 module.exports = { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, addEstimateSchema, recordPaymentSchema }
