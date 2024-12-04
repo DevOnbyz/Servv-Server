@@ -1097,9 +1097,9 @@ exports.addPreferredTimeController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const {preferredDate, preferredTime} = request.body
+    const {preferredDatetime} = request.body
     const newIssueData = {
-      customer_preferred_time: moment(`${preferredDate} ${preferredTime}`, 'YYYY-MM-DD HH:mm')?.format('YYYY-MM-DD HH:mm:ss')
+      customer_preferred_time: moment.utc(preferredDatetime)?.format('YYYY-MM-DD HH:mm:ss')
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ]) 
     Log.info(`[${domain} | OrganisationID:${orgID}] | addPreferredTimeController | Preferred time added successfully | IssueID: ${issueID}`)
