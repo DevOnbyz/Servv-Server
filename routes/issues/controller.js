@@ -1092,6 +1092,23 @@ exports.recordPaymentController = async (request, response) => {
   }
 }
 
+exports.addPreferredTimeController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const {preferredDate, preferredTime} = request.body
+    const newIssueData = {
+      customer_preferred_time: moment(`${preferredDate} ${preferredTime}`, 'YYYY-MM-DD HH:mm')?.format('YYYY-MM-DD HH:mm:ss')
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ]) 
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addPreferredTimeController | Preferred time added successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Preferred time added successfully')
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | addPreferredTimeController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while adding preferred time', error.message)
+  }
+}
 
 
 exports.getIssueHistoryController = async (request, response) => {

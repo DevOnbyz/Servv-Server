@@ -77,5 +77,13 @@ const recordPaymentSchema = Joi.object({
   }),
   notes: Joi.string().optional().allow(null),
 })
+const preferredTimeSchema = Joi.object({
+  preferredDate: Joi.string().pattern(/^\d{4}-\d{2}-\d{2}$/).required().messages({
+    'string.pattern.base': 'preferredDate must be in the format YYYY-MM-DD'
+  }),
+  preferredTime: Joi.string().pattern(/^\d{2}:\d{2}$/).required().messages({
+    'string.pattern.base': 'preferredTime must be in the format HH:mm'
+  }),
+});
 
-module.exports = { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, addEstimateSchema, recordPaymentSchema }
+module.exports = { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, addEstimateSchema, recordPaymentSchema, preferredTimeSchema }
