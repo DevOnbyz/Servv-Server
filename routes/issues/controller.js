@@ -743,6 +743,15 @@ exports.editEstimateController = async (request, response) => {
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [ estimateData, estimate.id ])
 
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
+      sub_status : isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
+      creator_id : request.userID,
+      creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
     Log.info(`[${domain} | OrganisationID:${orgID}] | editEstimateController | Estimate ${isDraft? 'drafted' : 'sent'} successfully | estimateID: ${estimate.id}`)
     return sendHTTPResponse.success(response, `Estimate ${isDraft ? 'drafted' : 'sent'} successfully`)
   } catch (error) {

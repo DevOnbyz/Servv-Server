@@ -18,8 +18,6 @@ admin.initializeApp({
 
 exports.loginController = async (request, response) => {
   const {username, password, userType, token, fcmToken} = request.body
-  console.log(request.body);
-  
   try{
 
     const allowedUserTypes = [CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN, CONSTANTS.SERVV_USER_TYPE_STRING.AGENT, CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER]
