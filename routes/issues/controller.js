@@ -584,7 +584,7 @@ exports.addAndSendEstimateController = async (request, response) => {
       const issueDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
       const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails.resident_id]))?.fcmToken
       Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | ResidentFCMToken: ${residentFCMToken} | IssueID: ${issueID} | Notification sent successfully`)
-      blastPushNotification(residentFCMToken, `An estimate has been generated for your service request.`)
+      blastPushNotification(residentFCMToken, 'Estimate Generated' ,`An estimate has been generated for your service request.`)
     }
     Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | Estimate added successfully | IssueID: ${issueID}`)
     return sendHTTPResponse.success(response, 'Estimate added successfully', {logID})
@@ -926,7 +926,7 @@ exports.addAndSentInvoiceController = async (request, response) => {
       const issueDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
       const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails.resident_id]))?.fcmToken
       Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | ResidentFCMToken: ${residentFCMToken} | IssueID: ${issueID} | Notification sent successfully`)
-      blastPushNotification(residentFCMToken, `An invoice has been generated for your service request.`)
+      blastPushNotification(residentFCMToken, 'Invoice Generated' ,`An invoice has been generated for your service request.`)
     }
     Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | Invoice ${isDraft ? 'drafted' : 'sent'} successfully | IssueID: ${issueID}`)
     return sendHTTPResponse.success(response, `Invoice ${isDraft ? 'drafted' : 'sent'} successfully`, {logID})
