@@ -743,6 +743,15 @@ exports.editEstimateController = async (request, response) => {
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [ estimateData, estimate.id ])
 
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
+      sub_status : isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
+      creator_id : request.userID,
+      creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
     Log.info(`[${domain} | OrganisationID:${orgID}] | editEstimateController | Estimate ${isDraft? 'drafted' : 'sent'} successfully | estimateID: ${estimate.id}`)
     return sendHTTPResponse.success(response, `Estimate ${isDraft ? 'drafted' : 'sent'} successfully`)
   } catch (error) {
@@ -1083,6 +1092,23 @@ exports.recordPaymentController = async (request, response) => {
   }
 }
 
+exports.addPreferredTimeController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const issueID = request.params.issueID
+  try {
+    const {preferredDate, preferredTime} = request.body
+    const newIssueData = {
+      customer_preferred_time: moment(`${preferredDate} ${preferredTime}`, 'YYYY-MM-DD HH:mm')?.format('YYYY-MM-DD HH:mm:ss')
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ]) 
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addPreferredTimeController | Preferred time added successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Preferred time added successfully')
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | addPreferredTimeController | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error while adding preferred time', error.message)
+  }
+}
 
 
 exports.getIssueHistoryController = async (request, response) => {
