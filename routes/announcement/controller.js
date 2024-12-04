@@ -123,6 +123,7 @@ exports.editAnnouncementController = async (request, response) => {
     const projectList = request.body.project
     const expiryDate = request.body.expiryDate ? moment(request.body.expiryDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') : null
     const isImageEdit = request.body.isImageEdit === 'true'
+    const isImageRemoved = request.body.isImageRemoved === 'true'
 
     if (_.isEmpty(title))
       return sendHTTPResponse.error(response, 'Title cannot be empty', null, 400)
@@ -143,13 +144,13 @@ exports.editAnnouncementController = async (request, response) => {
     let imgSrcPath = oldAnnouncement[0].img_src
     let filename = oldAnnouncement[0].filename
 
-    if (isImageEdit && request.file) {
-      if (imgSrcPath)
-        fs.unlink(imgSrcPath, (err) => err && Log.error(`Failed to delete old image: ${imgSrcPath}. Error: ${err.message}`))
-      
-      const destination = 'uploads/announcement/';
-      imgSrcPath = await saveFileToDisk(request.file, destination);
-      filename = request.file.originalname;
+    if (isImageRemoved) {
+      imgSrcPath && fs.unlink(imgSrcPath, err => err && Log.error(`Failed to delete image: ${imgSrcPath}. Error: ${err.message}`))
+      imgSrcPath = filename = null
+    } else if (isImageEdit && request.file) {
+      imgSrcPath && fs.unlink(imgSrcPath, err => err && Log.error(`Failed to delete old image: ${imgSrcPath}. Error: ${err.message}`))
+      imgSrcPath = await saveFileToDisk(request.file, 'uploads/announcement/')
+      filename = request.file.originalname
     }
 
     const announcementData = {
