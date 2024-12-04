@@ -20,4 +20,7 @@ module.exports = {
   getOrgDetailsByIDs(database) {
     return `SELECT * FROM ${database}.organisation where id in (?)`
   },
+  updateFcmToken(database) {
+    return `UPDATE ${database}.resident_identity SET fcm_token = ? WHERE ph_num = ?`;
+  }
 };
