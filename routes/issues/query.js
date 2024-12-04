@@ -236,6 +236,9 @@ module.exports = {
   },
   deleteEstimate(database) {
     return `DELETE FROM ${database}.estimate WHERE id = ?`;
+  },
+  getResidentFCMTokenByResidentID(database) {
+    return `SELECT RI.fcm_token as fcmToken FROM ${database}.resident_identity RI join ${database}.resident R on RI.id = R.identity_id where R.id = ?`;
   }
 
 };
