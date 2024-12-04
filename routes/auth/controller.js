@@ -17,7 +17,9 @@ admin.initializeApp({
 });
 
 exports.loginController = async (request, response) => {
-  const {username, password, userType, token} = request.body
+  const {username, password, userType, token, fcmToken} = request.body
+  console.log(request.body);
+  
   try{
 
     const allowedUserTypes = [CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN, CONSTANTS.SERVV_USER_TYPE_STRING.AGENT, CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER]
@@ -30,6 +32,7 @@ exports.loginController = async (request, response) => {
       const decodedToken = await admin.auth().verifyIdToken(token)
       const phNum = decodedToken.phone_number
       const customerData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getCustomerData(CONSTANTS.BUILDING_DATABASE), [phNum])
+      console.log(customerData);
 
       if(_.isEmpty(customerData))
         return sendHTTPResponse.error(response, 'Invalid phone number', null, 400)
@@ -37,6 +40,8 @@ exports.loginController = async (request, response) => {
       const {error, data} = await Fn.generateCustomerToken(customerData)
       if(error)
         return sendHTTPResponse.error(response, 'Error in generating admin token', null, 500)
+
+      await runQueryOne(CONSTANTS.BUILDING_DATABASE,queryBuilder.updateFcmToken(CONSTANTS.BUILDING_DATABASE),[fcmToken, customerData.phNum]);
 
       return response.json({ accessToken: data.accessToken, refreshToken: data.refreshToken }) 
     }
