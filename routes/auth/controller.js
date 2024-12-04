@@ -32,7 +32,8 @@ exports.loginController = async (request, response) => {
       if(error)
         return sendHTTPResponse.error(response, 'Error in generating admin token', null, 500)
 
-      await runQueryOne(CONSTANTS.BUILDING_DATABASE,queryBuilder.updateFcmToken(CONSTANTS.BUILDING_DATABASE),[fcmToken, customerData.phNum]);
+      const result = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.updateFcmToken(CONSTANTS.BUILDING_DATABASE),[fcmToken, phNum]);
+      console.log(result)
 
       return response.json({ accessToken: data.accessToken, refreshToken: data.refreshToken }) 
     }
