@@ -32,7 +32,6 @@ exports.loginController = async (request, response) => {
       const decodedToken = await admin.auth().verifyIdToken(token)
       const phNum = decodedToken.phone_number
       const customerData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getCustomerData(CONSTANTS.BUILDING_DATABASE), [phNum])
-      console.log(customerData);
 
       if(_.isEmpty(customerData))
         return sendHTTPResponse.error(response, 'Invalid phone number', null, 400)
