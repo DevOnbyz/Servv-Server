@@ -4,7 +4,6 @@ const validateRequest = require('../../middleware/validateRequest')
 const controller = require('./controller')
 const { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, recordPaymentSchema } = require('./validator')
 const multer = require('multer')
-const path = require('path')
 const Fn = require('./functions')
 
 router.get('/', controller.getIssuesController)
@@ -21,6 +20,9 @@ router.post('/',
     })
   }
 )
+
+// Site Visit
+
 router.post('/:issueID/schedule-visit', validateRequest(scheduleSiteVisitSchema), controller.scheduleVisitIssueController)
 router.patch('/:issueID/site-visit/re-assign',validateRequest(reAssignAgentSchema), controller.reAssignSiteVisitController)
 router.patch('/:issueID/site-visit/cancel', controller.cancelSiteVisitController)
@@ -35,15 +37,29 @@ router.patch('/:issueID/site-visit/complete',
     })
   }
 )
-
 router.get('/:issueID/site-visit', controller.getSiteVisitUnderIssueController)
+
+// Work Order
+
 router.get('/:issueID/work-order', controller.getWorkOrderUnderIssueController)
 router.post('/:issueID/work-order', validateRequest(scheduleSiteVisitSchema), controller.workOrderIssueController)
 router.patch('/:issueID/work-order/re-assign',validateRequest(reAssignAgentSchema), controller.reAssignWorkOrderController )
 router.patch('/:issueID/work-order/cancel', controller.cancelWorkOrderController)
+router.patch('/:issueID/work-order/complete', 
+  (req, res, next) => {
+    Fn.uploadImage(req, res, (err) => {
+      if (err instanceof multer.MulterError || err) {
+        return sendHTTPResponse.error(res, 'Error while uploading image', err.message)
+      }
+      controller.completeWorkOrderController(req, res, next)
+    })
+  }
+)
+
+// Estimate
+
 router.get('/:issueID/estimate', controller.getEstimatesController)
 router.patch('/:issueID/estimate/approve', controller.approveEstimateController) //an issue has only only one estimate 
-
 router.patch('/:issueID/estimate/send', controller.sendEstimateController) //an issue has only only one estimate 
 router.post('/:issueID/estimate', 
   (req, res, next) => {
@@ -68,7 +84,7 @@ router.patch('/:issueID/estimate/edit',
 router.patch('/:issueID/estimate/reject', controller.rejectEstimateController)
 router.delete('/:issueID/estimate', controller.deleteEstimateController)
 
-router.patch('/:issueID/close', controller.closeIssueController)
+// Invoice
 
 router.get('/:issueID/invoice', controller.getInvoiceController)
 router.post('/:issueID/invoice', 
@@ -91,11 +107,14 @@ router.patch('/:issueID/invoice/edit',
     })
   }
 )
-
 router.patch('/:issueID/invoice/approve', controller.approveInvoiceController) //an issue has only only one invoice
 router.patch('/:issueID/invoice/record-payment', validateRequest(recordPaymentSchema), controller.recordPaymentController)
 
+
 router.get('/:issueID/history', controller.getIssueHistoryController)
+
 router.post('/:issueID/hold', controller.holdIssueController)
+
+router.patch('/:issueID/close', controller.closeIssueController)
 
 module.exports = router
