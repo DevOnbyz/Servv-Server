@@ -109,7 +109,8 @@ exports.addResidentController = async (request, response) => {
       const projectID = item?.projectID
       const data = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveApratmentByProjectAndName(CONSTANTS.BUILDING_DATABASE), [projectID, doorNo])
       if (!_.isEmpty(data)) {
-        const message = `Door number ${doorNo} already exists for the project`
+        const projectName = data[0].project_name;
+        const message = `Door number ${doorNo} already exists for the ${projectName}`
         return sendHTTPResponse.error(response, message, null, 400)
       }
     }
@@ -184,7 +185,8 @@ exports.editResidentController = async (request, response) => {
       const data = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveApratmentByProjectAndName(CONSTANTS.BUILDING_DATABASE), [projectID, doorNo])
       // if a resident owned 18A and he is changing it by 2A which is owned by another guy then error so he have make the existing 2A person null
       if (!_.isEmpty(data) && !_.includes(residentOwnedDoorNos, doorNo)) {
-        const message = `Door number already exists for the project`
+        const projectName = data[0].project_name;
+        const message = `Door number already exists for the ${projectName}`
         return sendHTTPResponse.error(response, message, null, 400)
       }
     }

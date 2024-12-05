@@ -20,11 +20,24 @@ module.exports = {
   getApratmentByProjectAndName(database){
     return `SELECT * FROM ${database}.apartment WHERE project_id = ? AND name = ?`
   },
-  getActiveApratmentByProjectAndName(database){
-    return `SELECT * FROM ${database}.apartment WHERE project_id = ? AND name = ? AND status = 1`
-  },
   addApartmentResidentRel(database){
     return `INSERT INTO ${database}.apartment_resident_rel SET ?`
+  },
+  getActiveApratmentByProjectAndName(database) {
+    return `
+    SELECT
+    a.*,
+    p.name as project_name
+FROM
+    ${database}.apartment a
+JOIN
+    ${database}.project p ON a.project_id = p.id
+WHERE
+    a.project_id = ? 
+AND
+    a.name = ?
+AND
+    a.status = 1`
   },
   getResidentDataUnderOrg(database){
     return `
