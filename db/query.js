@@ -19,6 +19,9 @@ module.exports = {
   },
   getAllServicesUnderSystem(database) {
     return `SELECT * FROM ${database}.service`;
+  },
+  getProjectByIDs(database) {
+    return `SELECT * FROM ${database}.project WHERE id in (?)`;
   }
   
 }
