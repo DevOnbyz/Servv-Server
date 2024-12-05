@@ -23,7 +23,7 @@ exports.getServicesController = async (request, response) => {
 exports.addServicesController = async (request, response) => {
   const orgID = request.orgID
   try {
-    const name = request.body.name?.toLowerCase()
+    const name = request.body.name
     const type = request.body.type
     const description = request.body.description
     const serviceData = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getServiceByID(CONSTANTS.BUILDING_DATABASE), [type])

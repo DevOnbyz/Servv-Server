@@ -23,7 +23,7 @@ exports.getProjectsController = async (request, response) => {
 exports.addProjectController = async (request, response) => {
   const orgID = request.orgID
   try {
-    const name = request.body.name?.toLowerCase()
+    const name = request.body.name
     const city = request.body.city?.toLowerCase()
     const district = request.body.district?.toLowerCase()
     const state = request.body.state?.toLowerCase()
