@@ -1,3 +1,4 @@
+-- Active: 1718928938023@@127.0.0.1@3306@servv_residence
 CREATE DATABASE `servv_residence` character set utf8mb4;
 
 use `servv_residence`;
@@ -426,7 +427,24 @@ CREATE TABLE `notification` (
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
-
+CREATE TABLE `report` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `org_id` INT NOT NULL,
+    `name` VARCHAR(255) NOT NULL,
+    `type` INT NOT NULL,
+    `status` TINYINT DEFAULT 0,
+    `start_date` DATETIME,
+    `end_date` DATETIME,
+    `filename` VARCHAR(255),
+    `config` JSON,
+    `created_by` INT,
+    `updated_by` INT,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_report_ibfk_1` FOREIGN KEY (created_by) REFERENCES admin (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_report_ibfk_2` FOREIGN KEY (updated_by) REFERENCES admin (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_report_ibfk_3` FOREIGN KEY (org_id) REFERENCES organisation (id) ON DELETE CASCADE
+);
 
 INSERT INTO `service` SET name='plumbing';
 INSERT INTO `service` SET name='electrical';
