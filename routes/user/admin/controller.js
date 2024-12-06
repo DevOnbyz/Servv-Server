@@ -44,6 +44,11 @@ exports.addAdminController = async (request, response) => {
     const projectList = request.body.project
     const serviceList = request.body.serviceList ?? []
 
+    const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAdminIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum])
+
+    if (!_.isEmpty(phNumDetails))
+      return sendHTTPResponse.error(response, 'Manager with same phone number already exists in this organisation', null, 400)
+
     const adminDetails = {
       firstname,
       lastname,

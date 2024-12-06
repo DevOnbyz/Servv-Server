@@ -1,4 +1,7 @@
 module.exports = {
+  getAdminIdentityByPhNum(database){
+    return `SELECT * FROM ${database}.admin where ph_num = ?`
+  },
   getAllAdminsUnderOrg(database) {
     return `SELECT id, firstname, lastname, email, ph_num, username, org_id, project_id, status, reports_to, role_id, created_at FROM ${database}.admin WHERE org_id = ? order by id desc`;
   },
