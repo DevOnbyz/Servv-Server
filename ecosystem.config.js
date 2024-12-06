@@ -44,6 +44,21 @@ module.exports = {
         env_production: {
             NODE_ENV: 'production'
         }
+      },
+      {
+        name: 'Reporting Service',
+        script: 'services/report/index.js',
+        instances: 1,
+        autorestart: true,
+        exec_mode: 'cluster',
+        watch: false,
+        max_memory_restart: '1G',
+        env: {
+            NODE_ENV: 'dev'
+        },
+        env_production: {
+            NODE_ENV: 'production'
+        }
       }
   ]
 }

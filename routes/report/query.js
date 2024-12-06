@@ -3,6 +3,6 @@ module.exports = {
     return `INSERT INTO ${database}.report SET ?`;
   },
   getReports(database) {
-    return `SELECT * FROM ${database}.report WHERE org_id = ?`;
+    return `SELECT * FROM ${database}.report WHERE org_id = ? ORDER BY id DESC;`;
   }
 }
