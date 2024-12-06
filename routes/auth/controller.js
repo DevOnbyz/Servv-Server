@@ -32,10 +32,34 @@ exports.loginController = async (request, response) => {
       if(error)
         return sendHTTPResponse.error(response, 'Error in generating admin token', null, 500)
 
-      await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.updateFcmToken(CONSTANTS.BUILDING_DATABASE),[fcmToken, phNum]);
+      await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.updateResidentFcmToken(CONSTANTS.BUILDING_DATABASE),[fcmToken, phNum])
 
       return response.json({ accessToken: data.accessToken, refreshToken: data.refreshToken }) 
     }
+
+    if(userType == CONSTANTS.SERVV_USER_TYPE_STRING.AGENT){  
+
+      const decodedToken = await admin.auth().verifyIdToken(token)
+      console.log(decodedToken);
+      
+      const phNum = decodedToken.phone_number
+      const agentData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentData(CONSTANTS.BUILDING_DATABASE), [phNum])
+
+      if(_.isEmpty(agentData))  
+        return sendHTTPResponse.error(response, 'Invalid credentials', null, 400)  
+
+      if(agentData.status !== 1)  
+        return sendHTTPResponse.error(response, 'Agent account is not active', null, 403)  
+
+      const {error, data} = await Fn.generateAgentToken(agentData)  
+
+      if(error)  
+        return sendHTTPResponse.error(response, 'Error in generating agent token', null, 500)
+
+      await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.updateAgentFcmToken(CONSTANTS.BUILDING_DATABASE),[fcmToken, phNum]);
+
+      return response.json({accessToken: data.accessToken,refreshToken: data.refreshToken})   
+    }  
 
     if(userType == CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN){
 
@@ -45,9 +69,6 @@ exports.loginController = async (request, response) => {
       const adminData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAdminData(CONSTANTS.BUILDING_DATABASE), [username])
 
       if(_.isEmpty(adminData))
-        return sendHTTPResponse.error(response, 'Invalid credentials', null, 400)
-
-      if(!await bcrypt.compare(password, adminData.password))
         return sendHTTPResponse.error(response, 'Invalid credentials', null, 400)
 
       const {error, data} = await Fn.generateAdminToken(adminData)
@@ -106,6 +127,19 @@ exports.checkResidentPhoneController = async (request, response) => {
     if(_.isEmpty(residentData))
       return sendHTTPResponse.error(response, 'Invalid phone number', null, 400)
     return sendHTTPResponse.success(response, 'Resident found', null, 200)
+  }catch(error){
+    Log.error(`[Servv] | checkPhoneController | Error in check phone number ${phone} | ${error.message}`)
+    sendHTTPResponse.error(response, 'Error in check phone number', error)
+  }
+}
+
+exports.checkAgentPhoneController = async (request, response) => {
+  const {phone} = request.params
+  try{
+    const agentData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentbyPhNum(CONSTANTS.BUILDING_DATABASE), [phone])
+    if(_.isEmpty(agentData))
+      return sendHTTPResponse.error(response, 'Invalid phone number', null, 400)
+    return sendHTTPResponse.success(response, 'Agent found', null, 200)
   }catch(error){
     Log.error(`[Servv] | checkPhoneController | Error in check phone number ${phone} | ${error.message}`)
     sendHTTPResponse.error(response, 'Error in check phone number', error)

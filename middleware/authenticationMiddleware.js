@@ -21,13 +21,22 @@ module.exports = async (request, response, next) => {
       request.associatedOrganisation = decoded?.data?.associatedOrganisation
       if(!request.orgID) return sendHTTPResponse.error(response, 'Organisation ID not found', null, 403)
       next()
-
     }
     if(request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN){
       request.orgID = decoded?.data?.orgID
       request.username = decoded?.data?.username
       request.userID = decoded?.data?.id
       request.domain = decoded?.data?.domain
+      next()
+    }
+    if(request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.AGENT){
+      request.orgID = request.query.organisationID
+      request.userID = decoded?.data?.associatedOrganisation?.filter(org => org.id == request.orgID)[0]?.residentID
+      request.identityID = decoded?.data?.identityID
+      request.domain = decoded?.data?.associatedOrganisation?.filter(org => org.id == request.orgID)[0]?.name
+      request.name = decoded?.data?.name
+      request.associatedOrganisation = decoded?.data?.associatedOrganisation
+      if(!request.orgID) return sendHTTPResponse.error(response, 'Organisation ID not found', null, 403)
       next()
     }
     
