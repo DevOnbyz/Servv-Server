@@ -183,3 +183,17 @@ exports.getAgentAssignmentsController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while fetching agent list', error)
   }
 }
+
+exports.getAssignmentByIDController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const userID = request.userID
+  const assignmentID = request.params.assignmentID
+  try {
+    const detailedAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getDetailedAssignmentUnderAgentByAssignmentID(CONSTANTS.BUILDING_DATABASE), [assignmentID, userID])
+    return sendHTTPResponse.success(response, 'Fetched assignment details successfully', detailedAssignment)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getAssignmentByIDController | Error in fetching assignment details`)
+    sendHTTPResponse.error(response, 'Error while fetching assignment details', error)
+  }
+}
