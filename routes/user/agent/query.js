@@ -50,7 +50,7 @@ module.exports = {
     return `SELECT count(*) as activeWorkLoad FROM ${database}.issue WHERE agent_id = ? AND sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}`;
   },
   getAgentAssignments(database , isActive) {
-    return `SELECT AA.id as assignmentId, I.id as issueId, I.agent_id as agentId, A.name as doorNo, P.name as projectName, AA.type as type,
+    return `SELECT AA.id as assignmentId, I.id as issueId, I.agent_id as agentId, A.name as doorNo, P.name as projectName, AA.type as assignmentType,
     CASE WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}'
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING} THEN 'PENDING' 
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
