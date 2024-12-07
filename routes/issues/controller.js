@@ -1009,6 +1009,15 @@ exports.editInvoiceController = async (request, response) => {
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateInvoice(CONSTANTS.BUILDING_DATABASE), [ invoiceDBData, invoiceData.id ])
 
+    const issueLogData = {
+      issue_id : issueID,
+      event_type : isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
+      sub_status : isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
+      creator_id : request.userID,
+      creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+    const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
     Log.info(`[${domain} | OrganisationID:${orgID}] | editInvoiceController | Invoice updated successfully | invoiceID: ${invoiceData.id}`)
     return sendHTTPResponse.success(response, 'Invoice updated successfully')
   } catch (error) {
