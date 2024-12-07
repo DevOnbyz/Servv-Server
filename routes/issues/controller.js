@@ -18,6 +18,7 @@ exports.getIssuesController = async (request, response) => {
   const domain = request.domain
   try {
     const issues = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssues(CONSTANTS.BUILDING_DATABASE),[orgID])
+    
     for (const issue of issues) {
       issue.img_src = issue.img_src?.split(',')
       const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE),[issue.id])
