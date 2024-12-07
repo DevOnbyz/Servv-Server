@@ -1,4 +1,4 @@
-const { ISSUE_SUB_STATUS_NUM } = require("../../../lib/constants");
+const { ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, ISSUE_STATUS, ISSUE_STATUS_STRING, AGENT_ASSIGNMENT_TYPE } = require("../../../lib/constants");
 
 module.exports = {
   getAgentIdentityByPhNum(database){
@@ -49,6 +49,20 @@ module.exports = {
   getActiveWorkLoadByCountAgentID(database) {
     return `SELECT count(*) as activeWorkLoad FROM ${database}.issue WHERE agent_id = ? AND sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}`;
   },
+  getAgentAssignments(database , isActive) {
+    return `SELECT AA.id as assignmentId, I.id as issueId, I.agent_id as agentId, A.name as doorNo, P.name as projectName, AA.type as type,
+    CASE WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}'
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING} THEN 'PENDING' 
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
+    END as status,
+    AA.visit_scheduled_time as scheduledTime
+    FROM ${database}.agent_assignment AA
+    LEFT JOIN ${database}.issue I ON AA.issue_id = I.id
+    LEFT JOIN ${database}.apartment A ON I.apartment_id = A.id
+    LEFT JOIN ${database}.project P ON A.project_id = P.id
+    WHERE AA.agent_id = ? ${isActive ? `AND AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING}` : ''} ORDER BY AA.created_at DESC`;
+  }
 };
 
 

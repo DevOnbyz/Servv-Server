@@ -169,3 +169,17 @@ catch (error) {
     return sendHTTPResponse.error(response, 'Error on editing admin', error)
   }
 }
+
+exports.getAgentAssignmentsController = async (request, response) => {
+  const orgID = request.orgID
+  const domain = request.domain
+  const userID = request.userID
+  const isActive = request.query.isActive == 'true'
+  try {
+    const agentList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentAssignments(CONSTANTS.BUILDING_DATABASE, isActive), [userID]) ?? []
+    return sendHTTPResponse.success(response, 'Fetched agent details successfully', agentList)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getAgentsAssignmentsController | Error in fetching agent list`)
+    sendHTTPResponse.error(response, 'Error while fetching agent list', error)
+  }
+}

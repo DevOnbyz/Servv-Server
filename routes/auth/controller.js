@@ -39,9 +39,7 @@ exports.loginController = async (request, response) => {
 
     if(userType == CONSTANTS.SERVV_USER_TYPE_STRING.AGENT){  
 
-      const decodedToken = await admin.auth().verifyIdToken(token)
-      console.log(decodedToken);
-      
+      const decodedToken = await admin.auth().verifyIdToken(token)      
       const phNum = decodedToken.phone_number
       const agentData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentData(CONSTANTS.BUILDING_DATABASE), [phNum])
 

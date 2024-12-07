@@ -3,7 +3,7 @@ module.exports = {
     return `SELECT * FROM ${database}.admin where BINARY username = ?`
   },
   getAgentData(database) {
-    return `SELECT * FROM ${database}.agent R INNER JOIN ${database}.agent_identity RI ON R.identity_id = RI.id WHERE RI.ph_num = ?`
+    return `SELECT * FROM ${database}.agent A INNER JOIN ${database}.agent_identity AI ON A.identity_id = AI.id WHERE AI.ph_num = ?`
   },
   getAdminDataByID(database) {
     return `SELECT * FROM ${database}.admin where id = ?`
