@@ -66,7 +66,7 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}'
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
-     I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.customer_preferred_time as time, I.initial_activity_time as initialActivityTime
+    I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.customer_preferred_time as time, I.initial_activity_time as initialActivityTime
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
     left join ${database}.project P on A.project_id = P.id
@@ -101,6 +101,38 @@ module.exports = {
     FROM ${database}.agent_assignment AA
     LEFT JOIN ${database}.agent A ON A.id = AA.agent_id
     LEFT JOIN ${database}.admin B ON B.id = AA.created_by
+    where issue_id = ? and type = ${AGENT_ASSIGNMENT_TYPE.SITE_VISIT} ORDER BY AA.created_at DESC`;
+  },
+  getSiteVisitUnderIssueWithDetails(database) {
+    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', R.lastname) as ResidentName ,AA.issue_id as issueId, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.assigned_time as assignedTime, AA.visit_scheduled_time as siteVisitTime,
+    CASE
+    WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
+    ELSE 0
+    END AS overDueDate,
+    AA.notes as noteForAgent,
+    AA.agent_inferences as agentInferences,
+    AA.agent_uploads as agent_uploads,
+    I.description as issueDescription,
+    I.img_src as issueImages,
+    P.city as city, P.district as district, P.state as state, P.country as country,
+    AA.created_at as AgentAssignmentCreatedTime,
+    AA.updated_at as AgentAssignmentLastUpdatedTime,
+    CASE
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING} THEN 'PENDING'
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
+    END as status,
+    AP.name as doorNo, P.name as projectName, S.name as serviceType, SOR.name as serviceSubTypeName,
+    CONCAT(B.firstname, ' ', B.lastname) as agentAssignmentCreatedBy
+    FROM ${database}.agent_assignment AA
+    LEFT JOIN ${database}.agent A ON A.id = AA.agent_id
+    LEFT JOIN ${database}.admin B ON B.id = AA.created_by
+    LEFT JOIN ${database}.issue I ON I.id = AA.issue_id
+    LEFT JOIN ${database}.apartment AP ON AP.id = I.apartment_id
+    LEFT JOIN ${database}.project P ON P.id = AP.project_id
+    LEFT JOIN ${database}.service S ON S.id = I.service_type
+    LEFT JOIN ${database}.service_organisation_rel SOR ON SOR.id = I.service_subtype
+    LEFT JOIN ${database}.resident R ON R.id = I.resident_id
     where issue_id = ? and type = ${AGENT_ASSIGNMENT_TYPE.SITE_VISIT} ORDER BY AA.created_at DESC`;
   },
   getWorkOrderUnderIssue(database) {

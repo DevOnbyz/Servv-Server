@@ -281,8 +281,10 @@ exports.getSiteVisitUnderIssueController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
   const issueID = request.params.issueID
+  const details = request.query.details == 'true'
   try {
-    const siteVisit = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getSiteVisitUnderIssue(CONSTANTS.BUILDING_DATABASE), [issueID])
+    const query = details ? queryBuilder.getSiteVisitUnderIssueWithDetails(CONSTANTS.BUILDING_DATABASE) : queryBuilder.getSiteVisitUnderIssue(CONSTANTS.BUILDING_DATABASE)
+    const siteVisit = await runQuery(CONSTANTS.BUILDING_DATABASE, query, [issueID])
     Log.info(`[${domain} | OrganisationID:${orgID}] | getSiteVisitUnderIssueController | Site visit fetched successfully | IssueID: ${issueID}`)
     return sendHTTPResponse.success(response, 'Site visit fetched successfully', siteVisit)
   } catch (error) {

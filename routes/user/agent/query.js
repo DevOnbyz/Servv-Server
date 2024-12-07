@@ -56,11 +56,14 @@ module.exports = {
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
     END as status,
-    AA.visit_scheduled_time as scheduledTime
+    AA.visit_scheduled_time as scheduledTime,
+    P.city as city, P.district as district, P.state as state, P.country as country,
+    CONCAT(R.firstname, ' ', R.lastname) as ResidentName
     FROM ${database}.agent_assignment AA
     LEFT JOIN ${database}.issue I ON AA.issue_id = I.id
     LEFT JOIN ${database}.apartment A ON I.apartment_id = A.id
     LEFT JOIN ${database}.project P ON A.project_id = P.id
+    LEFT JOIN ${database}.resident R ON I.resident_id = R.id
     WHERE AA.agent_id = ? ${isActive ? `AND AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING}` : ''} ORDER BY AA.created_at DESC`;
   }
 };
