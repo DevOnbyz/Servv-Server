@@ -1,3 +1,5 @@
+const { REPORT_STATUS } = require("../lib/constants");
+
 module.exports = {
   getAllProjectsByOrgID(database) {
     return `SELECT * FROM ${database}.project WHERE org_id = ?`;
@@ -22,6 +24,9 @@ module.exports = {
   },
   getProjectByIDs(database) {
     return `SELECT * FROM ${database}.project WHERE id in (?)`;
+  },
+  getActiveReports(database) {
+    return `SELECT * from ${database}.report  where status = ${REPORT_STATUS.INPROGRESS}`;
   }
   
 }

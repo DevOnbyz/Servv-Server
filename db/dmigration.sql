@@ -80,3 +80,8 @@ ALTER TABLE `issue` ADD COLUMN `initial_activity_time` DATETIME AFTER customer_p
 ALTER TABLE announcement ADD COLUMN `filename` TEXT DEFAULT NULL AFTER `img_src`;
 ALTER TABLE invoice ADD COLUMN `collected_by` VARCHAR(255) DEFAULT NULL AFTER `total_charge`;
 ALTER TABLE invoice ADD COLUMN `payment_mode` TINYINT DEFAULT NULL AFTER `collected_by`;
+
+-- 07-12-2024
+ALTER TABLE report ADD COLUMN download_path TEXT AFTER filename;
+ALTER TABLE `report` CHANGE `start_date` `start_date` TIMESTAMP NULL;
+ALTER TABLE `report` CHANGE `end_date` `end_date` TIMESTAMP NULL;

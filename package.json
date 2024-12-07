@@ -17,6 +17,7 @@
     "firebase-admin": "^12.7.0",
     "ip": "^2.0.1",
     "joi": "^17.13.3",
+    "json2csv": "^6.0.0-alpha.2",
     "jsonwebtoken": "^9.0.2",
     "lodash": "^4.17.21",
     "moment": "^2.30.1",
