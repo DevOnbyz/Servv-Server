@@ -50,18 +50,55 @@ module.exports = {
     return `SELECT count(*) as activeWorkLoad FROM ${database}.issue WHERE agent_id = ? AND sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}`;
   },
   getAgentAssignments(database , isActive) {
-    return `SELECT AA.id as assignmentId, I.id as issueId, I.agent_id as agentId, A.name as doorNo, P.name as projectName, AA.type as type,
+    return `SELECT AA.id as assignmentId, I.id as issueId, I.agent_id as agentId, A.name as doorNo, P.name as projectName, AA.type as assignmentType,
     CASE WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}'
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING} THEN 'PENDING' 
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
     END as status,
-    AA.visit_scheduled_time as scheduledTime
+    AA.visit_scheduled_time as scheduledTime,
+    P.city as city, P.district as district, P.state as state, P.country as country,
+    CONCAT(R.firstname, ' ', R.lastname) as ResidentName
     FROM ${database}.agent_assignment AA
     LEFT JOIN ${database}.issue I ON AA.issue_id = I.id
     LEFT JOIN ${database}.apartment A ON I.apartment_id = A.id
     LEFT JOIN ${database}.project P ON A.project_id = P.id
+    LEFT JOIN ${database}.resident R ON I.resident_id = R.id
     WHERE AA.agent_id = ? ${isActive ? `AND AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING}` : ''} ORDER BY AA.created_at DESC`;
+  },
+  getDetailedAssignmentUnderAgentByAssignmentID(database) {
+    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', R.lastname) as ResidentName ,AA.issue_id as issueId, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.assigned_time as assignedTime, AA.visit_scheduled_time as siteVisitTime,
+    CASE
+    WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
+    ELSE 0
+    END AS overDueDate,
+    AA.type as assignmentType,
+    AA.notes as noteForAgent,
+    AA.agent_inferences as agentInferences,
+    AA.agent_uploads as agent_uploads,
+    I.description as issueDescription,
+    I.img_src as issueImages,
+    P.city as city, P.district as district, P.state as state, P.country as country,
+    AA.created_at as AgentAssignmentCreatedTime,
+    AA.updated_at as AgentAssignmentLastUpdatedTime,
+    CASE
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING} THEN 'PENDING'
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
+    END as status,
+    AP.name as doorNo, P.name as projectName, S.name as serviceType, SOR.name as serviceSubTypeName,
+    CONCAT(A.firstname, ' ', A.lastname) as agentAssignmentCreatedBy,
+    CONCAT(B.firstname, ' ', B.lastname) as issueCreatedBy
+    FROM ${database}.agent_assignment AA
+    LEFT JOIN ${database}.agent A ON A.id = AA.agent_id
+    LEFT JOIN ${database}.admin B ON B.id = AA.created_by
+    LEFT JOIN ${database}.issue I ON I.id = AA.issue_id
+    LEFT JOIN ${database}.apartment AP ON AP.id = I.apartment_id
+    LEFT JOIN ${database}.project P ON P.id = AP.project_id
+    LEFT JOIN ${database}.service S ON S.id = I.service_type
+    LEFT JOIN ${database}.service_organisation_rel SOR ON SOR.id = I.service_subtype
+    LEFT JOIN ${database}.resident R ON R.id = I.resident_id
+    where AA.id = ? AND AA.agent_id = ? ORDER BY AA.created_at DESC`;
   }
 };
 
