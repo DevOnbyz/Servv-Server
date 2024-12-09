@@ -22,7 +22,7 @@ const upload = multer({
   }
 }).single('imgSrc')
 
-router.get('/', controller.getAnnouncemntsController)
+router.get('/', controller.getAnnouncementsController)
 router.post('/', (req, res, next) => {
   upload(req, res, (err) => {
     if (err instanceof multer.MulterError) {
@@ -43,5 +43,6 @@ router.patch('/:id', (req, res, next) => {
     controller.editAnnouncementController(req, res, next)
   })
 })
+router.post('/interest', controller.addInterestController)
 
 module.exports = router

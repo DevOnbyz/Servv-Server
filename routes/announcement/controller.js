@@ -10,40 +10,46 @@ const path = require('path')
 const fs = require('fs')
 const { v4: uuidv4 } = require('uuid')
 const { getAllProjectsByOrgID } = require('../../db/query')
+const { getApartmentListByResidentID, formatAnnouncements, getProjectIDByApartmentID } = require('./functions')
 
 const formDataLogger = (formData) => {
   if (formData) {
-    const loggableData = { ...formData };
-    if (loggableData.file) delete loggableData.file;
-    if (loggableData.password) delete loggableData.password;
-    console.log("Form Data:", JSON.stringify(loggableData, null, 2));
+    const loggableData = { ...formData }
+    if (loggableData.file) delete loggableData.file
+    if (loggableData.password) delete loggableData.password
+    console.log('Form Data:', JSON.stringify(loggableData, null, 2))
   } else {
-    console.log("Form Data Logger: No data provided.");
+    console.log('Form Data Logger: No data provided.')
   }
-};
+}
 
 
-exports.getAnnouncemntsController = async (request, response) => {
+exports.getAnnouncementsController = async (request, response) => {
   const orgID = request.orgID
   try {
-    const announcementList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAnnouncementsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
-    const projectNames = await runQuery(CONSTANTS.BUILDING_DATABASE, getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE), orgID)
-    const dateFormattedData = announcementList?.map((announcement) => {
-      const projectList = !_.isEmpty(announcement.project_id) ? (JSON.parse(announcement.project_id))?.map((project) => parseInt(project)) : []
-      const projectAssociated = (projectNames?.filter((project) => projectList?.includes(project.id)))?.map((project) => project.name)
-      return {
-        ...announcement,
-        project: projectAssociated,
-        created_at: moment(announcement.created_at).format('DD-MM-YYYY'),
-        expire_date: moment(announcement.expire_date).format('DD-MM-YYYY'),
-        duration: moment(announcement.expire_date).startOf('day').diff(moment(announcement.created_at).startOf('day'), 'days'),
-        img_src: announcement.img_src ? announcement.img_src : null
+    const [announcementList, projectListUnderOrg] = await Promise.all([
+      runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAnnouncementsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID]),
+      runQuery(CONSTANTS.BUILDING_DATABASE, getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE), orgID),
+    ])
+
+    if (request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER) {
+      const residentID = request.userID
+      const apartmentList = await getApartmentListByResidentID(residentID)
+
+      if (_.isEmpty(apartmentList)) {
+        return sendHTTPResponse.success(response, "Announcement List fetched successfully", [])
       }
-    })
-    for (const announcement of dateFormattedData) {
+
+      const projectIDList = await getProjectIDByApartmentID(residentID)
+      const projectDetails = projectListUnderOrg.filter((project) => projectIDList.includes(project.id))
+      const formattedAnnouncements = formatAnnouncements(announcementList, projectDetails, true)
+      return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
+    }
+    const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg)
+    for (const announcement of formattedAnnouncements) {
       announcement.response = []
     }
-    return sendHTTPResponse.success(response, 'Announcement List fetched successfully', dateFormattedData)
+    return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
   } catch (error) {
     Log.error(`[Servv | OrganisationID:${orgID}] | getAnnouncemntsController | Error in fetching announcement list | Error: ${error.message}`)
     sendHTTPResponse.error(response, 'Error while fetching announcement list', error.message)
@@ -168,5 +174,23 @@ exports.editAnnouncementController = async (request, response) => {
   } catch (error) {
     Log.error(`[Servv | OrganisationID:${orgID}] | editAnnouncementController | Error in updating announcement | Error: ${error.message}`)
     sendHTTPResponse.error(response, 'Error on updating announcement', error.message)
+  }
+}
+
+exports.addInterestController = async (request, response) => {
+  return sendHTTPResponse.success(response, 'Work in progress')
+  const orgID = request.orgID
+  const announcementID = request.body.announcementID
+  const userID = request.userID
+  const userType = request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN ? CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN : CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER 
+  try {
+    if(! request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER)
+      throw new Error('Only customer can add interest')
+
+    const interest = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addInterestToAnnouncement(CONSTANTS.BUILDING_DATABASE), [orgID, announcementID, userID])
+    return sendHTTPResponse.success(response, 'Interest added successfully', interest)
+  } catch (error) {
+    Log.error(`[Servv | OrganisationID:${orgID}] | addInterestController | Error in adding interest | Error: ${error.message}`)
+    sendHTTPResponse.error(response, 'Error on adding interest', error.message)
   }
 }
