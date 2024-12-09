@@ -587,7 +587,10 @@ exports.addAndSendEstimateController = async (request, response) => {
       Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | ResidentFCMToken: ${residentFCMToken} | IssueID: ${issueID} | Notification sent successfully`)
       blastPushNotification(residentFCMToken, 'Estimate Generated' ,`An estimate has been generated for your service request.`)
     }
-    Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | Estimate Sent successfully | IssueID: ${issueID}`)
+
+    const successMessage = isDraft ? 'Estimate drafted successfully' : 'Estimate sent successfully'
+
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | Estimate ${isDraft ?"Drafted":"Sent"} successfully | IssueID: ${issueID}`)
     return sendHTTPResponse.success(response, 'Estimate Sent successfully', {logID})
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | ${error.message}`)
