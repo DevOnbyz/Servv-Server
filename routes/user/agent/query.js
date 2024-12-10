@@ -67,7 +67,7 @@ module.exports = {
     WHERE AA.agent_id = ? ${isActive ? `AND AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING}` : ''} ORDER BY AA.created_at DESC`;
   },
   getDetailedAssignmentUnderAgentByAssignmentID(database) {
-    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', R.lastname) as ResidentName ,AA.issue_id as issueId, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.assigned_time as assignedTime, AA.visit_scheduled_time as siteVisitTime,
+    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', R.lastname) as ResidentName, RI.ph_num as ResidentPhone, AA.issue_id as issueId, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.assigned_time as assignedTime, AA.visit_scheduled_time as siteVisitTime,
     CASE
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
@@ -98,6 +98,7 @@ module.exports = {
     LEFT JOIN ${database}.service S ON S.id = I.service_type
     LEFT JOIN ${database}.service_organisation_rel SOR ON SOR.id = I.service_subtype
     LEFT JOIN ${database}.resident R ON R.id = I.resident_id
+    LEFT JOIN ${database}.resident_identity RI ON RI.id = R.identity_id
     where AA.id = ? AND AA.agent_id = ? ORDER BY AA.created_at DESC`;
   }
 };
