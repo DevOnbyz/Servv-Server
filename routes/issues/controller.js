@@ -127,8 +127,8 @@ exports.addIssueController = async (request, response) => {
       creator_type : request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN ? CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN : CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData])
-    Log.info(`[${domain} | OrganisationID:${orgID}] | addIssueController | Issue added successfully | IssueID: ${insertID}`)
-    return sendHTTPResponse.success(response, 'Issue added successfully', insertID)
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addIssueController | Service request has been raised successfully | IssueID: ${insertID}`)
+    return sendHTTPResponse.success(response, 'Service request has been raised successfully', insertID)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | addIssueController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while fetching project list', error)
@@ -231,8 +231,8 @@ exports.workOrderIssueController = async (request, response) => {
     }
 
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
-    Log.info(`[${domain} | OrganisationID:${orgID}] | workOrderIssueController | Work order added successfully | IssueID: ${issueID} | LogID: ${logID}`)
-    return sendHTTPResponse.success(response, 'Work order added successfully', {entityID, logID})
+    Log.info(`[${domain} | OrganisationID:${orgID}] | workOrderIssueController | Work order has been successfully scheduled | IssueID: ${issueID} | LogID: ${logID}`)
+    return sendHTTPResponse.success(response, 'Work order has been successfully scheduled', {entityID, logID})
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | workOrderIssueController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while adding work order', error.message)
@@ -269,8 +269,8 @@ exports.reAssignWorkOrderController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentIDInAgentAssignmentofActiveIssue(CONSTANTS.BUILDING_DATABASE), [ newAgentAssignmentData, issueID ])
-    Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignWorkOrderController | Work order re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
-    return sendHTTPResponse.success(response, 'Work order re-assigned successfully')
+    Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignWorkOrderController | The work order has been re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
+    return sendHTTPResponse.success(response, 'The work order has been re-assigned successfully')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | reAssignWorkOrderController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while re-assigning work order', error.message)
@@ -326,8 +326,8 @@ exports.closeIssueController = async (request, response) => {
     }
 
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
-    Log.info(`[${domain} | OrganisationID:${orgID}] | closeIssueController | Issue closed successfully | IssueID: ${issueID}`)
-    return sendHTTPResponse.success(response, 'Issue closed successfully')
+    Log.info(`[${domain} | OrganisationID:${orgID}] | closeIssueController | Service request has been closed | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Service request has been closed')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | closeIssueController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while closing issue', error.message)
@@ -367,8 +367,8 @@ exports.reAssignSiteVisitController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentIDInAgentAssignmentofActiveIssue(CONSTANTS.BUILDING_DATABASE), [ newAgentAssignmentData, issueID ])
-    Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | Issue re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
-    return sendHTTPResponse.success(response, 'Issue re-assigned successfully')
+    Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | Service request has been re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
+    return sendHTTPResponse.success(response, 'Service request has been re-assigned successfully')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while re-assigning issue', error.message)
@@ -412,8 +412,8 @@ exports.cancelSiteVisitController = async (request, response) => {
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
     // await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.cancelSiteVisit(CONSTANTS.BUILDING_DATABASE), [issueID])
-    Log.info(`[${domain} | OrganisationID:${orgID}] | cancelSiteVisitController | Issue cancelled successfully | IssueID: ${issueID} | LogID: ${logID}`)
-    return sendHTTPResponse.success(response, 'Issue site visit cancelled successfully')
+    Log.info(`[${domain} | OrganisationID:${orgID}] | cancelSiteVisitController | Site visit has been canceled | IssueID: ${issueID} | LogID: ${logID}`)
+    return sendHTTPResponse.success(response, 'Site visit has been canceled')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | cancelSiteVisitController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while canceling issue site visit', error.message)
@@ -589,8 +589,8 @@ exports.addAndSendEstimateController = async (request, response) => {
       Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | ResidentFCMToken: ${residentFCMToken} | IssueID: ${issueID} | Notification sent successfully`)
       blastPushNotification(residentFCMToken, 'Estimate Generated' ,`An estimate has been generated for your service request.`)
     }
-    Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | Estimate ${isDraft ?"Drafted":"Sent"} successfully | IssueID: ${issueID}`)
-    return sendHTTPResponse.success(response, `Estimate ${isDraft ?"Drafted":"Sent"} successfully`, {logID})
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | The Estimate has been ${isDraft ?"drafted":"sent"} successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, `The Estimate has been ${isDraft ?"drafted":"sent"} successfully`, {logID})
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while adding estimate', error.message)
@@ -629,8 +629,8 @@ exports.approveEstimateController = async (request, response) => {
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
-    Log.info(`[${domain} | OrganisationID:${orgID}] | approveEstimateController | Estimate approved successfully | IssueID: ${issueID}`)
-    return sendHTTPResponse.success(response, 'Estimate approved successfully', {logID})
+    Log.info(`[${domain} | OrganisationID:${orgID}] | approveEstimateController | The estimate has been approved successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'The estimate has been approved successfully', {logID})
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | approveEstimateController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while approving estimate', error.message)
@@ -666,8 +666,8 @@ exports.sendEstimateController = async (request, response) => {
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
-    Log.info(`[${domain} | OrganisationID:${orgID}] | sendEstimateController | Estimate send successfully | IssueID: ${issueID}`)
-    return sendHTTPResponse.success(response, 'Estimate sent successfully', {logID})
+    Log.info(`[${domain} | OrganisationID:${orgID}] | sendEstimateController | The estimate has been sent successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'The estimate has been sent successfully', {logID})
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | sendEstimateController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while sending estimate', error.message)
@@ -760,8 +760,8 @@ exports.editEstimateController = async (request, response) => {
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
-    Log.info(`[${domain} | OrganisationID:${orgID}] | editEstimateController | Estimate ${isDraft? 'drafted' : 'sent'} successfully | estimateID: ${estimate.id}`)
-    return sendHTTPResponse.success(response, `Estimate ${isDraft ? 'drafted' : 'sent'} successfully`)
+    Log.info(`[${domain} | OrganisationID:${orgID}] | editEstimateController | The estimate has been ${isDraft? 'drafted' : 'sent'} successfully | estimateID: ${estimate.id}`)
+    return sendHTTPResponse.success(response, `The estimate has been ${isDraft ? 'drafted' : 'sent'} successfully`)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | editEstimateController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while updating estimate', error.message)
@@ -802,8 +802,8 @@ exports.rejectEstimateController = async (request, response) => {
         creator_type : request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
       }
       const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
-      Log.info(`[${domain} | OrganisationID:${orgID}] | rejectEstimateController | Estimate rejected successfully | estimateID: ${estimate.id} | logID: ${logID}`)
-      return sendHTTPResponse.success(response, 'Estimate rejected successfully')
+      Log.info(`[${domain} | OrganisationID:${orgID}] | rejectEstimateController | The estimate has been rejected | estimateID: ${estimate.id} | logID: ${logID}`)
+      return sendHTTPResponse.success(response, 'The estimate has been rejected')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | rejectEstimateController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while rejecting estimate', error.message)
@@ -820,8 +820,8 @@ exports.deleteEstimateController = async (request, response) => {
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.deleteEstimate(CONSTANTS.BUILDING_DATABASE), [estimate.id])
 
-    Log.info(`[${domain} | OrganisationID:${orgID}] | deleteEstimateController | Estimate deleted successfully | estimateID: ${estimate.id}`)
-    return sendHTTPResponse.success(response, 'Estimate deleted successfully')
+    Log.info(`[${domain} | OrganisationID:${orgID}] | deleteEstimateController | The estimate has been deleted | estimateID: ${estimate.id}`)
+    return sendHTTPResponse.success(response, 'The estimate has been deleted')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | deleteEstimateController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while deleting estimate', error.message)
@@ -931,8 +931,8 @@ exports.addAndSentInvoiceController = async (request, response) => {
       Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | ResidentFCMToken: ${residentFCMToken} | IssueID: ${issueID} | Notification sent successfully`)
       blastPushNotification(residentFCMToken, 'Invoice Generated' ,`An invoice has been generated for your service request.`)
     }
-    Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | Invoice ${isDraft ? 'drafted' : 'sent'} successfully | IssueID: ${issueID}`)
-    return sendHTTPResponse.success(response, `Invoice ${isDraft ? 'drafted' : 'sent'} successfully`, {logID})
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | The invoice has been ${isDraft ? 'drafted' : 'sent'} successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, `The invoice has been ${isDraft ? 'drafted' : 'sent'} successfully`, {logID})
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while adding invoice', error.message)
@@ -1020,8 +1020,8 @@ exports.editInvoiceController = async (request, response) => {
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
-    Log.info(`[${domain} | OrganisationID:${orgID}] | editInvoiceController | Invoice updated successfully | invoiceID: ${invoiceData.id}`)
-    return sendHTTPResponse.success(response, 'Invoice updated successfully')
+    Log.info(`[${domain} | OrganisationID:${orgID}] | editInvoiceController | The invoice has been updated successfully | invoiceID: ${invoiceData.id}`)
+    return sendHTTPResponse.success(response, 'The invoice has been updated successfully')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | editInvoiceController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while updating invoice', error.message)
@@ -1060,8 +1060,8 @@ exports.approveInvoiceController = async (request, response) => {
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
-    Log.info(`[${domain} | OrganisationID:${orgID}] | approveInvoiceController | Invoice approved successfully | IssueID: ${issueID}`)
-    return sendHTTPResponse.success(response, 'Invoice approved successfully', {logID})
+    Log.info(`[${domain} | OrganisationID:${orgID}] | approveInvoiceController | The invoice has been approved successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'The invoice has been approved successfully', {logID})
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | approveInvoiceController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while approving invoice', error.message)
@@ -1105,8 +1105,8 @@ exports.recordPaymentController = async (request, response) => {
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
-    Log.info(`[${domain} | OrganisationID:${orgID}] | recordPaymentController | Payment recorded successfully | IssueID: ${issueID}`)
-    return sendHTTPResponse.success(response, 'Payment recorded successfully', {logID})
+    Log.info(`[${domain} | OrganisationID:${orgID}] | recordPaymentController | The payment has been recorded successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'The payment has been recorded successfully', {logID})
   }
   catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | recordPaymentController | ${error.message}`)
@@ -1124,8 +1124,8 @@ exports.addPreferredTimeController = async (request, response) => {
       customer_preferred_time: moment.utc(preferredDatetime)?.format('YYYY-MM-DD HH:mm:ss')
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ]) 
-    Log.info(`[${domain} | OrganisationID:${orgID}] | addPreferredTimeController | Preferred time added successfully | IssueID: ${issueID}`)
-    return sendHTTPResponse.success(response, 'Preferred time added successfully')
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addPreferredTimeController | The preferred time has been added successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'The preferred time has been added successfully')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | addPreferredTimeController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while adding preferred time', error.message)
@@ -1167,8 +1167,8 @@ exports.holdIssueController = async (request, response) => {
       creator_type : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
-    Log.info(`[${domain} | OrganisationID:${orgID}] | holdIssueController | Issue hold successfully | IssueID: ${issueID}`)
-    return sendHTTPResponse.success(response, 'Issue hold successfully')
+    Log.info(`[${domain} | OrganisationID:${orgID}] | holdIssueController | Service request has been put on hold | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Service request has been put on hold')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | holdIssueController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while holding issue', error.message)
@@ -1205,8 +1205,8 @@ exports.cancelWorkOrderController = async (request, response) => {
     }
 
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
-    Log.info(`[${domain} | OrganisationID:${orgID}] | cancelWorkOrderController | Work order cancelled successfully | IssueID: ${issueID} | LogID: ${logID}`)
-    return sendHTTPResponse.success(response, 'Work order site visit cancelled successfully')
+    Log.info(`[${domain} | OrganisationID:${orgID}] | cancelWorkOrderController | The work order has been canceled | IssueID: ${issueID} | LogID: ${logID}`)
+    return sendHTTPResponse.success(response, 'The work order has been canceled')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | cancelWorkOrderController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while canceling Work order', error.message)
