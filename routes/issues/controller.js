@@ -12,6 +12,7 @@ const { generateOTP, getSubStatusStringById, blastPushNotification } = require('
 const moment = require('moment')
 const runQueryOne = require('../../db/runQueryOne')
 const Fn = require('./functions')
+const { convertToUTC } = require('../announcement/functions')
 
 exports.getIssuesController = async (request, response) => {
   const orgID = request.orgID
@@ -113,8 +114,8 @@ exports.addIssueController = async (request, response) => {
       issue_type: '',
       status: CONSTANTS.ISSUE_STATUS.OPEN,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.OPEN,
-      initial_activity_time: _.isEmpty(request.body.scheduledTime) ? null : request.body.scheduledTime,
-      customer_preferred_time: _.isEmpty(request.body.scheduledTime) ? null : request.body.scheduledTime,
+      initial_activity_time: _.isEmpty(request.body.scheduledTime) ? null : moment(convertToUTC(request.body.scheduledTime, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss'),
+      customer_preferred_time: _.isEmpty(request.body.scheduledTime) ? null : moment(convertToUTC(request.body.scheduledTime, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss'),
       img_src: _.isEmpty(request.body.imgSrcPaths) ? null : (request.body.imgSrcPaths)?.join(','),
     }
     const insertID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addIssue(CONSTANTS.BUILDING_DATABASE), [issueData]))?.insertId
@@ -131,7 +132,7 @@ exports.addIssueController = async (request, response) => {
     return sendHTTPResponse.success(response, 'Service request has been raised successfully', insertID)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | addIssueController | ${error.message}`)
-    sendHTTPResponse.error(response, 'Error while fetching project list', error)
+    sendHTTPResponse.error(response, 'Error while raising service request', error)
   }
 }
 
@@ -263,8 +264,8 @@ exports.reAssignWorkOrderController = async (request, response) => {
       otp_code: generateOTP(),
     }
     if(modifiedVisit){
-      newIssueData.customer_preferred_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
-      newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
+      newIssueData.customer_preferred_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
+      newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.notes = modifiedNote
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])
@@ -361,8 +362,8 @@ exports.reAssignSiteVisitController = async (request, response) => {
     }
     // sent notification to the agent regarding the issue
     if(modifiedVisit){
-      newIssueData.customer_preferred_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
-      newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(modifiedDate).format('YYYY-MM-DD HH:mm:ss') : null
+      newIssueData.customer_preferred_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
+      newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.notes = modifiedNote
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ newIssueData, issueID ])

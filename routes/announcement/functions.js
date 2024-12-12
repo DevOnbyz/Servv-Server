@@ -3,6 +3,7 @@ const _ = require('lodash')
 const moment = require('moment')
 const CONSTANTS = require('../../lib/constants')
 const queryBuilder = require('./query')
+const momentTZ = require('moment-timezone')
 
 const getApartmentListByResidentID = async (residentID) => {
   return (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentApartmentRelByResidentID(CONSTANTS.BUILDING_DATABASE), [residentID]))?.map((item) => item.apartment_id) ?? []
@@ -27,7 +28,6 @@ const formatAnnouncements = (announcementList, projectList, isFiltered) => {
         return null
       }
 
-      console.log({ projectAssociated })
       return {
         ...announcement,
         project: projectAssociated,
@@ -41,9 +41,22 @@ const formatAnnouncements = (announcementList, projectList, isFiltered) => {
     .filter(Boolean)
 }
 
+function convertToUTC(date, timezone) {
+// convert to UTC from local/user timezone
+  const format = "YYYY-MM-DD HH:mm:ss z";
+  const localDateTime = momentTZ.tz(date, format, timezone);
+
+  if (!localDateTime.isValid())
+    throw new Error("Invalid date format");
+
+  const utcDateTime = localDateTime.utc();
+  return utcDateTime.toISOString();
+}
+
 module.exports = {
   getApartmentListByResidentID,
   getProjectIDByApartmentID,
   getProjectNames,
   formatAnnouncements,
+  convertToUTC
 }
