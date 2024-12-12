@@ -26,78 +26,81 @@ exports.getSubscriptionPlansController = async (request, response) => {
     }
 }
 
-exports.createCustomerController = async (request, response) => {
-    const username = request.username
-    const userID = request.userID
-    const email = 'ali@gmail.com' // Use dynamic email if available from the request
+exports.activateSubscription = async (request, response) => {
+    const orgID = request.orgID
+    const username = request.username;
+    const userID = request.userID;
+    const email = 'ali@gmail.com';
 
     try {
-        const customers = await razorpay.customers.all()
-        const existingCustomer = customers.items.find(customer => customer.email === email)
+        const customers = await razorpay.customers.all();
+        const existingCustomer = customers.items.find(customer => customer.email === email);
+        let customer;
 
         if (existingCustomer) {
-            Log.info(`[Servv | createCustomerController | userID:${userID} | Customer already exists`)
-            return sendHTTPResponse.success(response, 'Customer already exists', existingCustomer)
+            Log.info(`[Servv | activateSubscription | userID:${userID} | Customer already exists`);
+            customer = existingCustomer;
+        } else {
+            customer = await razorpay.customers.create({
+                name: username,
+                email: email,
+                fail_existing: 0,
+                notes: {
+                    userId: userID,
+                },
+            });
+            Log.info(`[Servv | activateSubscription | userID:${userID} | Customer created`);
         }
-        const customer = await razorpay.customers.create({
-            name: username,
-            email: email,
-            fail_existing: 0,
-            notes: {
-                userId: userID
-            }
-        })
 
-        Log.info(`[Servv | createCustomerController | userID:${userID} | Customer created`)
-        return sendHTTPResponse.success(response, 'User created successfully', customer)
-
-    } catch (error) {
-        Log.error(`[Servv | createCustomerController | Error in creating user | Error: ${JSON.stringify(error)}`)
-        return sendHTTPResponse.error(response, 'Error in creating user', error)
-    }
-}
-
-exports.activateSubscription = async (request, response) => {
-    const customerID = request.body.customerId
-    const userID = request.userID
-
-    try {
         const subscription = await razorpay.subscriptions.create({
             plan_id: process.env.RAZORPAY_PLAN_ID,
-            customer_id: customerID,
+            customer_id: customer.id,
             total_count: 12,
             quantity: 1,
             customer_notify: 1,
             notes: {
-                userId: userID
-            }
-        })
-        return sendHTTPResponse.success(response, 'Subscription activated successfully', subscription)
+                userId: userID,
+            },
+        });
 
+        const subscriptionData = {
+            org_id: userID,
+            razorpay_subscription_id: subscription.id,
+            status: CONSTANTS.SUBSCRIPTION_STATUS.PENDING,
+            start_date: new Date(),
+            next_billing_date: new Date(subscription.current_end)
+        };
+        await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.addSubscription(CONSTANTS.BUILDING_DATABASE), subscriptionData);
+        await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.addSubscriptionID(CONSTANTS.BUILDING_DATABASE), [{razorpay_customer_id:customer.id},orgID]);
+
+
+        return sendHTTPResponse.success(response, 'User subscription created successfully', { subscription, customer },);
     } catch (error) {
-        Log.error(`[Servv | getSubscriptionPlansController | Error in activating Subscription  | Error: ${error.error}`)
-        sendHTTPResponse.error(response, 'Error in activating Subscription ', error.error)
+        Log.error(`[Servv | activateSubscription | Error in creating user | Error: ${JSON.stringify(error.message)}`);
+        return sendHTTPResponse.error(response, 'Error in creating user subscription', error.message);
     }
-}
+};
+
 
 exports.verifyPayment = async (request, response) => {
-    try {
-        const { razorpay_payment_id, razorpay_subscription_id, razorpay_signature } = req.body
+    const orgID = request.orgID
 
+    try {
+        const { razorpay_payment_id, razorpay_subscription_id, razorpay_signature } = request.body
         const body = razorpay_payment_id + '|' + razorpay_subscription_id
         const expectedSignature = crypto.createHmac('sha256', process.env.RAZORPAY_KEY_SECRET).update(body.toString()).digest('hex')
-
         const isAuthentic = expectedSignature === razorpay_signature
 
-        if (isAuthentic) {
+        if (isAuthentic) {    
+            await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.updateSubscription(CONSTANTS.BUILDING_DATABASE), [{status:CONSTANTS.SUBSCRIPTION_STATUS.ACTIVE},orgID])
             Log.info(`[Servv | verifyPayment | Payment verified successfully`)
             return sendHTTPResponse.success(response, 'Payment verified successfully')
         } else {
-            Log.error(`[Servv | verifyPayment | Error in authenticating payment  | Error: ${error.error}`)
-            sendHTTPResponse.error(response, 'Error in authenticating payment ', error.error)
+            Log.error(`[Servv | verifyPayment | Error in authenticating payment  | Error: ${error}`)
+            return sendHTTPResponse.error(response, 'Error in authenticating payment ', error)
         }
     } catch (error) {
-        Log.error(`[Servv | verifyPayment | Error in verifying payment  | Error: ${error.error}`)
-        sendHTTPResponse.error(response, 'Error in verifying payment ', error.error)
+        Log.error(`[Servv | verifyPayment | Error in verifying payment  | Error: ${error}`)
+        sendHTTPResponse.error(response, 'Error in verifying payment ', error)
     }
 }

@@ -85,3 +85,6 @@ ALTER TABLE invoice ADD COLUMN `payment_mode` TINYINT DEFAULT NULL AFTER `collec
 ALTER TABLE report ADD COLUMN download_path TEXT AFTER filename;
 ALTER TABLE `report` CHANGE `start_date` `start_date` TIMESTAMP NULL;
 ALTER TABLE `report` CHANGE `end_date` `end_date` TIMESTAMP NULL;
+
+-- 11-12-2024
+ALTER TABLE `organisation` ADD COLUMN `razorpay_customer_id` VARCHAR(255) DEFAULT NULL AFTER `domain`;
