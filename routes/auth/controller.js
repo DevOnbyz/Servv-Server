@@ -26,7 +26,7 @@ exports.loginController = async (request, response) => {
       const customerData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getCustomerData(CONSTANTS.BUILDING_DATABASE), [phNum])
 
       if(_.isEmpty(customerData))
-        return sendHTTPResponse.error(response, 'Invalid phone number', null, 400)
+        return sendHTTPResponse.error(response, 'Resident account not found', null, 400)
 
       const {error, data} = await Fn.generateCustomerToken(customerData)
       if(error)
