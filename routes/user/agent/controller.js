@@ -175,8 +175,10 @@ exports.getAgentAssignmentsController = async (request, response) => {
   const domain = request.domain
   const userID = request.userID
   const isActive = request.query.isActive == 'true'
+  const assignmentType = request.query.assignmentType
+
   try {
-    const agentList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentAssignments(CONSTANTS.BUILDING_DATABASE, isActive), [userID]) ?? []
+    const agentList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentAssignments(CONSTANTS.BUILDING_DATABASE, isActive,assignmentType), [userID]) ?? []
     return sendHTTPResponse.success(response, 'Fetched agent details successfully', agentList)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | getAgentsAssignmentsController | Error in fetching agent list`)
