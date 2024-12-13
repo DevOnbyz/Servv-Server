@@ -306,10 +306,10 @@ exports.addSupportController = async (request, response) => {
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addSupport(CONSTANTS.BUILDING_DATABASE),[{title,description,user_id:userID}])
 
-    Log.info(`[${domain} | userID:${userID}] | addSupportController | Support added successfully`)
+    Log.info(`[ userID:${userID}] | addSupportController | Support added successfully`)
     return sendHTTPResponse.success(response, 'Support added successfully', {})
   } catch (error) {
-    Log.error(`[${domain} | userID:${userID}] | addSupportController | Error on adding Support | Error: ${error.message}`)
+    Log.error(`[ userID:${userID}] | addSupportController | Error on adding Support | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on adding Support', error.message)
   }
 }

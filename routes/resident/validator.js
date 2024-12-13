@@ -18,7 +18,7 @@ const editResidentSchema = Joi.object({
 
 const addSupportSchema = Joi.object({
   title: Joi.string().required(),
-  discription: Joi.string().required(),
+  description: Joi.string().required(),
 })
 
 module.exports = { addResidentSchema, editResidentSchema, addSupportSchema }
