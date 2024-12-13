@@ -302,7 +302,7 @@ exports.addSupportController = async (request, response) => {
   const userID = request.userID
   try {
     const title = request.body.title
-    const description = request.body.lastname
+    const description = request.body.description
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addSupport(CONSTANTS.BUILDING_DATABASE),[{title,description,user_id:userID}])
 
