@@ -16,4 +16,9 @@ const editResidentSchema = Joi.object({
   status: Joi.number().optional(),
 })
 
-module.exports = { addResidentSchema, editResidentSchema }
+const addSupportSchema = Joi.object({
+  title: Joi.string().required(),
+  discription: Joi.string().required(),
+})
+
+module.exports = { addResidentSchema, editResidentSchema, addSupportSchema }

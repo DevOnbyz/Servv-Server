@@ -133,5 +133,8 @@ deleteApartmentByApartmentID(database){
 },
 getAllResidentApartmentRelDetails(database){
   return `SELECT * FROM ${database}.apartment_resident_rel where apartment_id in (?)`
+},
+addSupport: (database) => {
+  return `INSERT INTO ${database}.support SET ?`
 }
-};
+}
