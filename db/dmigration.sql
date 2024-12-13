@@ -85,3 +85,7 @@ ALTER TABLE invoice ADD COLUMN `payment_mode` TINYINT DEFAULT NULL AFTER `collec
 ALTER TABLE report ADD COLUMN download_path TEXT AFTER filename;
 ALTER TABLE `report` CHANGE `start_date` `start_date` TIMESTAMP NULL;
 ALTER TABLE `report` CHANGE `end_date` `end_date` TIMESTAMP NULL;
+
+-- 13-12-2024
+ALTER TABLE agent_assignment ADD COLUMN isSatisfied TINYINT DEFAULT 0 AFTER updated_by;
+ALTER TABLE agent_assignment ADD COLUMN description TEXT DEFAULT NULL AFTER isSatisfied;

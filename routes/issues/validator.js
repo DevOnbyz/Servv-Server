@@ -81,6 +81,11 @@ const preferredTimeSchema = Joi.object({
   preferredDatetime: Joi.string().isoDate().required().messages({
     'string.isoDate': 'preferredDatetime must be in a valid ISO 8601 format (e.g., 2024-12-04T20:11:14.168Z)',
   }),
-});
-
-module.exports = { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, addEstimateSchema, recordPaymentSchema, preferredTimeSchema }
+})
+const feedbackSchema = Joi.object({
+  satisfied: Joi.boolean().required().messages({
+    'string.empty': 'satisfied is required',
+  }),
+  description: Joi.string().optional().allow(null),
+})
+module.exports = { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, addEstimateSchema, recordPaymentSchema, preferredTimeSchema, feedbackSchema }

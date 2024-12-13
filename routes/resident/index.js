@@ -8,5 +8,5 @@ router.get('/', controller.getResidentController)
 router.post('/', validateRequest(addResidentSchema), controller.addResidentController)
 router.patch('/:id', validateRequest(editResidentSchema), controller.editResidentController)
 router.get('/project/:projectID', controller.getResidentByProjectController)
-router.post('/support',validateRequest(addSupportSchema), controller.addSupportController)
+router.post('/support/:id',validateRequest(addSupportSchema), controller.addSupportController)
 module.exports = router

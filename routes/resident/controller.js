@@ -299,17 +299,17 @@ exports.getResidentByProjectController = async (request, response) => {
 }
 
 exports.addSupportController = async (request, response) => {
-  const userID = request.userID
   try {
     const title = request.body.title
     const description = request.body.description
+    const residentID = parseInt(request.params.id)
 
-    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addSupport(CONSTANTS.BUILDING_DATABASE),[{title,description,user_id:userID}])
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addSupport(CONSTANTS.BUILDING_DATABASE),[{title,description,resident_id:residentID}])
 
-    Log.info(`[ userID:${userID}] | addSupportController | Support added successfully`)
+    Log.info(`[ residentID:${residentID}] | addSupportController | Support added successfully`)
     return sendHTTPResponse.success(response, 'Support added successfully', {})
   } catch (error) {
-    Log.error(`[ userID:${userID}] | addSupportController | Error on adding Support | Error: ${error.message}`)
+    Log.error(`[ residentID:${residentID}] | addSupportController | Error on adding Support | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on adding Support', error.message)
   }
 }
