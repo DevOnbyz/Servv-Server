@@ -1276,3 +1276,33 @@ exports.completeWorkOrderController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while completing issue work', error.message)
   }
 }
+
+exports.feedbackController = async (request, response) => {
+  const issueID = request.params.issueID
+
+  try {
+    const { satisfied, description } = request.body
+    const activeWorkOrder = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getCompletedWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    if(_.isEmpty(activeWorkOrder)) return sendHTTPResponse.error(response, 'There is no active work order for this issue', null, 400)
+
+    const satisfactionValue = satisfied === 'true' ? CONSTANTS.SATISFACTION_STATUS.SATISFIED : CONSTANTS.SATISFACTION_STATUS.UNSATISFIED
+
+    const activeWorkOrderID = activeWorkOrder.id
+    const updatedAgentAssignmentData = {
+      isSatisfied: satisfactionValue,
+      description:description ?? null
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentAssignmentByID(CONSTANTS.BUILDING_DATABASE), [ updatedAgentAssignmentData, activeWorkOrderID ])
+
+    Log.info(`[FeedbackController | Feedback saved successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Feedback submitted successfully')
+  } catch (error) {
+    Log.error(`[FeedbackController | IssueID: ${issueID}] | ${error.message}`)
+    return sendHTTPResponse.error(response, 'Error while submitting feedback', error.message, 500)
+  }
+
+}
+
+
+
+

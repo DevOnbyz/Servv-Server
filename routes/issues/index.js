@@ -2,7 +2,7 @@ const router = require('express').Router()
 const sendHTTPResponse = require('../../lib/sendHTTPResponse')
 const validateRequest = require('../../middleware/validateRequest')
 const controller = require('./controller')
-const { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, recordPaymentSchema, preferredTimeSchema } = require('./validator')
+const { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, recordPaymentSchema, preferredTimeSchema, feedbackSchema } = require('./validator')
 const multer = require('multer')
 const Fn = require('./functions')
 
@@ -117,5 +117,7 @@ router.get('/:issueID/history', controller.getIssueHistoryController)
 router.post('/:issueID/hold', controller.holdIssueController)
 
 router.patch('/:issueID/close', controller.closeIssueController)
+
+router.post('/:issueID/feedback',validateRequest(feedbackSchema), controller.feedbackController)
 
 module.exports = router
