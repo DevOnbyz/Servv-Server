@@ -277,6 +277,7 @@ CREATE TABLE `issue` (
     `customer_preferred_time` DATETIME,
     `due_date` DATETIME,
     `rating` INT,
+    `reviewed` TINYINT DEFAULT 0, -- 0 = pending, 1 = reviewed
     `payment_id` INT,
     `img_src` TEXT,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -333,7 +334,7 @@ CREATE TABLE `agent_assignment` (
     `agent_uploads` TEXT,
     `created_by` INT DEFAULT NULL,
     `updated_by` INT DEFAULT NULL,
-    `isSatisfied` TINYINT DEFAULT 0,-- 0 = false, 1 = true
+    `isSatisfied` TINYINT DEFAULT 0, -- 0 = false, 1 = true
     `description` TEXT DEFAULT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
@@ -475,7 +476,7 @@ CREATE TABLE `support` (
     `resident_id` INT NOT NULL,
     `resolved` TINYINT DEFAULT 0,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_support_ibfk_2` FOREIGN KEY (resident_id) REFERENCES resident (id) ON DELETE CASCADE
 );
 

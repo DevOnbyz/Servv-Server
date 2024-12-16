@@ -37,27 +37,41 @@ module.exports = {
              `
   },
   getIssuesEvent(database) {
-    return `SELECT id, issue_id,event_type,
-    CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.OPEN} THEN 'OPEN'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN 'SITE VISIT ASSIGNED'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN 'Site Visit Completed'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT} THEN 'Estimate Drafted'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 'Estimate Approved'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} THEN 'Estimate Rejected'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED} THEN 'Invoice Drafted'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN 'Work Assigned'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ORDER_CANCELLED} THEN 'Work Order Cancelled'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED} THEN 'Site Visit Cancelled'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED} THEN 'Invoice Approved'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN 'Invoice Sent'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN 'Estimate Sent'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.PAID} THEN 'Paid'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 'Work Completed'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ONHOLD} THEN 'ON HOLD'
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.CLOSED} THEN 'ON CLOSED'
-    END as event_type_string,
-    sub_status, created_at, creator_id, entity_id, creator_type, event_time, created_at  FROM ${database}.issue_event where issue_id = ? ORDER BY created_at DESC`;
+    return `SELECT 
+        IE.id as issue_event_id,
+        IE.issue_id, 
+        IE.event_type,
+        CASE
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.OPEN} THEN 'OPEN'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN 'SITE VISIT ASSIGNED'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN 'Site Visit Completed'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT} THEN 'Estimate Drafted'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 'Estimate Approved'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} THEN 'Estimate Rejected'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED} THEN 'Invoice Drafted'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN 'Work Assigned'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ORDER_CANCELLED} THEN 'Work Order Cancelled'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED} THEN 'Site Visit Cancelled'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED} THEN 'Invoice Approved'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN 'Invoice Sent'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN 'Estimate Sent'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.PAID} THEN 'Paid'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 'Work Completed'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.ONHOLD} THEN 'ON HOLD'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.CLOSED} THEN 'ON CLOSED'
+        END as event_type_string,
+        CONCAT(A.firstname, ' ', A.lastname) as generatedBy,
+        IE.sub_status, 
+        IE.created_at, 
+        IE.creator_id, 
+        IE.entity_id, 
+        IE.creator_type, 
+        IE.event_time, 
+        IE.created_at
+    FROM ${database}.issue_event IE
+    LEFT JOIN ${database}.admin A ON IE.creator_id = A.id
+    WHERE IE.issue_id = ? 
+    ORDER BY IE.created_at DESC`;
   },
   getIssuesUnderResident(database, limit, offset) {
     return `SELECT I.id, A.name as doorNo, P.name as projectName, CONCAT(R.firstname, ' ', R.lastname) as name,
@@ -76,6 +90,36 @@ module.exports = {
     left join ${database}.service_organisation_rel SOR on I.service_subtype = SOR.id
     where I.resident_id = ? AND I.org_id = ?
     ORDER BY I.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
+  },
+  getSingleIssueUnderResident(database) {
+    return `SELECT I.id, A.name as doorNo, P.name as projectName, 
+    CONCAT(R.firstname, ' ', R.lastname) as name, CONCAT(P.city, ', ', P.district, ', ', P.state, ', ', P.country) as location, 
+    SOR.name as serviceSubTypeName,
+    CASE 
+    WHEN I.status = ${ISSUE_STATUS.OPEN} THEN '${ISSUE_STATUS_STRING.OPEN}' 
+    WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
+    WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}'
+    WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' 
+    END as status, 
+    I.created_at, 
+    RI.ph_num as phNum, 
+    I.description, 
+    S.name as serviceType, 
+    I.customer_preferred_time as time, 
+    I.initial_activity_time as initialActivityTime, 
+    I.img_src,
+    I.reviewed
+    FROM ${database}.issue I
+    LEFT JOIN ${database}.apartment A ON I.apartment_id = A.id 
+    LEFT JOIN ${database}.project P ON A.project_id = P.id
+    LEFT JOIN ${database}.resident R ON I.resident_id = R.id
+    LEFT JOIN ${database}.resident_identity RI ON R.identity_id = RI.id
+    LEFT JOIN ${database}.service S ON I.service_type = S.id
+    LEFT JOIN ${database}.service_organisation_rel SOR ON I.service_subtype = SOR.id
+    WHERE I.id = ? 
+    AND I.resident_id = ? 
+    AND I.org_id = ?
+    ORDER BY I.created_at DESC`
   },
   updateIssue(database) {
     return `UPDATE ${database}.issue SET ? WHERE id = ?`;
@@ -176,6 +220,9 @@ module.exports = {
   },
   getCompletedWorkOrderByIssueID(database) {
     return `SELECT * FROM ${database}.agent_assignment where issue_id = ? AND status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} AND type = ${AGENT_ASSIGNMENT_TYPE.WORK_ORDER} LIMIT 1`;
+  },
+  getCompletedIssueByIssueID(database) {
+    return `SELECT * FROM ${database}.issue WHERE id = ? AND status = ${ISSUE_STATUS.CLOSED} LIMIT 1`;
   },
   updateAgentAssignmentByID(database) {
     return `UPDATE ${database}.agent_assignment SET ? WHERE id = ?`;

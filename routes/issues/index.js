@@ -2,13 +2,14 @@ const router = require('express').Router()
 const sendHTTPResponse = require('../../lib/sendHTTPResponse')
 const validateRequest = require('../../middleware/validateRequest')
 const controller = require('./controller')
-const { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, recordPaymentSchema, preferredTimeSchema, feedbackSchema } = require('./validator')
+const { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, recordPaymentSchema, preferredTimeSchema, workOrderFeedbackSchema, issueFeedbackSchema } = require('./validator')
 const multer = require('multer')
 const Fn = require('./functions')
 
 router.get('/', controller.getIssuesController)
 router.get('/stat', controller.getIssueStatController)
 router.get('/resident/:id', controller.getIssuesUnderResidentController)
+router.get('/:issueID/resident/:id', controller.getSingleIssueUnderResidentController)
 
 router.post('/', 
   (req, res, next) => {
@@ -118,6 +119,8 @@ router.post('/:issueID/hold', controller.holdIssueController)
 
 router.patch('/:issueID/close', controller.closeIssueController)
 
-router.post('/:issueID/feedback',validateRequest(feedbackSchema), controller.feedbackController)
+router.post('/:issueID/work-order/feedback',validateRequest(workOrderFeedbackSchema), controller.worOrderFeedbackController)
+
+router.patch('/:issueID/feedback',validateRequest(issueFeedbackSchema), controller.issueFeedbackController)
 
 module.exports = router
