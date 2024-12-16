@@ -91,6 +91,35 @@ module.exports = {
     where I.resident_id = ? AND I.org_id = ?
     ORDER BY I.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
   },
+  getSingleIssueUnderResident(database) {
+    return `SELECT I.id, A.name as doorNo, P.name as projectName, 
+    CONCAT(R.firstname, ' ', R.lastname) as name, CONCAT(P.city, ', ', P.district, ', ', P.state, ', ', P.country) as location, 
+    SOR.name as serviceSubTypeName,
+    CASE 
+    WHEN I.status = ${ISSUE_STATUS.OPEN} THEN '${ISSUE_STATUS_STRING.OPEN}' 
+    WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
+    WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}'
+    WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' 
+    END as status, 
+    I.created_at, 
+    RI.ph_num as phNum, 
+    I.description, 
+    S.name as serviceType, 
+    I.customer_preferred_time as time, 
+    I.initial_activity_time as initialActivityTime, 
+    I.img_src
+    FROM ${database}.issue I
+    LEFT JOIN ${database}.apartment A ON I.apartment_id = A.id 
+    LEFT JOIN ${database}.project P ON A.project_id = P.id
+    LEFT JOIN ${database}.resident R ON I.resident_id = R.id
+    LEFT JOIN ${database}.resident_identity RI ON R.identity_id = RI.id
+    LEFT JOIN ${database}.service S ON I.service_type = S.id
+    LEFT JOIN ${database}.service_organisation_rel SOR ON I.service_subtype = SOR.id
+    WHERE I.id = ? 
+    AND I.resident_id = ? 
+    AND I.org_id = ?
+    ORDER BY I.created_at DESC`
+  },
   updateIssue(database) {
     return `UPDATE ${database}.issue SET ? WHERE id = ?`;
   },
@@ -193,7 +222,7 @@ module.exports = {
   },
   getCompletedIssueByIssueID(database) {
     return `SELECT * FROM ${database}.issue WHERE id = ? AND status = ${ISSUE_STATUS.CLOSED} LIMIT 1`;
-  }, 
+  },
   updateAgentAssignmentByID(database) {
     return `UPDATE ${database}.agent_assignment SET ? WHERE id = ?`;
   },

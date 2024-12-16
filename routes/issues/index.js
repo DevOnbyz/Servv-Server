@@ -9,6 +9,7 @@ const Fn = require('./functions')
 router.get('/', controller.getIssuesController)
 router.get('/stat', controller.getIssueStatController)
 router.get('/resident/:id', controller.getIssuesUnderResidentController)
+router.get('/:issueID/resident/:id', controller.getSingleIssueUnderResidentController)
 
 router.post('/', 
   (req, res, next) => {
