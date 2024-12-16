@@ -18,7 +18,7 @@ async function handleChargedSubscription(subscription, paymentEntity, payload) {
         status: CONSTANTS.SUBSCRIPTION_LOG_STATUS.COMPLETED  
     }  
     
-    const nextBillingDate = moment.unix(payload.subscription.entity.charge_at).utc().format('YYYY-MM-DD HH:mm:ss')  
+    const nextBillingDate = moment.unix(payload.subscription.entity.current_end).utc().format('YYYY-MM-DD HH:mm:ss')  
     
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.subscriptionLog(CONSTANTS.BUILDING_DATABASE), subscriptionLog)  
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateSubscription(CONSTANTS.BUILDING_DATABASE), [{ status: CONSTANTS.SUBSCRIPTION_STATUS.ACTIVE, next_billing_date: nextBillingDate }, subscription.id])  

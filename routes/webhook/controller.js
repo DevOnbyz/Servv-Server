@@ -15,10 +15,10 @@ exports.subscriptionWebhook = async (request, response) => {
             return Log.info(`[Servv | subscriptionWebhook  | Invalid event Type : ${eventType}`)
         if (!verifySignature(JSON.stringify(request.body), request.headers['x-razorpay-signature'], process.env.RAZORPAY_KEY_SECRET))
             return Log.info(`[Servv | subscriptionWebhook  | Invalid Signature`)
-
+        
         const paymentEntity = payload.payment.entity
         const [subscription] = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getSubscriptionByRazorpayCustomerId(CONSTANTS.BUILDING_DATABASE), paymentEntity.customer_id)
-
+        
         if (!subscription)
             return Log.info(`[Servv | subscriptionWebhook  | Can't get active subscription`)
 

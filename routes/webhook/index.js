@@ -1,7 +1,7 @@
 const router = require('express').Router()
 const controller = require('./controller')
 
-router.post('/' ,controller.subscriptionWebhook)
+router.post('/razorpay/subscription' ,controller.subscriptionWebhook)
 
 
 module.exports = router

@@ -456,7 +456,7 @@ CREATE TABLE `subscriptions` (
     `razorpay_subscription_id` VARCHAR(255) NOT NULL,
     `status` TINYINT DEFAULT 0,
     `start_date` DATETIME NOT NULL,
-    `next_billing_date` DATETIME NOT NULL,
+    `next_billing_date` DATETIME DEFAULT NULL,
     FOREIGN KEY (`org_id`) REFERENCES `organisation`(`id`) ON DELETE CASCADE
 );
 CREATE TABLE `subscription_payment_log` (

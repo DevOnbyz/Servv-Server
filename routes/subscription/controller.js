@@ -6,7 +6,7 @@ const Log = require('../../log')
 const Razorpay = require('razorpay')
 require('dotenv').config()
 const crypto = require('crypto')
-
+const moment = require('moment')
 
 const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
@@ -48,8 +48,8 @@ exports.activateSubscription = async (request, response) => {
             org_id: userID,
             razorpay_subscription_id: subscription.id,
             status: CONSTANTS.SUBSCRIPTION_STATUS.PENDING,
-            start_date: new Date(),
-            next_billing_date: new Date(subscription.current_end)
+            start_date: moment.unix(subscription.created_at).utc().format('YYYY-MM-DD HH:mm:ss'),
+            next_billing_date: null
         }
         await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addSubscription(CONSTANTS.BUILDING_DATABASE), subscriptionData)
         await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addSubscriptionID(CONSTANTS.BUILDING_DATABASE), [{ razorpay_customer_id: customer.id }, orgID])
