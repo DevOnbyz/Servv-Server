@@ -89,3 +89,6 @@ ALTER TABLE `report` CHANGE `end_date` `end_date` TIMESTAMP NULL;
 -- 13-12-2024
 ALTER TABLE agent_assignment ADD COLUMN isSatisfied TINYINT DEFAULT 0 AFTER updated_by;
 ALTER TABLE agent_assignment ADD COLUMN description TEXT DEFAULT NULL AFTER isSatisfied;
+
+-- 16-12-2024
+ALTER TABLE agent_assignment ADD COLUMN reviewed TINYINT DEFAULT 0 AFTER description;

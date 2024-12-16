@@ -82,10 +82,20 @@ const preferredTimeSchema = Joi.object({
     'string.isoDate': 'preferredDatetime must be in a valid ISO 8601 format (e.g., 2024-12-04T20:11:14.168Z)',
   }),
 })
-const feedbackSchema = Joi.object({
+const workOrderFeedbackSchema = Joi.object({
   satisfied: Joi.boolean().required().messages({
     'string.empty': 'satisfied is required',
   }),
   description: Joi.string().optional().allow(null),
 })
-module.exports = { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, addEstimateSchema, recordPaymentSchema, preferredTimeSchema, feedbackSchema }
+const issueFeedbackSchema = Joi.object({
+  starRating: Joi.number().integer().min(1).max(5).required().messages({
+    'number.base': 'starRating must be a number',
+    'number.empty': 'starRating is required',
+    'number.min': 'starRating must be at least 1',
+    'number.max': 'starRating cannot be more than 5',
+    'any.required': 'starRating is required',
+  }),
+})
+
+module.exports = { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, addEstimateSchema, recordPaymentSchema, preferredTimeSchema, workOrderFeedbackSchema, issueFeedbackSchema }

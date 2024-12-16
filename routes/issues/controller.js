@@ -1277,7 +1277,7 @@ exports.completeWorkOrderController = async (request, response) => {
   }
 }
 
-exports.feedbackController = async (request, response) => {
+exports.worOrderFeedbackController = async (request, response) => {
   const issueID = request.params.issueID
 
   try {
@@ -1290,15 +1290,39 @@ exports.feedbackController = async (request, response) => {
     const activeWorkOrderID = activeWorkOrder.id
     const updatedAgentAssignmentData = {
       isSatisfied: satisfactionValue,
-      description:description ?? null
+      description:description ?? null,
+      reviewed:CONSTANTS.REVIEW_STATUS.COMPLETED
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentAssignmentByID(CONSTANTS.BUILDING_DATABASE), [ updatedAgentAssignmentData, activeWorkOrderID ])
 
-    Log.info(`[FeedbackController | Feedback saved successfully | IssueID: ${issueID}`)
-    return sendHTTPResponse.success(response, 'Feedback submitted successfully')
+    Log.info(`[worOrderFeedbackController | Workorder feedback saved successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Workorder feedback submitted successfully')
   } catch (error) {
-    Log.error(`[FeedbackController | IssueID: ${issueID}] | ${error.message}`)
-    return sendHTTPResponse.error(response, 'Error while submitting feedback', error.message, 500)
+    Log.error(`[worOrderFeedbackController | IssueID: ${issueID}] | ${error.message}`)
+    return sendHTTPResponse.error(response, 'Error while submitting workorder feedback', error.message, 500)
+  }
+
+}
+exports.issueFeedbackController = async (request, response) => {
+  const issueID = request.params.issueID
+
+  try {
+    const { starRating } = request.body
+    const completedIssue = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getCompletedIssueByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    if(_.isEmpty(completedIssue)) return sendHTTPResponse.error(response, 'Issue is not completed yet!', null, 400)
+
+
+    const completedIssueId = completedIssue.id
+    const updatedIssueData = {
+      rating:starRating
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [ updatedIssueData, completedIssueId ])
+
+    Log.info(`[issueFeedbackController | Issue feedback saved successfully | IssueID: ${issueID}`)
+    return sendHTTPResponse.success(response, 'Issue Feedback submitted successfully')
+  } catch (error) {
+    Log.error(`[issueFeedbackController | IssueID: ${issueID}] | ${error.message}`)
+    return sendHTTPResponse.error(response, 'Error while submitting issue feedback', error.message, 500)
   }
 
 }
