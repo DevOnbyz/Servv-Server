@@ -38,7 +38,7 @@ module.exports = {
   },
   getIssuesEvent(database) {
     return `SELECT 
-        IE.id as issue_event_id,  -- Shortened alias for issue_event
+        IE.id as issue_event_id,
         IE.issue_id, 
         IE.event_type,
         CASE
@@ -107,7 +107,8 @@ module.exports = {
     S.name as serviceType, 
     I.customer_preferred_time as time, 
     I.initial_activity_time as initialActivityTime, 
-    I.img_src
+    I.img_src,
+    I.reviewed
     FROM ${database}.issue I
     LEFT JOIN ${database}.apartment A ON I.apartment_id = A.id 
     LEFT JOIN ${database}.project P ON A.project_id = P.id

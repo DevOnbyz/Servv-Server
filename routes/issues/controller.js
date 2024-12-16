@@ -88,6 +88,7 @@ exports.getSingleIssueUnderResidentController = async (request, response) => {
     issue.agentOTP = activeAgentAssignment ? activeAgentAssignment.otp_code : null
 
     issue.img_src = issue.img_src ? issue.img_src.split(',') : null
+    issue.reviewed = issue.reviewed === CONSTANTS.REVIEW_STATUS.COMPLETED
 
     const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE), [issueID])
     issue.issuesEvents = issuesEvents
@@ -1321,7 +1322,6 @@ exports.worOrderFeedbackController = async (request, response) => {
     const updatedAgentAssignmentData = {
       isSatisfied: satisfactionValue,
       description: description ?? null,
-      reviewed: CONSTANTS.REVIEW_STATUS.COMPLETED
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentAssignmentByID(CONSTANTS.BUILDING_DATABASE), [updatedAgentAssignmentData, activeWorkOrderID])
 
@@ -1344,7 +1344,8 @@ exports.issueFeedbackController = async (request, response) => {
 
     const completedIssueId = completedIssue.id
     const updatedIssueData = {
-      rating: starRating
+      rating: starRating,
+      reviewed: CONSTANTS.REVIEW_STATUS.COMPLETED
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [updatedIssueData, completedIssueId])
 

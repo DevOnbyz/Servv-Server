@@ -91,4 +91,4 @@ ALTER TABLE agent_assignment ADD COLUMN isSatisfied TINYINT DEFAULT 0 AFTER upda
 ALTER TABLE agent_assignment ADD COLUMN description TEXT DEFAULT NULL AFTER isSatisfied;
 
 -- 16-12-2024
-ALTER TABLE agent_assignment ADD COLUMN reviewed TINYINT DEFAULT 0 AFTER description;
+ALTER TABLE issue ADD COLUMN reviewed TINYINT DEFAULT 0 AFTER rating;
