@@ -91,7 +91,7 @@ module.exports = {
     where I.resident_id = ? AND I.org_id = ?
     ORDER BY I.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
   },
-  getSingleIssueUnderResident(database) {
+  getIssueByID(database) {
     return `SELECT I.id, A.name as doorNo, P.name as projectName, 
     CONCAT(R.firstname, ' ', R.lastname) as name, CONCAT(P.city, ', ', P.district, ', ', P.state, ', ', P.country) as location, 
     SOR.name as serviceSubTypeName,
@@ -117,7 +117,6 @@ module.exports = {
     LEFT JOIN ${database}.service S ON I.service_type = S.id
     LEFT JOIN ${database}.service_organisation_rel SOR ON I.service_subtype = SOR.id
     WHERE I.id = ? 
-    AND I.resident_id = ? 
     AND I.org_id = ?
     ORDER BY I.created_at DESC`
   },

@@ -70,17 +70,16 @@ exports.getIssuesUnderResidentController = async (request, response) => {
   }
 }
 
-exports.getSingleIssueUnderResidentController = async (request, response) => {
+exports.getIssueByIDController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
-  const residentID = parseInt(request.params.id)
   const issueID = parseInt(request.params.issueID)
 
   try {
-    const issue = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getSingleIssueUnderResident(CONSTANTS.BUILDING_DATABASE), [issueID, residentID, orgID])
+    const issue = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueByID(CONSTANTS.BUILDING_DATABASE), [issueID, orgID])
 
     if (!issue) {
-      Log.info(`[${domain} | OrganisationID:${orgID} | residentID:${residentID} | issueID:${issueID}] | getSingleIssueUnderResidentController | Issue not found`)
+      Log.info(`[${domain} | OrganisationID:${orgID}  issueID:${issueID}] | getSingleIssueUnderResidentController | Issue not found`)
       return sendHTTPResponse.error(response, 'Issue not found', null, 404)
     }
 
@@ -93,10 +92,10 @@ exports.getSingleIssueUnderResidentController = async (request, response) => {
     const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE), [issueID])
     issue.issuesEvents = issuesEvents
 
-    Log.info(`[${domain} | OrganisationID:${orgID} | residentID:${residentID} | issueID:${issueID}] | getSingleIssueUnderResidentController | Issue fetched successfully`)
+    Log.info(`[${domain} | OrganisationID:${orgID}  issueID:${issueID}] | getSingleIssueUnderResidentController | Issue fetched successfully`)
     return sendHTTPResponse.success(response, 'Issue fetched successfully', issue)
   } catch (error) {
-    Log.error(`[${domain} | OrganisationID:${orgID} | residentID:${residentID} | issueID:${issueID}] | getSingleIssueUnderResidentController | Error in fetching issue | Error: ${error.message}`)
+    Log.error(`[${domain} | OrganisationID:${orgID}  issueID:${issueID}] | getSingleIssueUnderResidentController | Error in fetching issue | Error: ${error.message}`)
     return sendHTTPResponse.error(response, error.message, null, 400)
   }
 }
