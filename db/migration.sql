@@ -334,8 +334,8 @@ CREATE TABLE `agent_assignment` (
     `agent_uploads` TEXT,
     `created_by` INT DEFAULT NULL,
     `updated_by` INT DEFAULT NULL,
-    `isSatisfied` TINYINT DEFAULT 0, -- 0 = false, 1 = true
-    `description` TEXT DEFAULT NULL,
+    `is_satisfied` TINYINT DEFAULT 0, -- 0 = false, 1 = true
+    `feedback_comments` TEXT DEFAULT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_agent_assignment_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE,
