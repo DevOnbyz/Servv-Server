@@ -1320,8 +1320,8 @@ exports.worOrderFeedbackController = async (request, response) => {
 
     const activeWorkOrderID = activeWorkOrder.id
     const updatedAgentAssignmentData = {
-      isSatisfied: satisfactionValue,
-      description: description ?? null,
+      is_satisfied: satisfactionValue,
+      feedback_comments: description ?? null,
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentAssignmentByID(CONSTANTS.BUILDING_DATABASE), [updatedAgentAssignmentData, activeWorkOrderID])
 

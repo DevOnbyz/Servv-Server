@@ -7,6 +7,7 @@ CREATE TABLE `organisation` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
     `domain` VARCHAR(255) UNIQUE NOT NULL,
+    `razorpay_customer_id` VARCHAR(255) DEFAULT NULL,
     `config` JSON,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
@@ -333,8 +334,8 @@ CREATE TABLE `agent_assignment` (
     `agent_uploads` TEXT,
     `created_by` INT DEFAULT NULL,
     `updated_by` INT DEFAULT NULL,
-    `isSatisfied` TINYINT DEFAULT 0, -- 0 = false, 1 = true
-    `description` TEXT DEFAULT NULL,
+    `is_satisfied` TINYINT DEFAULT 0, -- 0 = false, 1 = true
+    `feedback_comments` TEXT DEFAULT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_agent_assignment_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE,
@@ -448,6 +449,25 @@ CREATE TABLE `report` (
     CONSTRAINT `fk_report_ibfk_1` FOREIGN KEY (created_by) REFERENCES admin (id) ON DELETE CASCADE,
     CONSTRAINT `fk_report_ibfk_2` FOREIGN KEY (updated_by) REFERENCES admin (id) ON DELETE CASCADE,
     CONSTRAINT `fk_report_ibfk_3` FOREIGN KEY (org_id) REFERENCES organisation (id) ON DELETE CASCADE
+);
+CREATE TABLE `subscriptions` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `org_id` INT NOT NULL,
+    `razorpay_subscription_id` VARCHAR(255) NOT NULL,
+    `status` TINYINT DEFAULT 0,
+    `start_date` DATETIME NOT NULL,
+    `next_billing_date` DATETIME DEFAULT NULL,
+    FOREIGN KEY (`org_id`) REFERENCES `organisation`(`id`) ON DELETE CASCADE
+);
+CREATE TABLE `subscription_payment_log` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `subscription_id` INT NOT NULL,
+    `transaction_id` VARCHAR(255) NOT NULL,
+    `amount` DECIMAL(10, 2) NOT NULL,
+    `payment_date` DATETIME NOT NULL,
+    `status` TINYINT DEFAULT 0,
+    `failure_reason` TEXT DEFAULT NULL,
+    FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions`(`id`) ON DELETE CASCADE
 );
 CREATE TABLE `support` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,

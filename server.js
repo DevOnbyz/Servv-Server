@@ -10,6 +10,7 @@ const requestLogger = require('./middleware/requestLogger')
 const Log = require('./log')
 const routes = require('./routes')
 const authRouter = require('./routes/auth')
+const webhookRouter = require('./routes/webhook')
 const sendHTTPResponse = require('./lib/sendHTTPResponse')
 const authenticationMiddleware = require('./middleware/authenticationMiddleware')
 
@@ -27,6 +28,7 @@ app.use('/uploads', express.static('uploads'));
 app.use('/public', express.static('public'));
 
 
+app.use('/webhook',webhookRouter)
 app.use(requestLogger)
 app.use('/auth',authRouter)
 app.use(authenticationMiddleware)
