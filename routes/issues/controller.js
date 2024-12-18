@@ -399,8 +399,8 @@ exports.reAssignSiteVisitController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentIDInAgentAssignmentofActiveIssue(CONSTANTS.BUILDING_DATABASE), [newAgentAssignmentData, issueID])
-    Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | Service request has been re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
-    return sendHTTPResponse.success(response, 'Service request has been re-assigned successfully')
+    Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | Site visit has been re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
+    return sendHTTPResponse.success(response, 'Site visit has been re-assigned successfully')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while re-assigning issue', error.message)
