@@ -17,9 +17,8 @@ const formDataLogger = (formData) => {
     const loggableData = { ...formData }
     if (loggableData.file) delete loggableData.file
     if (loggableData.password) delete loggableData.password
-    console.log('Form Data:', JSON.stringify(loggableData, null, 2))
   } else {
-    console.log('Form Data Logger: No data provided.')
+    Log.error(`formDataLogger | No Form Data Available`)
   }
 }
 

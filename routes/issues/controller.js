@@ -1169,10 +1169,13 @@ exports.getIssueHistoryController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
   const issueID = request.params.issueID
+  const isCustomer = request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER
   try {
-    const issueHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueHistory(CONSTANTS.BUILDING_DATABASE), [issueID])
+    const query = isCustomer ? queryBuilder.getIssueHistoryForCustomer(CONSTANTS.BUILDING_DATABASE) : queryBuilder.getIssueHistory(CONSTANTS.BUILDING_DATABASE)
+    const issueHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, query, [issueID])
+    const customerIssueHistory = isCustomer && issueHistory?.filter(issue => issue.event_type != null)
     Log.info(`[${domain} | OrganisationID:${orgID}] | getIssueHistoryController | Issue history fetched successfully | IssueID: ${issueID}`)
-    return sendHTTPResponse.success(response, 'Issue history fetched successfully', issueHistory)
+    return sendHTTPResponse.success(response, 'Issue history fetched successfully', isCustomer ? customerIssueHistory : issueHistory)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | getIssueHistoryController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while fetching issue history', error.message)
@@ -1356,7 +1359,3 @@ exports.issueFeedbackController = async (request, response) => {
   }
 
 }
-
-
-
-
