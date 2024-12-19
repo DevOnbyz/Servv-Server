@@ -12,6 +12,46 @@ const razorpay = new Razorpay({
     key_id: process.env.RAZORPAY_KEY_ID,
     key_secret: process.env.RAZORPAY_KEY_SECRET
 })
+exports.getActivePlan = async (request, response) => {
+
+    try {
+        if (!process.env.RAZORPAY_PLAN_ID)
+           sendHTTPResponse.error(response, 'Plan ID is required', error.message)
+
+        const plan = await razorpay.plans.fetch(process.env.RAZORPAY_PLAN_ID)
+
+        Log.info(`[Servv | getActivePlan | Successfully fetched plan details ]`)
+        sendHTTPResponse.success(response,'Successfully fetched plan details', [plan])
+    } catch (error) {
+        Log.error(`[Servv | getActivePlan | Error fetching plan details | Error: ${error.message}]`)
+        sendHTTPResponse.error(response, 'Error fetching plan details', error.message)
+    }
+}
+
+exports.getActiveSubscriptionByOrgID = async (request, response) => {
+    const orgID = request.orgID
+    try {
+        const organisation = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.getOrganisationById(CONSTANTS.BUILDING_DATABASE),[orgID])
+        if (!organisation || !organisation[0].razorpay_customer_id) 
+            return sendHTTPResponse.error(response, 'User is not an active subscriber')
+        
+        const subscriptions = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.getActiveSubscriptions(CONSTANTS.BUILDING_DATABASE),[orgID])
+        if (!subscriptions || subscriptions.length === 0)
+            return sendHTTPResponse.error(response, 'No active subscription found')
+        
+        const subscriptionIDs = subscriptions.map(sub => sub.id)
+        const paymentLogs = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.getSubscriptionPaymentLogs(CONSTANTS.BUILDING_DATABASE),[subscriptionIDs])
+
+        const result = subscriptions.map(subscription => ({...subscription,paymentHistory: paymentLogs.filter(log => log.subscription_id === subscription.id)}))
+
+        Log.info(`[Servv | getActiveSubscription | orgID:${orgID} | Subscription data fetched successfully`)
+        return sendHTTPResponse.success(response, 'Active subscription data fetched successfully ',result)
+
+    } catch (error) {
+        Log.error(`[Servv | getActiveSubscription | Error in fetching subscription | Error: ${JSON.stringify(error.message)}`)
+        return sendHTTPResponse.error(response, 'Error in fetching active subscription data', error.message)
+    }
+}
 
 exports.activateSubscription = async (request, response) => {
     const orgID = request.orgID
