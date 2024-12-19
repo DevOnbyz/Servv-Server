@@ -70,7 +70,6 @@ module.exports = {
         IE.created_at,
         AA.is_satisfied as isSatisfied,
         AA.feedback_comments as feedbackComments,
-        AA.reviewed
     FROM ${database}.issue_event IE
     LEFT JOIN ${database}.admin A ON IE.creator_id = A.id
     LEFT JOIN ${database}.agent_assignment AA ON IE.issue_id = AA.issue_id
