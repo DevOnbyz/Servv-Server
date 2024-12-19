@@ -66,10 +66,14 @@ module.exports = {
         IE.creator_id, 
         IE.entity_id, 
         IE.creator_type, 
-        IE.event_time, 
-        IE.created_at
+        IE.event_time,
+        IE.created_at,
+        AA.is_satisfied as isSatisfied,
+        AA.feedback_comments as feedbackComments,
+        AA.reviewed
     FROM ${database}.issue_event IE
     LEFT JOIN ${database}.admin A ON IE.creator_id = A.id
+    LEFT JOIN ${database}.agent_assignment AA ON IE.issue_id = AA.issue_id
     WHERE IE.issue_id = ? 
     ORDER BY IE.created_at DESC`;
   },
