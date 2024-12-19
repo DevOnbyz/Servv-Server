@@ -328,6 +328,50 @@ module.exports = {
     END as createdBy
     FROM ${database}.issue_event where issue_id = ? ORDER BY created_at ASC`;
   },
+  getIssueHistoryForCustomer(database) {
+    return `SELECT id, issue_id, event_type, created_at,
+    CASE
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.OPEN} THEN 'OPEN'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN 'Agent Assigned'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN 'Site Visit Completed'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 'Estimate Approved'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} THEN 'Estimate Rejected'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN 'Work Assigned'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 'Work Completed'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.PAID} THEN 'Paid'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ONHOLD} THEN 'On Hold'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.CLOSED} THEN 'Closed'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED} THEN 'Site Visit Cancelled'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ORDER_CANCELLED} THEN 'Work Order Cancelled'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN 'Estimate Generated'
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN 'Invoice Generated'
+    ELSE null END as event_type,
+    CASE
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = creator_id LIMIT 1)
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = creator_id LIMIT 1)
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.resident WHERE id = creator_id LIMIT 1) END as name,
+    CASE
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN 'Admin'
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN 'Agent'
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN 'Resident' END as userType,
+    CASE
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
+    END as agentName,
+    CASE
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1)
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1) 
+    END as visitTime,
+    CASE
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN (SELECT total_charge FROM ${database}.invoice WHERE id = entity_id LIMIT 1)
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN (SELECT total_charge FROM ${database}.estimate WHERE id = entity_id LIMIT 1)
+    END as totalCharge,
+    CASE
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
+    END as createdBy
+    FROM ${database}.issue_event where issue_id = ? ORDER BY created_at ASC`;
+  },
   getActiveInvoiceByIssueID(database) {
     return `SELECT * FROM ${database}.invoice where issue_id = ? AND status in (${QUOTATION_STATUS.SEND}, ${QUOTATION_STATUS.DRAFTED}) LIMIT 1`;
   },

@@ -95,7 +95,6 @@ exports.addAgentController = async (request, response) => {
     Log.info(`[${domain} | OrganisationID:${orgID}] | addAgentController | Agent added successfully | AgentID: ${agentID}`)
     return sendHTTPResponse.success(response, 'Agent added successfully')
   } catch (error) {
-    console.log(error)
     if(error.code === 'ER_DUP_ENTRY') return sendHTTPResponse.error(response, 'Agent already exists', error.message)
 
     Log.error(`[${domain} | OrganisationID:${orgID}] | addAgentController | Error in fetching agent list`)
