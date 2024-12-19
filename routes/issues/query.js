@@ -69,7 +69,7 @@ module.exports = {
         IE.event_time,
         IE.created_at,
         AA.is_satisfied as isSatisfied,
-        AA.feedback_comments as feedbackComments,
+        AA.feedback_comments as feedbackComments
     FROM ${database}.issue_event IE
     LEFT JOIN ${database}.admin A ON IE.creator_id = A.id
     LEFT JOIN ${database}.agent_assignment AA ON IE.issue_id = AA.issue_id
