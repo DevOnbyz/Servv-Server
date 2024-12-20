@@ -444,8 +444,8 @@ exports.cancelSiteVisitController = async (request, response) => {
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
     // await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.cancelSiteVisit(CONSTANTS.BUILDING_DATABASE), [issueID])
-    Log.info(`[${domain} | OrganisationID:${orgID}] | cancelSiteVisitController | Site visit has been canceled | IssueID: ${issueID} | LogID: ${logID}`)
-    return sendHTTPResponse.success(response, 'Site visit has been canceled')
+    Log.info(`[${domain} | OrganisationID:${orgID}] | cancelSiteVisitController | Site visit has been cancelled | IssueID: ${issueID} | LogID: ${logID}`)
+    return sendHTTPResponse.success(response, 'Site visit has been cancelled')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | cancelSiteVisitController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while canceling issue site visit', error.message)
@@ -1007,7 +1007,8 @@ exports.editInvoiceController = async (request, response) => {
     if (notAllowedSubStatusForEditInvoice.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status == CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, 'You can\'t edit invoice for this issue as the issue is already in ' + getSubStatusStringById(issueDetails[0]?.sub_status))
 
     const invoiceData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getInvoiceByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
-    if (_.isEmpty(invoiceData)) return sendHTTPResponse.error(response, 'No active invoice found for this issue', null, 400)
+    if (_.isEmpty(invoiceData))
+      return sendHTTPResponse.error(response, 'No active invoice found for this issue', null, 400)
 
     if (request.file && hasFileChanged) {
       const destination = 'uploads/invoices/'
@@ -1240,8 +1241,8 @@ exports.cancelWorkOrderController = async (request, response) => {
     }
 
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
-    Log.info(`[${domain} | OrganisationID:${orgID}] | cancelWorkOrderController | The work order has been canceled | IssueID: ${issueID} | LogID: ${logID}`)
-    return sendHTTPResponse.success(response, 'The work order has been canceled')
+    Log.info(`[${domain} | OrganisationID:${orgID}] | cancelWorkOrderController | The work order has been cancelled | IssueID: ${issueID} | LogID: ${logID}`)
+    return sendHTTPResponse.success(response, 'The work order has been cancelled')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | cancelWorkOrderController | ${error.message}`)
     sendHTTPResponse.error(response, 'Error while canceling Work order', error.message)
