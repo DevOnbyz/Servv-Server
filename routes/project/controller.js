@@ -20,6 +20,26 @@ exports.getProjectsController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error while fetching project list', error)
   }
 }
+exports.getProjectByIdController = async (request, response) => {  
+  const orgID = request.orgID;  
+  const projectID = parseInt(request.params.id);  
+
+  try {  
+    const project = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.getProjectById(CONSTANTS.BUILDING_DATABASE),[orgID, projectID]);  
+
+    if (project.length === 0)
+      return sendHTTPResponse.error(response, 'Project not found', null, 404);  
+
+    const serviceList = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.getAllActiveServicesByProject(CONSTANTS.BUILDING_DATABASE),[project[0].id]);  
+
+    project[0].serviceList = serviceList;  
+    return sendHTTPResponse.success(response, 'Project fetched successfully', project[0]);  
+  } catch (error) {  
+    Log.error(`[Servv | OrganisationID:${orgID}, ProjectID:${projectID}] | getProjectByIdController | Error in fetching project | Error: ${error.message}`);  
+    sendHTTPResponse.error(response, 'Error while fetching project', error);  
+  }  
+};
+
 exports.addProjectController = async (request, response) => {
   const orgID = request.orgID
   try {

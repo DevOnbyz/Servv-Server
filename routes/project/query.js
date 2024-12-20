@@ -2,6 +2,9 @@ module.exports = {
   getAllProjectsByOrgID(database) {
     return `SELECT * FROM ${database}.project WHERE org_id = ?`;
   },
+  getProjectById(database) {
+    return `SELECT * FROM ${database}.project WHERE org_id = ? AND id = ?`;
+  },
   addProjectToOrg(database) {
     return `INSERT INTO ${database}.project SET ?`;
   },

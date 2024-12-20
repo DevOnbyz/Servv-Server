@@ -4,6 +4,7 @@ const controller = require('./controller')
 const { addProjectSchema, editProjectSchema } = require('./validator')
 
 router.get('/', controller.getProjectsController)
+router.get('/:id', controller.getProjectByIdController)
 router.post('/', validateRequest(addProjectSchema), controller.addProjectController)
 router.patch('/:id', validateRequest(editProjectSchema), controller.editProjectController)
 
