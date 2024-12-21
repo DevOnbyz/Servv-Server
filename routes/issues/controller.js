@@ -53,13 +53,15 @@ exports.getIssuesUnderResidentController = async (request, response) => {
   const itemsPerPage = request.query.itemsPerPage ? parseInt(request.query.itemsPerPage) : 3
   const pageNumber = request.query.pageNumber ? parseInt(request.query.pageNumber) : 0
   const offset = (pageNumber - 1) * itemsPerPage
+  const isCustomer = request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER
   try {
     const issues = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesUnderResident(CONSTANTS.BUILDING_DATABASE, itemsPerPage, offset), [residentID, orgID])
     for (const issue of issues) {
       const activeAgentAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveAgentAssignment(CONSTANTS.BUILDING_DATABASE), [issue.id])
       issue.agentOTP = activeAgentAssignment ? activeAgentAssignment.otp_code : null
       issue.img_src = issue.img_src ? issue.img_src.split(',') : null
-      const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE), [issue.id])
+      const issueEventQuery = isCustomer ? queryBuilder.getIssuesEventForCustomer(CONSTANTS.BUILDING_DATABASE) : queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE)
+      const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, issueEventQuery, [issue.id])
       issue.issuesEvents = issuesEvents
     }
     Log.info(`[${domain} | OrganisationID:${orgID} | residentID:${residentID}] | getIssuesUnderResidentController | Issues fetched for resident successfully`)
