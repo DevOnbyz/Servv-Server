@@ -34,7 +34,6 @@ const getIssueReportDetails = (database, startDate, endDate) => {
     WHEN I.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN "Work Completed"
     WHEN I.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ORDER_CANCELLED} THEN "Work Order Cancelled"
     WHEN I.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED} THEN "Invoice Drafted"
-    WHEN I.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED} THEN "Invoice Approved"
     WHEN I.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN "Invoice Sent"
     WHEN I.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID} THEN "Paid"
     WHEN I.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.ONHOLD} THEN "On Hold"
