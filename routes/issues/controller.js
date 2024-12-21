@@ -1218,7 +1218,7 @@ exports.cancelWorkOrderController = async (request, response) => {
   try {
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
-      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ORDER_CANCELLED
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_CANCELLED
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
     const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
@@ -1233,8 +1233,8 @@ exports.cancelWorkOrderController = async (request, response) => {
 
     const issueLogData = {
       issue_id: issueID,
-      event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.WORK_ORDER_CANCELLED,
-      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ORDER_CANCELLED,
+      event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.WORK_CANCELLED,
+      sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_CANCELLED,
       entity_id: activeWorkOrderID, //since it have multiple workorders
       creator_id: request.userID,
       creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
