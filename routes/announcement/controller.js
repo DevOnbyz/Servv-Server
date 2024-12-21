@@ -39,9 +39,7 @@ exports.getAnnouncementsController = async (request, response) => {
         return sendHTTPResponse.success(response, "Announcement List fetched successfully", [])
       }
 
-      const projectIDList = await getProjectIDByApartmentID(residentID)
-      const projectDetails = projectListUnderOrg.filter((project) => projectIDList.includes(project.id))
-      const formattedAnnouncements = formatAnnouncements(announcementList, projectDetails, true)
+      const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg, true)
       return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
     }
     const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg)
@@ -177,16 +175,20 @@ exports.editAnnouncementController = async (request, response) => {
 }
 
 exports.addInterestController = async (request, response) => {
-  return sendHTTPResponse.success(response, 'Work in progress')
   const orgID = request.orgID
   const announcementID = request.body.announcementID
   const userID = request.userID
   const userType = request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN ? CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN : CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER 
   try {
-    if(! request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER)
-      throw new Error('Only customer can add interest')
+    if(!userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER)
+      sendHTTPResponse.error(response,'Only customer can add interest')
 
-    const interest = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addInterestToAnnouncement(CONSTANTS.BUILDING_DATABASE), [orgID, announcementID, userID])
+    const announcementInterestData = {
+      announcement_id:parseInt(announcementID),
+      resident_id:userID,
+    }
+
+    const interest = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addInterestToAnnouncement(CONSTANTS.BUILDING_DATABASE),announcementInterestData)
     return sendHTTPResponse.success(response, 'Interest added successfully', interest)
   } catch (error) {
     Log.error(`[Servv | OrganisationID:${orgID}] | addInterestController | Error in adding interest | Error: ${error.message}`)

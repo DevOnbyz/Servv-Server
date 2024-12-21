@@ -35,6 +35,7 @@ const formatAnnouncements = (announcementList, projectList, isFiltered) => {
         expire_date: moment(announcement.expire_date).format("DD-MM-YYYY"),
         duration: moment(announcement.expire_date).startOf("day").diff(moment(announcement.created_at).startOf("day"), "days"),
         img_src: announcement.img_src || null,
+        interest: announcement.interest === CONSTANTS.ANNOUNCEMENT_INTEREST.INTERESTED,
         response: [],
       }
     })
