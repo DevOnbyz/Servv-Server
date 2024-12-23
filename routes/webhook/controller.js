@@ -31,6 +31,8 @@ exports.subscriptionWebhook = async (request, response) => {
                 return Log.info(`[Servv | subscriptionWebhook  | Invalid event Type:${eventType}`)
         }
 
+        return response.status(200).send('Webhook received');
+
     } catch (error) {
         return Log.error(`[Servv | subscriptionWebhook  | Error:${error.message}`)
     }
