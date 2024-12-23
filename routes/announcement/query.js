@@ -25,5 +25,8 @@ module.exports = {
   },
   addInterestToAnnouncement(database){
     return `INSERT INTO ${database}.announcement_interest SET ?`;
+  },
+  getAnnouncementResponses(database){
+    return `SELECT * FROM ${database}.announcement_interest WHERE announcement_id in (?)`
   }
 }

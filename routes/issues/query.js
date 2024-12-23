@@ -75,6 +75,43 @@ module.exports = {
     WHERE IE.issue_id = ? 
     ORDER BY IE.created_at DESC`;
   },
+  getIssuesEventForCustomer(database) {
+    return `SELECT 
+        IE.id as issue_event_id,
+        IE.issue_id, 
+        IE.event_type,
+        CASE
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.OPEN} THEN 'OPEN'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN 'SITE VISIT ASSIGNED'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN 'Site Visit Completed'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 'Estimate Approved'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} THEN 'Estimate Rejected'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN 'Work Assigned'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_CANCELLED} THEN 'WORK CANCELLED'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED} THEN 'Site Visit Cancelled'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN 'Invoice Sent'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN 'Estimate Sent'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.PAID} THEN 'Paid'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 'Work Completed'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.ONHOLD} THEN 'ON HOLD'
+            WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.CLOSED} THEN 'ON CLOSED'
+        END as event_type_string,
+        CONCAT(A.firstname, ' ', A.lastname) as generatedBy,
+        IE.sub_status, 
+        IE.created_at, 
+        IE.creator_id, 
+        IE.entity_id, 
+        IE.creator_type, 
+        IE.event_time,
+        IE.created_at,
+        AA.is_satisfied as isSatisfied,
+        AA.feedback_comments as feedbackComments
+    FROM ${database}.issue_event IE
+    LEFT JOIN ${database}.admin A ON IE.creator_id = A.id
+    LEFT JOIN ${database}.agent_assignment AA ON IE.issue_id = AA.issue_id
+    WHERE IE.issue_id = ? AND IE.sub_status not in (${ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT})
+    ORDER BY IE.created_at DESC`;
+  },
   getIssuesUnderResident(database, limit, offset) {
     return `SELECT I.id, A.name as doorNo, P.name as projectName, CONCAT(R.firstname, ' ', R.lastname) as name,
     CONCAT(P.city, ', ', P.district, ', ', P.state, ', ', P.country) as location, SOR.name as serviceSubTypeName,

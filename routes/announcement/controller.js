@@ -9,8 +9,8 @@ const moment = require('moment')
 const path = require('path')
 const fs = require('fs')
 const { v4: uuidv4 } = require('uuid')
-const { getAllProjectsByOrgID } = require('../../db/query')
-const { getApartmentListByResidentID, formatAnnouncements, getProjectIDByApartmentID } = require('./functions')
+const { getAllProjectsByOrgID, getResidentByIDs } = require('../../db/query')
+const { getApartmentListByResidentID, formatAnnouncements, getProjectAssocaitedWithResident } = require('./functions')
 
 const formDataLogger = (formData) => {
   if (formData) {
@@ -30,6 +30,7 @@ exports.getAnnouncementsController = async (request, response) => {
       runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAnnouncementsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID]),
       runQuery(CONSTANTS.BUILDING_DATABASE, getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE), orgID),
     ])
+    const announcementIDList = announcementList.map((announcement) => announcement.id)
 
     if (request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER) {
       const residentID = request.userID
@@ -43,8 +44,19 @@ exports.getAnnouncementsController = async (request, response) => {
       return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
     }
     const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg)
-    for (const announcement of formattedAnnouncements) {
-      announcement.response = []
+    const announcementResponse = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAnnouncementResponses(CONSTANTS.BUILDING_DATABASE), announcementIDList)
+    if(!_.isEmpty(announcementResponse)){
+      for (const announcement of formattedAnnouncements) {
+        const announcementID = announcement.id
+        const announcementResponses = announcementResponse.filter((response) => response.announcement_id === announcementID)
+        if(_.isEmpty(announcementResponses)) continue
+        const residentDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getResidentByIDs(CONSTANTS.BUILDING_DATABASE), [announcementResponses[0].resident_id])
+        announcementResponses[0].name = residentDetails.firstname + ' ' + residentDetails.lastname
+        announcementResponses[0].phNum = residentDetails.ph_num
+        announcementResponses[0].associatedProject = (await getProjectAssocaitedWithResident(announcementResponses[0].resident_id, projectListUnderOrg))?.map((item) => item.name)
+        announcement.announcementResponses = announcementResponses
+        
+      } 
     }
     return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
   } catch (error) {

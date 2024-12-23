@@ -9,8 +9,8 @@ const getApartmentListByResidentID = async (residentID) => {
   return (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentApartmentRelByResidentID(CONSTANTS.BUILDING_DATABASE), [residentID]))?.map((item) => item.apartment_id) ?? []
 }
 
-const getProjectIDByApartmentID = async (residentID) => {
-  return (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getProjectByApartmentID(CONSTANTS.BUILDING_DATABASE), [residentID]))?.map((item) => item.project_id) ?? []
+const getProjectIDByApartmentID = async (apartmentID) => {
+  return (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getProjectByApartmentID(CONSTANTS.BUILDING_DATABASE), [apartmentID]))?.map((item) => item.project_id) ?? []
 }
 
 const getProjectNames = (projectList, projectNames) => {
@@ -36,7 +36,6 @@ const formatAnnouncements = (announcementList, projectList, isFiltered) => {
         duration: moment(announcement.expire_date).startOf("day").diff(moment(announcement.created_at).startOf("day"), "days"),
         img_src: announcement.img_src || null,
         interest: announcement.interest === CONSTANTS.ANNOUNCEMENT_INTEREST.INTERESTED,
-        response: [],
       }
     })
     .filter(Boolean)
@@ -54,10 +53,17 @@ function convertToUTC(date, timezone) {
   return utcDateTime.toISOString();
 }
 
+async function getProjectAssocaitedWithResident(residentID, projectList){
+  const apartmentUnderResident = await getApartmentListByResidentID(residentID)
+  const projectUnderResident = await getProjectIDByApartmentID(apartmentUnderResident)
+  return projectList?.filter((project) => projectUnderResident?.includes(project.id))
+}
+
 module.exports = {
   getApartmentListByResidentID,
   getProjectIDByApartmentID,
   getProjectNames,
   formatAnnouncements,
-  convertToUTC
+  convertToUTC,
+  getProjectAssocaitedWithResident
 }
