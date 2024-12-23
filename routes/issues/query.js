@@ -249,9 +249,10 @@ module.exports = {
     WHEN E.status = ${QUOTATION_STATUS.CANCELLED} THEN 'cancelled'
     WHEN E.status = ${QUOTATION_STATUS.SEND} THEN 'sent'
     ELSE 'pending' END as status,
-    admin.id as created_by, admin.firstname as created_by_firstname, admin.lastname as created_by_lastname
+    admin.id as created_by, admin.firstname as created_by_firstname, admin.lastname as created_by_lastname, issue.customer_preferred_time as customerPreferredTime
     FROM ${database}.estimate E
     left join ${database}.admin on E.created_by = admin.id
+    LEFT JOIN ${database}.issue ON E.issue_id = issue.id
     where E.issue_id = ? order by E.created_at desc`;
   },
   updateEstimate(database) {
