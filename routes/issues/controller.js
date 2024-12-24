@@ -395,7 +395,8 @@ exports.reAssignSiteVisitController = async (request, response) => {
     }
     // sent notification to the agent regarding the issue
     if (modifiedVisit) {
-      newIssueData.customer_preferred_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
+      newIssueData.customer_preferred_time = null
+      // newIssueData.customer_preferred_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.notes = modifiedNote
     }
@@ -484,7 +485,8 @@ exports.completeSiteVisitController = async (request, response) => {
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED,
-      updated_by: request.userID
+      updated_by: request.userID,
+      customer_preferred_time: null
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
