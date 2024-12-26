@@ -80,15 +80,16 @@ exports.getIssueByIDController = async (request, response) => {
 
   try {
     const issue = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueByID(CONSTANTS.BUILDING_DATABASE), [issueID, orgID])
+    const lastCompletetedWorkOrder = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getCompletedWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
     
     if (!issue) {
       Log.info(`[${domain} | OrganisationID:${orgID}  issueID:${issueID}] | getSingleIssueUnderResidentController | Issue not found`)
       return sendHTTPResponse.error(response, 'Issue not found', null, 404)
     }
     
-        const activeAgentAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveAgentAssignment(CONSTANTS.BUILDING_DATABASE), [issueID])
+    const activeAgentAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveAgentAssignment(CONSTANTS.BUILDING_DATABASE), [issueID])
     issue.agentOTP = activeAgentAssignment ? activeAgentAssignment.otp_code : null
-
+    issue.isWorkFeedbackCompleted = lastCompletetedWorkOrder?.is_satisfied == 1 || (lastCompletetedWorkOrder?.is_satisfied == 0 && ! _.isEmpty(lastCompletetedWorkOrder?.feedback_comments))
     issue.img_src = issue.img_src ? issue.img_src.split(',') : null
     issue.reviewed = issue.reviewed === CONSTANTS.REVIEW_STATUS.COMPLETED
     const issuesEventsQuery = isCustomer ? queryBuilder.getIssuesEventForCustomer(CONSTANTS.BUILDING_DATABASE) : queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE)
