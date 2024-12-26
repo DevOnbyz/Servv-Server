@@ -86,7 +86,7 @@ exports.getIssueByIDController = async (request, response) => {
       return sendHTTPResponse.error(response, 'Issue not found', null, 404)
     }
     
-        const activeAgentAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, issuesEventsQuery, [issueID])
+        const activeAgentAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveAgentAssignment(CONSTANTS.BUILDING_DATABASE), [issueID])
     issue.agentOTP = activeAgentAssignment ? activeAgentAssignment.otp_code : null
 
     issue.img_src = issue.img_src ? issue.img_src.split(',') : null
