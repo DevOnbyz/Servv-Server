@@ -76,22 +76,24 @@ exports.getIssueByIDController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
   const issueID = parseInt(request.params.issueID)
+  const isCustomer = request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER
 
   try {
     const issue = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueByID(CONSTANTS.BUILDING_DATABASE), [issueID, orgID])
-
+    
     if (!issue) {
       Log.info(`[${domain} | OrganisationID:${orgID}  issueID:${issueID}] | getSingleIssueUnderResidentController | Issue not found`)
       return sendHTTPResponse.error(response, 'Issue not found', null, 404)
     }
-
-    const activeAgentAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveAgentAssignment(CONSTANTS.BUILDING_DATABASE), [issueID])
+    
+        const activeAgentAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, issuesEventsQuery, [issueID])
     issue.agentOTP = activeAgentAssignment ? activeAgentAssignment.otp_code : null
 
     issue.img_src = issue.img_src ? issue.img_src.split(',') : null
     issue.reviewed = issue.reviewed === CONSTANTS.REVIEW_STATUS.COMPLETED
+    const issuesEventsQuery = isCustomer ? queryBuilder.getIssuesEventForCustomer(CONSTANTS.BUILDING_DATABASE) : queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE)
 
-    const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE), [issueID])
+    const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, issuesEventsQuery, [issueID])
     issue.issuesEvents = issuesEvents
 
     Log.info(`[${domain} | OrganisationID:${orgID}  issueID:${issueID}] | getSingleIssueUnderResidentController | Issue fetched successfully`)
