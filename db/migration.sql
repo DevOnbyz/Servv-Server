@@ -245,19 +245,6 @@ CREATE TABLE `agent_service_rel` (
     CONSTRAINT `fk_agent_service_rel_ibfk_4` FOREIGN KEY (updated_by) REFERENCES admin (id)
 );
 
-CREATE TABLE `payment` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `order_id` VARCHAR(255) UNIQUE NOT NULL,
-    `amount` INT NOT NULL,
-    `status` VARCHAR(50) NOT NULL,
-    `payment_method` VARCHAR(50) NOT NULL,
-    `created_by` INT,
-    `updated_by` INT,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    KEY `status` (`status`)
-);
-
 CREATE TABLE `issue` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `org_id` INT,
@@ -477,6 +464,34 @@ CREATE TABLE `support` (
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_support_ibfk_2` FOREIGN KEY (resident_id) REFERENCES resident (id) ON DELETE CASCADE
+);
+CREATE TABLE `order` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `issue_id` INT NOT NULL,
+    `invoice_id` INT NOT NULL,
+    `status` TINYINT DEFAULT 0, -- 0=pending, 1=completed, 2=cancelled
+    `amount` DECIMAL(10,2) NOT NULL,
+    `payment_method` VARCHAR(50) NOT NULL,
+    `payment_status` TINYINT DEFAULT 0, -- 0=pending, 1=completed, 2=failed,
+    `razorpay_order_id` VARCHAR(255) DEFAULT NULL,
+    `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_order_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_order_ibfk_2` FOREIGN KEY (invoice_id) REFERENCES invoice (id) ON DELETE CASCADE
+);
+CREATE TABLE `payment` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `order_id` VARCHAR(255) UNIQUE NOT NULL,
+    `razorpay_payment_id` VARCHAR(255) NOT NULL,
+    `total_amount` DECIMAL(10,2) NOT NULL,
+    `platform_fee` DECIMAL(10,2) NOT NULL,
+    `razorpay_fee` DECIMAL(10,2) NOT NULL,
+    `status` TINYINT DEFAULT 0, -- 0=pending, 1=completed, 2=cancelled
+    `payment_type` TINYINT DEFAULT 0,
+    `final_amount` DECIMAL(10,2) NOT NULL,
+    `transfer_id` VARCHAR(255) NOT NULL,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
 
 INSERT INTO `service` SET name='plumbing';
