@@ -76,22 +76,25 @@ exports.getIssueByIDController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
   const issueID = parseInt(request.params.issueID)
+  const isCustomer = request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER
 
   try {
     const issue = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueByID(CONSTANTS.BUILDING_DATABASE), [issueID, orgID])
-
+    const lastCompletetedWorkOrder = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getCompletedWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    
     if (!issue) {
       Log.info(`[${domain} | OrganisationID:${orgID}  issueID:${issueID}] | getSingleIssueUnderResidentController | Issue not found`)
       return sendHTTPResponse.error(response, 'Issue not found', null, 404)
     }
-
+    
     const activeAgentAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveAgentAssignment(CONSTANTS.BUILDING_DATABASE), [issueID])
     issue.agentOTP = activeAgentAssignment ? activeAgentAssignment.otp_code : null
-
+    issue.isWorkFeedbackCompleted = lastCompletetedWorkOrder?.is_satisfied == 1 || (lastCompletetedWorkOrder?.is_satisfied == 0 && ! _.isEmpty(lastCompletetedWorkOrder?.feedback_comments))
     issue.img_src = issue.img_src ? issue.img_src.split(',') : null
     issue.reviewed = issue.reviewed === CONSTANTS.REVIEW_STATUS.COMPLETED
+    const issuesEventsQuery = isCustomer ? queryBuilder.getIssuesEventForCustomer(CONSTANTS.BUILDING_DATABASE) : queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE)
 
-    const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE), [issueID])
+    const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, issuesEventsQuery, [issueID])
     issue.issuesEvents = issuesEvents
 
     Log.info(`[${domain} | OrganisationID:${orgID}  issueID:${issueID}] | getSingleIssueUnderResidentController | Issue fetched successfully`)
@@ -395,7 +398,8 @@ exports.reAssignSiteVisitController = async (request, response) => {
     }
     // sent notification to the agent regarding the issue
     if (modifiedVisit) {
-      newIssueData.customer_preferred_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
+      newIssueData.customer_preferred_time = null
+      // newIssueData.customer_preferred_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.notes = modifiedNote
     }
@@ -484,7 +488,8 @@ exports.completeSiteVisitController = async (request, response) => {
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED,
-      updated_by: request.userID
+      updated_by: request.userID,
+      customer_preferred_time: null
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 

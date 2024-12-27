@@ -119,7 +119,7 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}'
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
-    I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.customer_preferred_time as time, I.initial_activity_time as initialActivityTime, I.img_src
+    I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.customer_preferred_time as time, I.initial_activity_time as initialActivityTime, I.img_src, I.updated_at
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
     left join ${database}.project P on A.project_id = P.id
@@ -251,13 +251,13 @@ module.exports = {
     return `SELECT * FROM ${database}.agent_assignment where issue_id = ? AND status = ${AGENT_ASSIGNMENT_STATUS.PENDING} ORDER BY id DESC LIMIT 1`;
   },
   getActiveSiteVisitByIssueID(database) {
-    return `SELECT * FROM ${database}.agent_assignment where issue_id = ? AND status = ${AGENT_ASSIGNMENT_STATUS.PENDING} AND type = ${AGENT_ASSIGNMENT_TYPE.SITE_VISIT} LIMIT 1`;
+    return `SELECT * FROM ${database}.agent_assignment where issue_id = ? AND status = ${AGENT_ASSIGNMENT_STATUS.PENDING} AND type = ${AGENT_ASSIGNMENT_TYPE.SITE_VISIT} ORDER BY id DESC LIMIT 1`;
   },
   getActiveWorkOrderByIssueID(database) {
-    return `SELECT * FROM ${database}.agent_assignment where issue_id = ? AND status = ${AGENT_ASSIGNMENT_STATUS.PENDING} AND type = ${AGENT_ASSIGNMENT_TYPE.WORK_ORDER} LIMIT 1`;
+    return `SELECT * FROM ${database}.agent_assignment where issue_id = ? AND status = ${AGENT_ASSIGNMENT_STATUS.PENDING} AND type = ${AGENT_ASSIGNMENT_TYPE.WORK_ORDER} ORDER BY id DESC LIMIT 1`;
   },
   getCompletedWorkOrderByIssueID(database) {
-    return `SELECT * FROM ${database}.agent_assignment where issue_id = ? AND status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} AND type = ${AGENT_ASSIGNMENT_TYPE.WORK_ORDER} LIMIT 1`;
+    return `SELECT * FROM ${database}.agent_assignment where issue_id = ? AND status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} AND type = ${AGENT_ASSIGNMENT_TYPE.WORK_ORDER} ORDER BY id DESC LIMIT 1`;
   },
   getCompletedIssueByIssueID(database) {
     return `SELECT * FROM ${database}.issue WHERE id = ? AND status = ${ISSUE_STATUS.CLOSED} LIMIT 1`;

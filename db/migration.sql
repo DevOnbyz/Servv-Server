@@ -1,4 +1,3 @@
--- Active: 1718928938023@@127.0.0.1@3306@servv_residence
 CREATE DATABASE `servv_residence` character set utf8mb4;
 
 use `servv_residence`;
@@ -483,5 +482,4 @@ CREATE TABLE `support` (
 INSERT INTO `service` SET name='plumbing';
 INSERT INTO `service` SET name='electrical';
 INSERT INTO `service` SET name='cleaning';
-INSERT INTO `service` SET name='designing';
 INSERT INTO `service` SET name='others';
