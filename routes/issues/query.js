@@ -128,7 +128,7 @@ module.exports = {
     left join ${database}.service S on I.service_type = S.id
     left join ${database}.service_organisation_rel SOR on I.service_subtype = SOR.id
     where I.resident_id = ? AND I.org_id = ?
-    ORDER BY I.created_at DESC LIMIT ${limit} OFFSET ${offset}`;
+    ORDER BY I.updated_at DESC LIMIT ${limit} OFFSET ${offset}`;
   },
   getIssueByID(database) {
     return `SELECT I.id, A.name as doorNo, P.name as projectName, 
