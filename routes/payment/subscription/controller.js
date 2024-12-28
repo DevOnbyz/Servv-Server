@@ -1,8 +1,8 @@
-const sendHTTPResponse = require('../../lib/sendHTTPResponse')
-const runQuery = require('../../db/runQuery')
-const CONSTANTS = require('../../lib/constants')
+const sendHTTPResponse = require('../../../lib/sendHTTPResponse')
+const runQuery = require('../../../db/runQuery')
+const CONSTANTS = require('../../../lib/constants')
 const queryBuilder = require('./query')
-const Log = require('../../log')
+const Log = require('../../../log')
 const Razorpay = require('razorpay')
 require('dotenv').config()
 const crypto = require('crypto')
@@ -117,8 +117,8 @@ exports.verifyPayment = async (request, response) => {
             Log.info(`[Servv | verifyPayment | Payment verified successfully`)
             return sendHTTPResponse.success(response, 'Payment verified successfully')
         } else {
-            Log.error(`[Servv | verifyPayment | Error in authenticating payment  | Error: ${error}`)
-            return sendHTTPResponse.error(response, 'Error in authenticating payment ', error)
+            Log.error(`[Servv | verifyPayment | Error in authenticating payment  `)
+            return sendHTTPResponse.error(response, 'Error in authenticating payment ')
         }
     } catch (error) {
         Log.error(`[Servv | verifyPayment | Error in verifying payment  | Error: ${error}`)
