@@ -1348,11 +1348,13 @@ exports.issueFeedbackController = async (request, response) => {
 
   try {
     const { starRating } = request.body
-    const completedIssue = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getCompletedIssueByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
-    if (_.isEmpty(completedIssue)) return sendHTTPResponse.error(response, 'Issue is not completed yet!', null, 400)
+    const issueDetails = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    
+    // const completedIssue = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getCompletedIssueByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    // if (_.isEmpty(completedIssue)) return sendHTTPResponse.error(response, 'Issue is not completed yet!', null, 400)
 
 
-    const completedIssueId = completedIssue.id
+    const completedIssueId = issueDetails.id
     const updatedIssueData = {
       rating: starRating,
       reviewed: CONSTANTS.REVIEW_STATUS.COMPLETED

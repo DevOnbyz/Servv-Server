@@ -132,22 +132,22 @@ CREATE TABLE `resident_identity` (
 );
 
 CREATE TABLE `resident` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `identity_id` INT,
-    `firstname` VARCHAR(255) NOT NULL,
-    `lastname` VARCHAR(255) NOT NULL,
-    `org_id` INT,
-    `status` TINYINT DEFAULT 1,
-    `email_id` VARCHAR(255),
-    `fcm_token` TEXT,
-    `created_by` INT,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_by` INT,
-    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_resident_ibfk_1` FOREIGN KEY (created_by) REFERENCES admin (id),
-    CONSTRAINT `fk_resident_ibfk_2` FOREIGN KEY (updated_by) REFERENCES admin (id),
-    CONSTRAINT `fk_resident_ibfk_3` FOREIGN KEY (identity_id) REFERENCES resident_identity (id),
-    CONSTRAINT `fk_resident_ibfk_4` FOREIGN KEY (org_id) REFERENCES organisation (id)
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `identity_id` INT,
+  `firstname` VARCHAR(255) NOT NULL,
+  `lastname` VARCHAR(255) NOT NULL,
+  `email_id` VARCHAR(255) DEFAULT NULL,
+  `status` TINYINT DEFAULT 1,
+  `org_id` INT,
+  `fcm_token` TEXT,
+  `created_by` INT,
+  `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  `updated_by` INT,
+  `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+   CONSTRAINT `fk_resident_ibfk_1` FOREIGN KEY (created_by) REFERENCES admin (id),
+   CONSTRAINT `fk_resident_ibfk_2` FOREIGN KEY (updated_by) REFERENCES admin (id),
+   CONSTRAINT `fk_resident_ibfk_3` FOREIGN KEY (identity_id) REFERENCES resident_identity (id),
+   CONSTRAINT `fk_resident_ibfk_4` FOREIGN KEY (org_id) REFERENCES organisation (id)
 );
 
 CREATE TABLE `apartment` (
@@ -323,6 +323,7 @@ CREATE TABLE `agent_assignment` (
     `issue_id` INT,
     `agent_id` INT,
     `status` TINYINT DEFAULT 0, -- 0 = pending, 1 = completed
+    `type` TINYINT DEFAULT NULL,
     `notes` TEXT,
     `assigned_by` INT,
     `assigned_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
