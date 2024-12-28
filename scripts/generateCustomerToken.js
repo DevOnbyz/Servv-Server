@@ -40,3 +40,4 @@ const main = async () => {
 }
 
 main()
+// node scripts/generateCustomerToken.js --phoneNumber=+917994771185
