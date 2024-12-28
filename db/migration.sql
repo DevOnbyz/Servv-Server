@@ -7,6 +7,7 @@ CREATE TABLE `organisation` (
     `name` VARCHAR(255) NOT NULL,
     `domain` VARCHAR(255) UNIQUE NOT NULL,
     `razorpay_customer_id` VARCHAR(255) DEFAULT NULL,
+    `razorpay_route_account_id` VARCHAR(255) DEFAULT NULL,
     `config` JSON,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP

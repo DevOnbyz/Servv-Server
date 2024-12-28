@@ -19,15 +19,15 @@ exports.updateSubscription = async (request, response) => {
         const supportedEvents = [CONSTANTS.SUBSCRIPTION_WEBHOOK_EVENT.CHARGED]
 
         if (!supportedEvents.includes(eventType))
-            return Log.info(`[Servv | updateSubscription  | Invalid event Type : ${eventType}`)
+            return Log.info(`[ updateSubscription  | Invalid event Type : ${eventType}`)
         if (!verifySignature(JSON.stringify(request.body), request.headers['x-razorpay-signature'], process.env.RAZORPAY_KEY_SECRET))
-            return Log.info(`[Servv | updateSubscription  | Invalid Signature`)
+            return Log.info(`[ updateSubscription  | Invalid Signature`)
 
         const paymentEntity = payload.payment.entity
         const [subscription] = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getSubscriptionByRazorpayCustomerId(CONSTANTS.BUILDING_DATABASE), paymentEntity.customer_id)
 
         if (!subscription)
-            return Log.info(`[Servv | updateSubscription  | Can't get active subscription`)
+            return Log.info(`[ updateSubscription  | Can't get active subscription`)
 
         switch (eventType) {
             case CONSTANTS.SUBSCRIPTION_WEBHOOK_EVENT.CHARGED:
@@ -35,25 +35,25 @@ exports.updateSubscription = async (request, response) => {
                 break
 
             default:
-                return Log.info(`[Servv | updateSubscription  | Invalid event Type:${eventType}`)
+                return Log.info(`[ updateSubscription  | Invalid event Type:${eventType}`)
         }
 
         return response.status(200).send('Webhook received')
 
     } catch (error) {
-        return Log.error(`[Servv | updateSubscription  | Error:${error.message}`)
+        return Log.error(`[ updateSubscription  | Error:${error.message}`)
     }
 }
 
-exports.createOrder = async (request, response) => {
+exports.paymentCallback = async (request, response) => {
     try {
         const { event: eventType, payload } = request.body
         const supportedEvents = [CONSTANTS.ORDER_WEBHOOK_EVENT.CHARGED]
 
         if (!supportedEvents.includes(eventType))
-            return Log.info(`[Servv | createOrder  | Invalid event Type : ${eventType}`)
+            return Log.info(`[ paymentCallback  | Invalid event Type : ${eventType}`)
         if (!verifySignature(JSON.stringify(request.body), request.headers['x-razorpay-signature'], process.env.RAZORPAY_KEY_SECRET))
-            return Log.info(`[Servv | updateSubscription  | Invalid Signature`)
+            return Log.info(`[ updateSubscription  | Invalid Signature`)
 
         const paymentEntity = payload.payment.entity
         const feeCalculation = calculateAllFees(paymentEntity.amount, paymentEntity)
@@ -61,9 +61,16 @@ exports.createOrder = async (request, response) => {
         const [existingOrder] = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getOrderByIssueOrInvoiceId(CONSTANTS.BUILDING_DATABASE), [paymentEntity.notes.issue_id, paymentEntity.notes.invoice_id])
 
         if (existingOrder) {
-            Log.info(`[Servv | createOrder | Order already exists for issue_id: ${paymentEntity.notes.issue_id} or invoice_id: ${paymentEntity.notes.invoice_id}]`)
+            Log.info(`[ paymentCallback | Order already exists for issue_id: ${paymentEntity.notes.issue_id} or invoice_id: ${paymentEntity.notes.invoice_id}]`)
             return response.status(409).send('Order already exists')
         }
+
+        const [organisation] = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getOrganisationByOrgID(CONSTANTS.BUILDING_DATABASE), [paymentEntity.notes.org_id])  
+
+        if (!organisation?.razorpay_route_account_id) {  
+            Log.error(`[ paymentCallback | Error: Razorpay route account not found for the organisation - org_id: ${paymentEntity.notes.org_id}]`)  
+            return response.status(404).send('Razorpay route account not found for the organisation')  
+        }  
 
         const orderData = {
             issue_id: paymentEntity.notes.issue_id,
@@ -77,21 +84,17 @@ exports.createOrder = async (request, response) => {
 
         const orderResult = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addOrder(CONSTANTS.BUILDING_DATABASE), [orderData])
 
-        const transfer = await razorpay.transfers.create({
-            account: process.env.RAZORPAY_ROUTE_ACCOUNT_ID,
-            amount: feeCalculation.finalAmount * 100,
-            currency: "INR",
-            payment_id: paymentEntity.id,
-            notes: {
-                issue_id: paymentEntity.notes.issue_id,
-                invoice_id: paymentEntity.notes.invoice_id
-            }
+        const transfer = await razorpay.payments.transfer(paymentEntity.id, {
+            transfers: [{
+                account: organisation?.razorpay_route_account_id,
+                amount: 123,
+                currency: "INR",
+                notes: {
+                    issue_id: paymentEntity.notes.issue_id,
+                    invoice_id: paymentEntity.notes.invoice_id
+                }
+            }]
         })
-
-        if (transfer.status !== 'processed') {
-            Logger.error(`[Servv | createOrder | Error: Transfer failed]`)
-            return response.status(500).send('Error creating order')
-        }
 
         const paymentData = {
             order_id: orderResult.insertId,
@@ -101,7 +104,16 @@ exports.createOrder = async (request, response) => {
             razorpay_fee: feeCalculation.razorpay.total,
             status: CONSTANTS.PAYMENT_STATUS.COMPLETED,
             final_amount: feeCalculation.finalAmount,
-            transfer_id: transfer.id
+            transfer_id: transfer?.id ?? null
+        }
+
+        if (transfer.status !== CONSTANTS.RAZORPAY_TRANSFER_STATUS.COMPLETED) {
+            const paymentData = {
+                status: CONSTANTS.PAYMENT_STATUS.PENDING
+            }
+            await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addPayment(CONSTANTS.BUILDING_DATABASE), [paymentData])
+            Log.error(`[ paymentCallback | Error: Transfer failed]`)
+            return response.status(500).send('Error creating order')
         }
 
         await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addPayment(CONSTANTS.BUILDING_DATABASE), [paymentData])
@@ -109,7 +121,7 @@ exports.createOrder = async (request, response) => {
 
         return response.status(200).send('Webhook received for create order')
     } catch (error) {
-        Log.error(`[Servv | createOrder | Error: ${error.message ?? JSON.stringify(error)}]`)
-        return response.status(500).send('Error creating order')
+        Log.error(`[ paymentCallback | Error: ${JSON.stringify(error)}]`)
+        return response.status(500).send('Error creating order' + error,)
     }
 }

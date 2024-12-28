@@ -6,8 +6,7 @@ const userRouter = require('./user')
 const announcementRouter = require('./announcement')
 const issueRouter = require('./issues') 
 const reportRouter = require('./report')
-const subscriptionRouter = require('./subscription')
-const orderRouter = require('./order')
+const paymentRouter = require('./payment')
 const { downloadRouter } = require('./controller')
 
 
@@ -18,8 +17,7 @@ router.use('/user', userRouter)
 router.use('/announcement', announcementRouter)
 router.use('/issue', issueRouter)
 router.use('/report', reportRouter)
-router.use('/subscription', subscriptionRouter)
-router.use('/order', orderRouter)
+router.use('/payment', paymentRouter)
 router.get('/download/:filename', downloadRouter)
 
 module.exports = router

@@ -20,4 +20,7 @@ module.exports = {
     getOrderByIssueOrInvoiceId(database) {
         return `SELECT * FROM ${database}.order WHERE issue_id = ? OR invoice_id = ? LIMIT 1;`
     },
+    getOrganisationByOrgID(database){
+        return `SELECT * FROM ${database}.organisation WHERE id = ? LIMIT 1;`
+    }
 };
