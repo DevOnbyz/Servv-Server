@@ -35,20 +35,22 @@ function extractRazorpayFees(razorpayPayload) {
 }
 
 function calculateAllFees(amount, razorpayPayload) {
+    // Convert amount from paise to rupees
+    const amountInRupees = amount / 100;
 
-    const razorpayFees = extractRazorpayFees(razorpayPayload)
-    const razorpayBaseFee = razorpayFees.baseFee
-    const razorpayGST = razorpayFees.tax
-    const razorpayRouteCharge = razorpayFees.methodDetails.fee || 0
-    const totalRazorpayFee = razorpayBaseFee + razorpayRouteCharge
+    const razorpayFees = extractRazorpayFees(razorpayPayload);
+    const razorpayBaseFee = razorpayFees.baseFee;
+    const razorpayGST = razorpayFees.tax;
+    const razorpayRouteCharge = razorpayFees.methodDetails.fee || 0;
+    const totalRazorpayFee = razorpayBaseFee + razorpayRouteCharge;
 
-    // Calculate company fee 
-    const companyBaseFee = (amount * CONSTANTS.FEES.COMPANY.PERCENTAGE) / 100
-    const companyGST = (companyBaseFee * CONSTANTS.FEES.COMPANY.GST_PERCENTAGE) / 100
+    // Calculate company fee
+    const companyBaseFee = (amountInRupees * CONSTANTS.FEES.COMPANY.PERCENTAGE) / 100;
+    const companyGST = (companyBaseFee * CONSTANTS.FEES.COMPANY.GST_PERCENTAGE) / 100;
 
     // Calculate total deductions and finalAmount amount
-    const totalDeductions = totalRazorpayFee + razorpayGST + companyBaseFee + companyGST
-    const finalAmount = amount - totalDeductions
+    const totalDeductions = totalRazorpayFee + razorpayGST + companyBaseFee + companyGST;
+    const finalAmount = amountInRupees - totalDeductions;
 
     return {
         razorpay: {
@@ -64,7 +66,7 @@ function calculateAllFees(amount, razorpayPayload) {
         },
         finalAmount,
         totalDeductions
-    }
+    };
 }
 
 module.exports = {  

@@ -87,7 +87,7 @@ exports.paymentCallback = async (request, response) => {
         const transfer = await razorpay.payments.transfer(paymentEntity.id, {
             transfers: [{
                 account: organisation?.razorpay_route_account_id,
-                amount: 123,
+                amount: Math.round(feeCalculation.finalAmount),
                 currency: "INR",
                 notes: {
                     issue_id: paymentEntity.notes.issue_id,
@@ -99,21 +99,13 @@ exports.paymentCallback = async (request, response) => {
         const paymentData = {
             order_id: orderResult.insertId,
             razorpay_payment_id: paymentEntity.id,
-            total_amount: paymentEntity.amount,
+            total_amount: paymentEntity.amount / 100,
             platform_fee: feeCalculation.company.total,
             razorpay_fee: feeCalculation.razorpay.total,
             status: CONSTANTS.PAYMENT_STATUS.COMPLETED,
             final_amount: feeCalculation.finalAmount,
-            transfer_id: transfer?.id ?? null
-        }
-
-        if (transfer.status !== CONSTANTS.RAZORPAY_TRANSFER_STATUS.COMPLETED) {
-            const paymentData = {
-                status: CONSTANTS.PAYMENT_STATUS.PENDING
-            }
-            await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addPayment(CONSTANTS.BUILDING_DATABASE), [paymentData])
-            Log.error(`[ paymentCallback | Error: Transfer failed]`)
-            return response.status(500).send('Error creating order')
+            transfer_id: transfer?.items[0].id ?? null,
+            status :  CONSTANTS.PAYMENT_STATUS.PENDING
         }
 
         await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addPayment(CONSTANTS.BUILDING_DATABASE), [paymentData])
