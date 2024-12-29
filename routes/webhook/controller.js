@@ -47,6 +47,7 @@ exports.updateSubscription = async (request, response) => {
 
 exports.paymentCallback = async (request, response) => {
     try {
+        Log.info(`[ paymentCallback  | Webhook received]  | Body: ${JSON.stringify(request.body)}`)
         const { event: eventType, payload } = request.body
         const supportedEvents = [CONSTANTS.ORDER_WEBHOOK_EVENT.CHARGED]
 
