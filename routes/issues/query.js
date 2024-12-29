@@ -151,7 +151,8 @@ module.exports = {
     I.customer_preferred_time as time, 
     I.initial_activity_time as initialActivityTime, 
     I.img_src,
-    I.reviewed
+    I.reviewed,
+    I.updated_at
     FROM ${database}.issue I
     LEFT JOIN ${database}.apartment A ON I.apartment_id = A.id 
     LEFT JOIN ${database}.project P ON A.project_id = P.id
