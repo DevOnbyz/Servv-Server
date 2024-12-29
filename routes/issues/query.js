@@ -97,6 +97,10 @@ module.exports = {
             WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.CLOSED} THEN 'ON CLOSED'
         END as event_type_string,
         CONCAT(A.firstname, ' ', A.lastname) as generatedBy,
+        CASE
+          WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
+          WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
+        END as assignee,
         IE.sub_status, 
         IE.created_at, 
         IE.creator_id, 
