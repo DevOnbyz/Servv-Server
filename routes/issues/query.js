@@ -97,6 +97,10 @@ module.exports = {
             WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.CLOSED} THEN 'ON CLOSED'
         END as event_type_string,
         CONCAT(A.firstname, ' ', A.lastname) as generatedBy,
+        CASE
+          WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
+          WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
+        END as assignee,
         IE.sub_status, 
         IE.created_at, 
         IE.creator_id, 
@@ -105,7 +109,8 @@ module.exports = {
         IE.event_time,
         IE.created_at,
         AA.is_satisfied as isSatisfied,
-        AA.feedback_comments as feedbackComments
+        AA.feedback_comments as feedbackComments,
+        AA.updated_at
     FROM ${database}.issue_event IE
     LEFT JOIN ${database}.admin A ON IE.creator_id = A.id
     LEFT JOIN ${database}.agent_assignment AA ON IE.issue_id = AA.issue_id
@@ -147,7 +152,8 @@ module.exports = {
     I.customer_preferred_time as time, 
     I.initial_activity_time as initialActivityTime, 
     I.img_src,
-    I.reviewed
+    I.reviewed,
+    I.updated_at
     FROM ${database}.issue I
     LEFT JOIN ${database}.apartment A ON I.apartment_id = A.id 
     LEFT JOIN ${database}.project P ON A.project_id = P.id
@@ -179,6 +185,8 @@ module.exports = {
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
     END as status,
+    AA.otp_code as otp_code,
+    AA.created_at as created_at,
     CONCAT(B.firstname, ' ', B.lastname) as created_by
     FROM ${database}.agent_assignment AA
     LEFT JOIN ${database}.agent A ON A.id = AA.agent_id
@@ -233,6 +241,8 @@ module.exports = {
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
     END as status,
+    AA.otp_code as otp_code,
+    AA.created_at as created_at,
     CONCAT(B.firstname, ' ', B.lastname) as created_by
     FROM ${database}.agent_assignment AA
     LEFT JOIN ${database}.agent A ON A.id = AA.agent_id
