@@ -9,4 +9,5 @@ router.post('/', validateRequest(addResidentSchema), controller.addResidentContr
 router.patch('/:id', validateRequest(editResidentSchema), controller.editResidentController)
 router.get('/project/:projectID', controller.getResidentByProjectController)
 router.post('/support/:id',validateRequest(addSupportSchema), controller.addSupportController)
+router.get('/payment-history/:id', controller.getResidentPaymentHistoryController)
 module.exports = router

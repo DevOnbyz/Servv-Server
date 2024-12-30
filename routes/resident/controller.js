@@ -7,6 +7,7 @@ const _ = require('lodash')
 const runQueryOne = require('../../db/runQueryOne')
 const { unifyDoorNumber } = require('../../lib/function')
 const { getAllProjectsByOrgID, getAllApartmentsUnderProject, getResidentByIDs } = require('../../db/query')
+const { formatPaymentHistory } = require('./functions')
 
 exports.getResidentController = async (request, response) => {
   const orgID = request.orgID
@@ -304,10 +305,30 @@ exports.addSupportController = async (request, response) => {
     const description = request.body.description
     const residentID = parseInt(request.params.id)
 
-    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addSupport(CONSTANTS.BUILDING_DATABASE),[{title,description,resident_id:residentID}])
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addSupport(CONSTANTS.BUILDING_DATABASE), [{ title, description, resident_id: residentID }])
 
     Log.info(`[ residentID:${residentID}] | addSupportController | Support added successfully`)
     return sendHTTPResponse.success(response, 'Support added successfully', {})
+  } catch (error) {
+    Log.error(`[ residentID:${residentID}] | addSupportController | Error on adding Support | Error: ${error.message}`)
+    return sendHTTPResponse.error(response, 'Error on adding Support', error.message)
+  }
+}
+exports.getResidentPaymentHistoryController = async (request, response) => {
+  const residentID = parseInt(request.params.id)
+  
+  try {
+    const [residentDetails] = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByIDUnderOrg(CONSTANTS.BUILDING_DATABASE), [residentID])
+
+    if (_.isEmpty(residentDetails)) return sendHTTPResponse.success(response, [])
+    if (_.isEmpty(residentDetails.razorpay_route_account_id)) return sendHTTPResponse.error(response, 'Razorpay route account not found for the organisation - org_id:' + residentDetails.org_id, null, 400)
+      
+
+    const paymentHistory = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.getPaymentWithOrderByOrgID(CONSTANTS.BUILDING_DATABASE),[residentDetails.org_id])
+
+    residentDetails.paymentHistory = formatPaymentHistory(paymentHistory)
+
+    return sendHTTPResponse.success(response, 'Resident List fetched successfully',residentDetails)
   } catch (error) {
     Log.error(`[ residentID:${residentID}] | addSupportController | Error on adding Support | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on adding Support', error.message)

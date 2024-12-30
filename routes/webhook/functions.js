@@ -121,6 +121,7 @@ async function handleChargedPayment(payload) {
 
     const paymentData = {
         order_id: orderResult.insertId,
+        org_id: paymentEntity.notes.org_id,
         razorpay_payment_id: paymentEntity.id,
         total_amount: paymentEntity.amount / 100,
         platform_fee: feeCalculation.company.total,

@@ -484,6 +484,7 @@ CREATE TABLE `order` (
 CREATE TABLE `payment` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `order_id` VARCHAR(255) UNIQUE NOT NULL,
+    `org_id` INT NOT NULL,
     `razorpay_payment_id` VARCHAR(255) NOT NULL,
     `total_amount` DECIMAL(10,2) NOT NULL,
     `platform_fee` DECIMAL(10,2) NOT NULL,

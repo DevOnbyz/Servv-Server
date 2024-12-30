@@ -8,19 +8,19 @@ module.exports = {
   getResidentByNameAndIdentity(database) {
     return `SELECT * FROM ${database}.resident WHERE firstname = ? AND lastname = ? AND email = ? AND identity_id = ?`;
   },
-  getResidentIdentityByPhNum(database){
+  getResidentIdentityByPhNum(database) {
     return `SELECT * FROM ${database}.resident_identity where ph_num = ?`
   },
-  addResidentIdentity(database){
+  addResidentIdentity(database) {
     return `INSERT INTO ${database}.resident_identity SET ?`
   },
-  addApartment(database){
+  addApartment(database) {
     return `INSERT INTO ${database}.apartment SET ?`
   },
-  getApratmentByProjectAndName(database){
+  getApratmentByProjectAndName(database) {
     return `SELECT * FROM ${database}.apartment WHERE project_id = ? AND name = ?`
   },
-  addApartmentResidentRel(database){
+  addApartmentResidentRel(database) {
     return `INSERT INTO ${database}.apartment_resident_rel SET ?`
   },
   getActiveApratmentByProjectAndName(database) {
@@ -39,7 +39,7 @@ AND
 AND
     a.status = 1`
   },
-  getResidentDataUnderOrg(database){
+  getResidentDataUnderOrg(database) {
     return `
     SELECT
     r.id,
@@ -70,7 +70,7 @@ WHERE
     p.org_id = ? AND arr.status = 1 ORDER BY r.created_at DESC;
     `
   },
-  getResidentDataByID(database){
+  getResidentDataByID(database) {
     return `
     SELECT
     r.id,
@@ -101,40 +101,52 @@ WHERE
     p.org_id = ? AND arr.status = 1 AND r.id = ?;
     `
   },
-getResidentApartmentRelByID(database){
-  return `SELECT * FROM ${database}.apartment_resident_rel WHERE id = ?`
-},
-getApartmentByID(database){
-  return `SELECT * FROM ${database}.apartment WHERE id = ?`
-},
-getResidentByID(database){
-  return `SELECT * FROM ${database}.resident WHERE id = ?`
-},
-updateApartmentDetails(database){
-  return `UPDATE ${database}.apartment SET ? WHERE id = ?`
-},
-updateResidentDetails(database){
+  getResidentApartmentRelByID(database) {
+    return `SELECT * FROM ${database}.apartment_resident_rel WHERE id = ?`
+  },
+  getApartmentByID(database) {
+    return `SELECT * FROM ${database}.apartment WHERE id = ?`
+  },
+  getResidentByID(database) {
+    return `SELECT * FROM ${database}.resident WHERE id = ?`
+  },
+  getResidentByIDUnderOrg(database) {
+    return `SELECT r.*, o.* 
+    FROM ${database}.resident r
+    JOIN ${database}.organisation o ON r.org_id = o.id
+    WHERE r.id = ?`
+  },
+  updateApartmentDetails(database) {
+    return `UPDATE ${database}.apartment SET ? WHERE id = ?`
+  },
+  updateResidentDetails(database) {
     return `UPDATE ${database}.resident SET ? WHERE id = ?`
-},
-updateResidentApartmentRel(database){
-  return `UPDATE ${database}.apartment_resident_rel SET ? WHERE id = ?`
-},
-getResidentApartmentRelByResidentID(database){
-  return `SELECT * FROM ${database}.apartment_resident_rel WHERE resident_id = ?`
-},
-getApartmentsByIDs(database){
-  return `SELECT * FROM ${database}.apartment WHERE id in (?)`
-},
-deleteApartmentRelByResidentID(database){
-  return `DELETE FROM ${database}.apartment_resident_rel WHERE resident_id = ? and apartment_id = ?`
-},
-deleteApartmentByApartmentID(database){
-  return `DELETE FROM ${database}.apartment WHERE id = ?`
-},
-getAllResidentApartmentRelDetails(database){
-  return `SELECT * FROM ${database}.apartment_resident_rel where apartment_id in (?)`
-},
-addSupport: (database) => {
-  return `INSERT INTO ${database}.support SET ?`
-}
+  },
+  updateResidentApartmentRel(database) {
+    return `UPDATE ${database}.apartment_resident_rel SET ? WHERE id = ?`
+  },
+  getResidentApartmentRelByResidentID(database) {
+    return `SELECT * FROM ${database}.apartment_resident_rel WHERE resident_id = ?`
+  },
+  getApartmentsByIDs(database) {
+    return `SELECT * FROM ${database}.apartment WHERE id in (?)`
+  },
+  deleteApartmentRelByResidentID(database) {
+    return `DELETE FROM ${database}.apartment_resident_rel WHERE resident_id = ? and apartment_id = ?`
+  },
+  deleteApartmentByApartmentID(database) {
+    return `DELETE FROM ${database}.apartment WHERE id = ?`
+  },
+  getAllResidentApartmentRelDetails(database) {
+    return `SELECT * FROM ${database}.apartment_resident_rel where apartment_id in (?)`
+  },
+  addSupport: (database) => {
+    return `INSERT INTO ${database}.support SET ?`
+  },
+  getPaymentWithOrderByOrgID: (database) => {
+    return `SELECT p.*, o.*
+    FROM ${database}.payment p
+    JOIN ${database}.order o ON p.order_id = o.id
+    WHERE p.org_id = ?`
+  }
 }
