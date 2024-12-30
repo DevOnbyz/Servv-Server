@@ -28,8 +28,8 @@ app.use('/uploads', express.static('uploads'));
 app.use('/public', express.static('public'));
 
 
-app.use('/webhook',webhookRouter)
 app.use(requestLogger)
+app.use('/webhook',webhookRouter)
 app.use('/auth',authRouter)
 app.use(authenticationMiddleware)
 app.use('/api', routes)
