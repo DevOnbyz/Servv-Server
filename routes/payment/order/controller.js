@@ -16,7 +16,7 @@ const razorpay = new Razorpay({
 exports.createOrder = async (request, response) => {
     const orgID = request.orgID
     const domain = request.domain
-    const issueID = request.params.issueID ? parseInt(request.params.issueID) : null;
+    const issueID = request.params.issueID ? parseInt(request.params.issueID) : null
 
     try {
 
@@ -43,5 +43,36 @@ exports.createOrder = async (request, response) => {
     } catch (error) {
         Log.error(`[${domain} | verifyOrder | Error in creating razorpay order  | Error: ${JSON.stringify(error)}`)
         sendHTTPResponse.error(response, 'Error in creating razorpay order ')
+    }
+}
+
+//trigger after successfull payment
+exports.verifyOrder = async (request, response) => {
+    const orgID = request.orgID
+    const domain = request.domain
+
+    try {
+
+        razorpay.orders.create(options, function(err, order) {
+            console.log(order);
+          });
+        const { razorpay_payment_id, razorpay_order_id } = request.body
+
+        if (!razorpay_payment_id || !razorpay_order_id)
+            return sendHTTPResponse.error(response, 'Missing Razorpay payment or order ID')
+
+        const orderDetails = await razorpay.orders.fetch(razorpay_order_id)
+
+        if (orderDetails.status !== 'created')
+            return sendHTTPResponse.error(response, 'Order not found or already processed')
+
+        const captureAmount = orderDetails.amount
+        await razorpay.payments.capture(razorpay_payment_id, captureAmount)
+
+        return sendHTTPResponse.success(response, 'Payment verified successfully')
+
+    } catch (error) {
+        Log.error(`[${domain} | verifyOrder | Error in verifying Razorpay order | Error: ${error}`)
+        sendHTTPResponse.error(response, 'Error in verifying Razorpay order',error)
     }
 }
