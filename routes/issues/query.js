@@ -236,6 +236,7 @@ module.exports = {
     AA.agent_inferences as agent_inferences,
     AA.agent_uploads as agent_uploads,
     AA.is_satisfied as is_satisfied,
+    AA.feedback_comments as feedbackComments,
     CASE
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING} THEN 'PENDING'
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
