@@ -48,23 +48,16 @@ exports.createOrder = async (request, response) => {
 
 //trigger after successfull payment
 exports.verifyOrder = async (request, response) => {
-    const orgID = request.orgID
     const domain = request.domain
 
     try {
-
-        razorpay.orders.create(options, function(err, order) {
-            console.log(order);
-          });
-        const { razorpay_payment_id, razorpay_order_id } = request.body
+        
+        const { razorpay_payment_id, razorpay_order_id,razorpay_signature } = request.body
 
         if (!razorpay_payment_id || !razorpay_order_id)
             return sendHTTPResponse.error(response, 'Missing Razorpay payment or order ID')
 
         const orderDetails = await razorpay.orders.fetch(razorpay_order_id)
-
-        if (orderDetails.status !== 'created')
-            return sendHTTPResponse.error(response, 'Order not found or already processed')
 
         const captureAmount = orderDetails.amount
         await razorpay.payments.capture(razorpay_payment_id, captureAmount)
