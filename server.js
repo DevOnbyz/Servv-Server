@@ -21,7 +21,6 @@ app.use(cors({
   origin: process.env.ALLOWED_DOMAIN,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE'],
   credentials: true,
-  allowedHeaders:['Content-Type', 'Authorization']
 }));
 app.use(express.json())
 app.use(express.urlencoded({ extended: true }))

@@ -33,12 +33,11 @@ async function handleChargedSubscription(subscription, paymentEntity, payload) {
 }
 
 function extractRazorpayFees(razorpayPayload) {
-    const { fee, tax, payment_method_details } = razorpayPayload
+    const { fee, tax } = razorpayPayload
 
     return {
         baseFee: fee ? (fee - (tax || 0)) / 100 : 0,
         tax: tax ? tax / 100 : 0,
-        methodDetails: payment_method_details || {}
     }
 }
 
@@ -46,10 +45,12 @@ function calculateAllFees(amount, razorpayPayload) {
     // Convert amount from paise to rupees
     const amountInRupees = amount / 100
 
+    const routeFee = (amountInRupees * CONSTANTS.FEES.RAZORPAY_ROUTE.PERCENTAGE * (1 + CONSTANTS.FEES.RAZORPAY_ROUTE.GST_PERCENTAGE / 100)) / 100
+    
     const razorpayFees = extractRazorpayFees(razorpayPayload)
     const razorpayBaseFee = razorpayFees.baseFee
     const razorpayGST = razorpayFees.tax
-    const razorpayRouteCharge = razorpayFees.methodDetails.fee || 0
+    const razorpayRouteCharge = routeFee || 0
     const totalRazorpayFee = razorpayBaseFee + razorpayRouteCharge
 
     // Calculate company fee
