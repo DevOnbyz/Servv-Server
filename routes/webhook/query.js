@@ -31,5 +31,8 @@ module.exports = {
     },
     getPaymentByTransferID(database) {
         return `SELECT * FROM ${database}.payment WHERE id = ? LIMIT 1;`;
+    },
+    getPendingPayments(database) {
+        return `SELECT * FROM ${database}.payment WHERE status = ?;`;
     }
 };

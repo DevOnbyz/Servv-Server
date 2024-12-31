@@ -44,21 +44,21 @@ function extractRazorpayFees(razorpayPayload) {
 
 function calculateAllFees(amount, razorpayPayload) {
     // Convert amount from paise to rupees
-    const amountInRupees = amount / 100;
+    const amountInRupees = amount / 100
 
-    const razorpayFees = extractRazorpayFees(razorpayPayload);
-    const razorpayBaseFee = razorpayFees.baseFee;
-    const razorpayGST = razorpayFees.tax;
-    const razorpayRouteCharge = razorpayFees.methodDetails.fee || 0;
-    const totalRazorpayFee = razorpayBaseFee + razorpayRouteCharge;
+    const razorpayFees = extractRazorpayFees(razorpayPayload)
+    const razorpayBaseFee = razorpayFees.baseFee
+    const razorpayGST = razorpayFees.tax
+    const razorpayRouteCharge = razorpayFees.methodDetails.fee || 0
+    const totalRazorpayFee = razorpayBaseFee + razorpayRouteCharge
 
     // Calculate company fee
-    const companyBaseFee = (amountInRupees * CONSTANTS.FEES.COMPANY.PERCENTAGE) / 100;
-    const companyGST = (companyBaseFee * CONSTANTS.FEES.COMPANY.GST_PERCENTAGE) / 100;
+    const companyBaseFee = (amountInRupees * CONSTANTS.FEES.COMPANY.PERCENTAGE) / 100
+    const companyGST = (companyBaseFee * CONSTANTS.FEES.COMPANY.GST_PERCENTAGE) / 100
 
     // Calculate total deductions and finalAmount amount
-    const totalDeductions = totalRazorpayFee + razorpayGST + companyBaseFee + companyGST;
-    const finalAmount = amountInRupees - totalDeductions;
+    const totalDeductions = totalRazorpayFee + razorpayGST + companyBaseFee + companyGST
+    const finalAmount = amountInRupees - totalDeductions
 
     return {
         razorpay: {
@@ -74,10 +74,10 @@ function calculateAllFees(amount, razorpayPayload) {
         },
         finalAmount,
         totalDeductions
-    };
+    }
 }
 
-async function handleChargedPayment(payload) {
+async function handleChargedPayment(payload, response) {
     const paymentEntity = payload.payment.entity
     const feeCalculation = calculateAllFees(paymentEntity.amount, paymentEntity)
 
@@ -85,14 +85,14 @@ async function handleChargedPayment(payload) {
 
     if (existingOrder) {
         Log.info(`[ paymentCallback | Order already exists for issue_id: ${paymentEntity.notes.issue_id} or invoice_id: ${paymentEntity.notes.invoice_id}]`)
-        return response.status(409).send('Order already exists')
+        return response.status(200).send('Order already exists')
     }
 
     const [organisation] = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getOrganisationByOrgID(CONSTANTS.BUILDING_DATABASE), [paymentEntity.notes.org_id])
 
     if (!organisation?.razorpay_route_account_id) {
         Log.error(`[ paymentCallback | Error: Razorpay route account not found for the organisation - org_id: ${paymentEntity.notes.org_id}]`)
-        return response.status(404).send('Razorpay route account not found for the organisation')
+        return response.status(200).send('Razorpay route account not found for the organisation')
     }
 
     const orderData = {
@@ -114,7 +114,8 @@ async function handleChargedPayment(payload) {
             currency: "INR",
             notes: {
                 issue_id: paymentEntity.notes.issue_id,
-                invoice_id: paymentEntity.notes.invoice_id
+                invoice_id: paymentEntity.notes.invoice_id,
+                order_id: orderResult.insertId
             }
         }]
     })
@@ -132,19 +133,31 @@ async function handleChargedPayment(payload) {
     }
 
     const paymentResult = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addPayment(CONSTANTS.BUILDING_DATABASE), [paymentData])
-    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [{ payment_id: paymentResult.insertId }, issueID])
-    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateOrder(CONSTANTS.BUILDING_DATABASE), [{ status: CONSTANTS.ORDER_STATUS.COMPLETED, payment_status: CONSTANTS.PAYMENT_STATUS.PENDING }, orderResult.insertId])
 
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [{ payment_id: paymentResult.insertId }, paymentEntity.notes.issue_id])
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateOrder(CONSTANTS.BUILDING_DATABASE), [{ status: CONSTANTS.ORDER_STATUS.COMPLETED, payment_status: CONSTANTS.PAYMENT_STATUS.PENDING }, orderResult.insertId])
     return response.status(200).send('Webhook received for create order')
 }
 
-async function handleTranferPayment(payload){
+async function checkPendingTransfers() {
+    try {
+        const pendingTransfers = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getPendingPayments(CONSTANTS.BUILDING_DATABASE), [CONSTANTS.PAYMENT_STATUS.PENDING])
 
-    const tranferEntity = payload.transfer.entity
+        for (const transfer of pendingTransfers) {
 
-    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updatePayment(CONSTANTS.BUILDING_DATABASE), [{status: CONSTANTS.PAYMENT_STATUS.COMPLETED},tranferEntity.id])
-    const paymentResult = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getPaymentByTransferID(CONSTANTS.BUILDING_DATABASE), tranferEntity.id)
-    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateOrder(CONSTANTS.BUILDING_DATABASE), [{payment_status: CONSTANTS.PAYMENT_STATUS.COMPLETED }, paymentResult.order_id])
+            const transferDetails = await razorpay.transfers.fetch(transfer.transfer_id)
+
+            if (transferDetails.status === 'settled') {
+                await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updatePayment(CONSTANTS.BUILDING_DATABASE), [{ status: CONSTANTS.PAYMENT_STATUS.COMPLETED }, transfer.transfer_id])
+                const paymentResult = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getPaymentByTransferID(CONSTANTS.BUILDING_DATABASE), transfer.transfer_id)
+                await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateOrder(CONSTANTS.BUILDING_DATABASE), [{ payment_status: CONSTANTS.PAYMENT_STATUS.COMPLETED }, paymentResult.order_id])
+                console.log(`Transfer ${transfer.transfer_id} updated to ${transferDetails.status}`)
+            }
+        }
+    }
+    catch (error) {
+        Log.error(error)
+    }
 }
 
 module.exports = {
@@ -152,5 +165,5 @@ module.exports = {
     verifySignature,
     calculateAllFees,
     handleChargedPayment,
-    handleTranferPayment
+    checkPendingTransfers
 }
