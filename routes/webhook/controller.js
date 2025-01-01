@@ -13,11 +13,11 @@ exports.updateSubscription = async (request, response) => {
 
         if (!supportedEvents.includes(eventType)){
             Log.info(`[ updateSubscription  | Invalid event Type : ${eventType}`)
-            return res.status(200).json({ message: 'Invalid event Type' });  
+            return response.status(200).json({ message: 'Invalid event Type' });  
         }
         if (!verifySignature(JSON.stringify(request.body), request.headers['x-razorpay-signature'], process.env.RAZORPAY_KEY_SECRET)){  
             Log.info(`[ updateSubscription  | Invalid Signature`)
-            return res.status(200).json({ message: 'Invalid signature' });  
+            return response.status(200).json({ message: 'Invalid signature' });  
         }
 
         const paymentEntity = payload.payment.entity
@@ -25,11 +25,11 @@ exports.updateSubscription = async (request, response) => {
 
         if (!subscription){
             Log.info(`[ updateSubscription  | Can't get active subscription`)
-            return res.status(200).json({ message: 'Cant get active subscription' });  
+            return response.status(200).json({ message: 'Cant get active subscription' });  
         }
         if (subscription.status === CONSTANTS.SUBSCRIPTION_STATUS.ACTIVE){   
             Log.info(`[ updateSubscription  | subscription is already activated`)
-            return res.status(200).json({ message: 'subscription is already activated' });  
+            return response.status(200).json({ message: 'subscription is already activated' });  
         }
 
         switch (eventType) {
@@ -76,7 +76,7 @@ exports.paymentCallback = async (request, response) => {
         }
 
     } catch (error) {
-        Log.error(`[ paymentCallback | Error: ${(error)}]`)
+        Log.error(`[ paymentCallback | Error: ${JSON.stringify(error)}]` + error)
         return response.status(200).send('Error creating order' + error,)
     }
 }
