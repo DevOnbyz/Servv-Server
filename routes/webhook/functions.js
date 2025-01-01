@@ -102,11 +102,26 @@ async function handleChargedPayment(payload, response) {
         amount: feeCalculation.finalAmount,
         payment_method: paymentEntity.method,
         razorpay_order_id: paymentEntity.order_id,
-        status: CONSTANTS.ORDER_STATUS.PENDING,
+        status: CONSTANTS.ORDER_STATUS.COMPLETED,
         payment_status: CONSTANTS.PAYMENT_STATUS.PENDING
     }
 
     const orderResult = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addOrder(CONSTANTS.BUILDING_DATABASE), [orderData])
+
+    const paymentData = {
+        order_id: orderResult.insertId,
+        org_id: paymentEntity.notes.org_id,
+        razorpay_payment_id: paymentEntity.id,
+        total_amount: paymentEntity.amount / 100,
+        platform_fee: feeCalculation.company.total,
+        razorpay_fee: feeCalculation.razorpay.total,
+        final_amount: feeCalculation.finalAmount,
+        transfer_id: null,
+        status: CONSTANTS.PAYMENT_STATUS.PENDING
+    }
+
+    const paymentResult = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addPayment(CONSTANTS.BUILDING_DATABASE), [paymentData])
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [{ payment_id: paymentResult.insertId }, paymentEntity.notes.issue_id])
 
     const transfer = await razorpay.payments.transfer(paymentEntity.id, {
         transfers: [{
@@ -121,22 +136,7 @@ async function handleChargedPayment(payload, response) {
         }]
     })
 
-    const paymentData = {
-        order_id: orderResult.insertId,
-        org_id: paymentEntity.notes.org_id,
-        razorpay_payment_id: paymentEntity.id,
-        total_amount: paymentEntity.amount / 100,
-        platform_fee: feeCalculation.company.total,
-        razorpay_fee: feeCalculation.razorpay.total,
-        final_amount: feeCalculation.finalAmount,
-        transfer_id: transfer?.items[0].id ?? null,
-        status: CONSTANTS.PAYMENT_STATUS.PENDING
-    }
-
-    const paymentResult = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addPayment(CONSTANTS.BUILDING_DATABASE), [paymentData])
-
-    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [{ payment_id: paymentResult.insertId }, paymentEntity.notes.issue_id])
-    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateOrder(CONSTANTS.BUILDING_DATABASE), [{ status: CONSTANTS.ORDER_STATUS.COMPLETED, payment_status: CONSTANTS.PAYMENT_STATUS.PENDING }, orderResult.insertId])
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updatePayment(CONSTANTS.BUILDING_DATABASE), [{ transfer_id: transfer?.items[0].id ?? null }, paymentResult.insertId])
     return response.status(200).send('Webhook received for create order')
 }
 
@@ -149,7 +149,7 @@ async function checkPendingTransfers() {
             const transferDetails = await razorpay.transfers.fetch(transfer.transfer_id)
 
             if (transferDetails.status === 'settled') {
-                await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updatePayment(CONSTANTS.BUILDING_DATABASE), [{ status: CONSTANTS.PAYMENT_STATUS.COMPLETED }, transfer.transfer_id])
+                await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updatePaymentUsingTranferID(CONSTANTS.BUILDING_DATABASE), [{ status: CONSTANTS.PAYMENT_STATUS.COMPLETED }, transfer.transfer_id])
                 const paymentResult = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getPaymentByTransferID(CONSTANTS.BUILDING_DATABASE), transfer.transfer_id)
                 await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateOrder(CONSTANTS.BUILDING_DATABASE), [{ payment_status: CONSTANTS.PAYMENT_STATUS.COMPLETED }, paymentResult.order_id])
                 console.log(`Transfer ${transfer.transfer_id} updated to ${transferDetails.status}`)

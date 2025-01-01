@@ -15,6 +15,9 @@ module.exports = {
         return `UPDATE ${database}.order SET ? WHERE id = ?`
     },
     updatePayment(database) {
+        return `UPDATE ${database}.payment SET ? WHERE id = ?`
+    },
+    updatePaymentUsingTranferID(database) {
         return `UPDATE ${database}.payment SET ? WHERE transfer_id = ?`
     },
     addPayment(database) {
