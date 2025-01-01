@@ -126,12 +126,16 @@ async function handleChargedPayment(payload, response) {
     const transfer = await razorpay.payments.transfer(paymentEntity.id, {
         transfers: [{
             account: organisation?.razorpay_route_account_id,
-            amount: Math.round(feeCalculation.finalAmount),
+            amount: Number(feeCalculation.finalAmount.toFixed(2)) * 100,
             currency: "INR",
             notes: {
                 issue_id: paymentEntity.notes.issue_id,
                 invoice_id: paymentEntity.notes.invoice_id,
-                order_id: orderResult.insertId
+                order_id: orderResult.insertId,
+                total_amount: paymentEntity.amount / 100,
+                platform_fee: feeCalculation.company.total,
+                razorpay_fee: feeCalculation.razorpay.total,
+                final_amount: feeCalculation.finalAmount,
             }
         }]
     })
