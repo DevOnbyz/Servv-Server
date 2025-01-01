@@ -1326,7 +1326,7 @@ exports.worOrderFeedbackController = async (request, response) => {
     const activeWorkOrder = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getCompletedWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
     if (_.isEmpty(activeWorkOrder)) return sendHTTPResponse.error(response, 'There is no active work order for this issue', null, 400)
 
-    const satisfactionValue = satisfied === 'true' ? CONSTANTS.SATISFACTION_STATUS.SATISFIED : CONSTANTS.SATISFACTION_STATUS.UNSATISFIED
+    const satisfactionValue = satisfied == 'true' ? CONSTANTS.SATISFACTION_STATUS.SATISFIED : CONSTANTS.SATISFACTION_STATUS.UNSATISFIED
 
     const activeWorkOrderID = activeWorkOrder.id
     const updatedAgentAssignmentData = {
