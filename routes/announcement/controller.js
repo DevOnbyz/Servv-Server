@@ -44,6 +44,9 @@ exports.getAnnouncementsController = async (request, response) => {
       return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
     }
     const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg)
+    if(_.isEmpty(announcementIDList))
+      return sendHTTPResponse.success(response, 'No Announcement List found under this organisation', [])
+
     const announcementResponse = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAnnouncementResponses(CONSTANTS.BUILDING_DATABASE), announcementIDList)
     if(!_.isEmpty(announcementResponse)){
       for (const announcement of formattedAnnouncements) {
