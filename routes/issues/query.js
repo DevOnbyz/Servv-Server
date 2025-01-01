@@ -37,7 +37,7 @@ module.exports = {
              `
   },
   getIssuesEvent(database) {
-    return `SELECT DISTINCT 
+    return `SELECT DISTINCT
         IE.id as issue_event_id,
         IE.issue_id, 
         IE.event_type,
@@ -67,8 +67,8 @@ module.exports = {
         IE.creator_type, 
         IE.event_time,
         IE.created_at,
-        IF(IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, AA.is_satisfied, NULL) as isSatisfied,
-        IF(IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, AA.feedback_comments, NULL) as feedbackComments
+        AA.is_satisfied as isSatisfied,
+        AA.feedback_comments as feedbackComments
     FROM ${database}.issue_event IE
     LEFT JOIN ${database}.admin A ON IE.creator_id = A.id
     LEFT JOIN ${database}.agent_assignment AA ON IE.issue_id = AA.issue_id
