@@ -37,7 +37,7 @@ module.exports = {
              `
   },
   getIssuesEvent(database) {
-    return `SELECT 
+    return `SELECT DISTINCT 
         IE.id as issue_event_id,
         IE.issue_id, 
         IE.event_type,
