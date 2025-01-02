@@ -51,7 +51,8 @@ exports.getAnnouncementsController = async (request, response) => {
     if(!_.isEmpty(announcementResponse)){
       for (const announcement of formattedAnnouncements) {
         const announcementID = announcement.id
-        const announcementResponses = announcementResponse.filter((response) => response.announcement_id === announcementID)
+        let announcementResponses = announcementResponse.filter((response) => response.announcement_id === announcementID)
+        announcementResponses = _.uniqBy(announcementResponses,'resident_id')  
         if(_.isEmpty(announcementResponses)) continue
         const residentDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getResidentByIDs(CONSTANTS.BUILDING_DATABASE), [announcementResponses[0].resident_id])
         announcementResponses[0].name = residentDetails.firstname + ' ' + residentDetails.lastname
