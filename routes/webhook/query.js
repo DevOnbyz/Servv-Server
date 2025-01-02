@@ -32,6 +32,12 @@ module.exports = {
     updateIssue(database) {
         return `UPDATE ${database}.issue SET ? WHERE id = ?`;
     },
+    updateInvoice(database) {
+        return `UPDATE ${database}.invoice SET ? WHERE id = ?`;
+    },
+    addIssueEvent(database) {
+        return `INSERT INTO ${database}.issue_event SET ?`;
+    },
     getPaymentByTransferID(database) {
         return `SELECT * FROM ${database}.payment WHERE id = ? LIMIT 1;`;
     },

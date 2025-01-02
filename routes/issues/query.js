@@ -429,6 +429,9 @@ module.exports = {
   updateInvoice(database) {
     return `UPDATE ${database}.invoice SET ? WHERE id = ?`;
   },
+  addIssueEvent(database) {
+    return `INSERT INTO ${database}.issue_event SET ?`;
+  },
   getEstimateByID(database) {
     return `SELECT * FROM ${database}.estimate where id = ?`;
   },

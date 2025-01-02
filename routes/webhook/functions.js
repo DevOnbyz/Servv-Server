@@ -46,7 +46,7 @@ function calculateAllFees(amount, razorpayPayload) {
     const amountInRupees = amount / 100
 
     const routeFee = (amountInRupees * CONSTANTS.FEES.RAZORPAY_ROUTE.PERCENTAGE * (1 + CONSTANTS.FEES.RAZORPAY_ROUTE.GST_PERCENTAGE / 100)) / 100
-    
+
     const razorpayFees = extractRazorpayFees(razorpayPayload)
     const razorpayBaseFee = razorpayFees.baseFee
     const razorpayGST = razorpayFees.tax
@@ -91,11 +91,6 @@ async function handleChargedPayment(payload, response) {
 
     const [organisation] = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getOrganisationByOrgID(CONSTANTS.BUILDING_DATABASE), [paymentEntity.notes.org_id])
 
-    if (!organisation?.razorpay_route_account_id) {
-        Log.error(`[ paymentCallback | Error: Razorpay route account not found for the organisation - org_id: ${paymentEntity.notes.org_id}]`)
-        return response.status(200).send('Razorpay route account not found for the organisation')
-    }
-
     const orderData = {
         issue_id: paymentEntity.notes.issue_id,
         invoice_id: paymentEntity.notes.invoice_id,
@@ -121,7 +116,35 @@ async function handleChargedPayment(payload, response) {
     }
 
     const paymentResult = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addPayment(CONSTANTS.BUILDING_DATABASE), [paymentData])
-    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [{ payment_id: paymentResult.insertId }, paymentEntity.notes.issue_id])
+
+    const newIssueData = {
+        status: CONSTANTS.ISSUE_STATUS.CLOSED,
+        sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID,
+        payment_id: paymentResult.insertId
+    }
+
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, paymentEntity.notes.issue_id])
+
+    const updateInvoiceDetails = {
+        status: CONSTANTS.QUOTATION_STATUS.PAID,
+        payment_mode: CONSTANTS.PAYMENT_MODE.BANK_TRANSFER,
+    }
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateInvoice(CONSTANTS.BUILDING_DATABASE), [updateInvoiceDetails, paymentEntity.notes.invoice_id])
+
+    const issueLogData = {
+        issue_id: paymentEntity.notes.issue_id,
+        event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.PAID,
+        sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID,
+        creator_id: paymentEntity.notes.user_id,
+        creator_type: paymentEntity.notes.user_type == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData])
+
+    if (!organisation?.razorpay_route_account_id) {
+        Log.error(`[ paymentCallback | Error: Razorpay route account not found for the organisation - org_id: ${paymentEntity.notes.org_id}]`)
+        return response.status(200).send('Razorpay route account not found for the organisation')
+    }
 
     const transfer = await razorpay.payments.transfer(paymentEntity.id, {
         transfers: [{

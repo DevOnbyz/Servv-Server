@@ -33,7 +33,9 @@ exports.createOrder = async (request, response) => {
             notes: {
                 issue_id: issueID,
                 invoice_id: invoiceData.id,
-                org_id: orgID
+                org_id: orgID,
+                user_type: request?.userType,
+                user_id:request?.userID
             },
         })
 
