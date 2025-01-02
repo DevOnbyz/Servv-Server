@@ -18,7 +18,7 @@ const getProjectNames = (projectList, projectNames) => {
 }
 
 const formatAnnouncements = (announcementList, projectList, isFiltered) => {
-  return announcementList
+  const formattedAnnouncements =  announcementList
     ?.map((announcement) => {
       const projectIDs = !_.isEmpty(announcement.project_id) ? JSON.parse(announcement.project_id)?.map((project) => parseInt(project)) : []
       const projectAssociated = getProjectNames(projectIDs, projectList)
@@ -39,6 +39,7 @@ const formatAnnouncements = (announcementList, projectList, isFiltered) => {
       }
     })
     .filter(Boolean)
+    return [...new Map(formattedAnnouncements.map(item => [item.id, item])).values()]
 }
 
 function convertToUTC(date, timezone) {
