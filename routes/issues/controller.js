@@ -298,12 +298,13 @@ exports.reAssignWorkOrderController = async (request, response) => {
     const newAgentAssignmentData = {
       agent_id: agentID,
       otp_code: generateOTP(),
+      notes:modifiedNote ?? null
     }
     if (modifiedVisit) {
       newIssueData.customer_preferred_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
-      newAgentAssignmentData.notes = modifiedNote
     }
+
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentIDInAgentAssignmentofActiveIssue(CONSTANTS.BUILDING_DATABASE), [newAgentAssignmentData, issueID])
     Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignWorkOrderController | The work order has been re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
@@ -395,13 +396,13 @@ exports.reAssignSiteVisitController = async (request, response) => {
     const newAgentAssignmentData = {
       agent_id: agentID,
       otp_code: generateOTP(),
+      notes : modifiedNote
     }
     // sent notification to the agent regarding the issue
     if (modifiedVisit) {
       newIssueData.customer_preferred_time = null
       // newIssueData.customer_preferred_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
-      newAgentAssignmentData.notes = modifiedNote
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentIDInAgentAssignmentofActiveIssue(CONSTANTS.BUILDING_DATABASE), [newAgentAssignmentData, issueID])
