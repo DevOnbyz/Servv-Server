@@ -328,8 +328,8 @@ CREATE TABLE `agent_assignment` (
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_agent_assignment_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE,
     CONSTRAINT `fk_agent_assignment_ibfk_2` FOREIGN KEY (agent_id) REFERENCES agent (id) ON DELETE CASCADE,
-    CONSTRAINT `fk_agent_assignment_ibfk_3` FOREIGN KEY (created_by) REFERENCES admin (id) ON DELETE CASCADE,
-    CONSTRAINT `fk_agent_assignment_ibfk_4` FOREIGN KEY (updated_by) REFERENCES admin (id) ON DELETE CASCADE
+    CONSTRAINT `fk_agent_assignment_ibfk_3` FOREIGN KEY (created_by) REFERENCES agent (id) ON DELETE CASCADE,
+    CONSTRAINT `fk_agent_assignment_ibfk_4` FOREIGN KEY (updated_by) REFERENCES agent (id) ON DELETE CASCADE
 );
 CREATE TABLE `estimate` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
