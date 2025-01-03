@@ -94,3 +94,12 @@ ALTER TABLE agent_assignment ADD COLUMN feedback_comments TEXT DEFAULT NULL AFTE
 
 -- 16-12-2024
 ALTER TABLE issue ADD COLUMN reviewed TINYINT DEFAULT 0 AFTER rating;
+
+-- 03-1-2025
+ALTER TABLE agent_assignment
+DROP FOREIGN KEY fk_agent_assignment_ibfk_3,
+DROP FOREIGN KEY fk_agent_assignment_ibfk_4;
+
+ALTER TABLE agent_assignment
+ADD CONSTRAINT fk_agent_assignment_ibfk_3 FOREIGN KEY (created_by) REFERENCES agent (id) ON DELETE CASCADE,
+ADD CONSTRAINT fk_agent_assignment_ibfk_4 FOREIGN KEY (updated_by) REFERENCES agent (id) ON DELETE CASCADE;
