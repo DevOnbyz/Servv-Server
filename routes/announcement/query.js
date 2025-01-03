@@ -1,6 +1,6 @@
 module.exports = {
   getAllAnnouncementsByOrgID(database) {
-    return `SELECT DISTINCT  a.*,
+    return `SELECT a.*,
     CASE WHEN ai.id IS NOT NULL THEN true ELSE false END AS interest
     FROM ${database}.announcement a
     LEFT JOIN ${database}.announcement_interest ai ON a.id = ai.announcement_id

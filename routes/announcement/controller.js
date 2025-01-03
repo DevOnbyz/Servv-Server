@@ -44,15 +44,11 @@ exports.getAnnouncementsController = async (request, response) => {
       return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
     }
     const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg)
-    if(_.isEmpty(announcementIDList))
-      return sendHTTPResponse.success(response, 'No Announcement List found under this organisation', [])
-
-    const announcementResponse = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAnnouncementResponses(CONSTANTS.BUILDING_DATABASE), [announcementIDList])
+    const announcementResponse = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAnnouncementResponses(CONSTANTS.BUILDING_DATABASE), announcementIDList)
     if(!_.isEmpty(announcementResponse)){
       for (const announcement of formattedAnnouncements) {
         const announcementID = announcement.id
-        let announcementResponses = announcementResponse.filter((response) => response.announcement_id === announcementID)
-        announcementResponses = _.uniqBy(announcementResponses,'resident_id')  
+        const announcementResponses = announcementResponse.filter((response) => response.announcement_id === announcementID)
         if(_.isEmpty(announcementResponses)) continue
         const residentDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getResidentByIDs(CONSTANTS.BUILDING_DATABASE), [announcementResponses[0].resident_id])
         announcementResponses[0].name = residentDetails.firstname + ' ' + residentDetails.lastname
