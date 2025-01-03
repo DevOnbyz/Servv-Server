@@ -95,7 +95,7 @@ exports.addAgentController = async (request, response) => {
     Log.info(`[${domain} | OrganisationID:${orgID}] | addAgentController | Agent added successfully | AgentID: ${agentID}`)
     return sendHTTPResponse.success(response, 'Agent added successfully')
   } catch (error) {
-    if(error.code === 'ER_DUP_ENTRY') return sendHTTPResponse.error(response, 'Agent already exists', error.message)
+    if (error.code === 'ER_DUP_ENTRY') return sendHTTPResponse.error(response, 'Agent already exists', error.message)
 
     Log.error(`[${domain} | OrganisationID:${orgID}] | addAgentController | Error in fetching agent list`)
     return sendHTTPResponse.error(response, 'Error on adding agent', error.message)
@@ -135,10 +135,10 @@ exports.editAgentController = async (request, response) => {
     const existingServiceList = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllServicesByAgentID(CONSTANTS.BUILDING_DATABASE), [id]))?.map((item) => (item.service_id))
     const newServiceList = _.difference(serviceList, existingServiceList)
     const deactivatedServiceList = _.difference(existingServiceList, serviceList)
-    if(!_.isEmpty(deactivatedServiceList)) {
+    if (!_.isEmpty(deactivatedServiceList)) {
       await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.deleteAgentServiceRelByAgentIDAndServiceIDs(CONSTANTS.BUILDING_DATABASE), [id, deactivatedServiceList])
     }
-    if(!_.isEmpty(newServiceList)) {
+    if (!_.isEmpty(newServiceList)) {
       for (const service of newServiceList) {
         const agentServiceDetails = {
           service_id: service,
@@ -154,16 +154,16 @@ exports.editAgentController = async (request, response) => {
       const agentOrgDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [phNumDetails?.id, orgID])
       if (!_.isEmpty(agentOrgDetails) && agentOrgDetails?.identity_id !== agentEntityID) return sendHTTPResponse.error(response, 'Agent with same phone number already exists in this organisation', null, 400)
 
-    // if a agent having same phone number exists in another organisation then the agent can update the identity id
+      // if a agent having same phone number exists in another organisation then the agent can update the identity id
       const updatedAgentIdentityId = phNumDetails?.id
-      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [{...newAgentDetails, identity_id: updatedAgentIdentityId}, id])
-    }else{
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [{ ...newAgentDetails, identity_id: updatedAgentIdentityId }, id])
+    } else {
       const newAgentIdentityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAgentIdentity(CONSTANTS.BUILDING_DATABASE), [{ ph_num: phNum, created_by: userID }]))?.insertId
-      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [{...newAgentDetails, identity_id: newAgentIdentityID}, id])
-      }
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [{ ...newAgentDetails, identity_id: newAgentIdentityID }, id])
+    }
     return sendHTTPResponse.success(response, 'Agent updated successfully')
   }
-catch (error) {
+  catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | editAgentController | Error in fetching agent list`)
     return sendHTTPResponse.error(response, 'Error on editing admin', error)
   }
@@ -177,12 +177,8 @@ exports.getAgentAssignmentsController = async (request, response) => {
   const assignmentType = request.query.assignmentType
 
   try {
-    const agentList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentAssignments(CONSTANTS.BUILDING_DATABASE, isActive,assignmentType), [userID]) ?? []
-    const normalizedAgentList = agentList.map(agent => ({
-      ...agent,
-      agent_uploads: Array.isArray(agent.agent_uploads) ? agent.agent_uploads : agent.agent_uploads ? [agent.agent_uploads] : []
-  }));
-    return sendHTTPResponse.success(response, 'Fetched agent details successfully', normalizedAgentList)
+    const agentList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentAssignments(CONSTANTS.BUILDING_DATABASE, isActive, assignmentType), [userID]) ?? []
+    return sendHTTPResponse.success(response, 'Fetched agent details successfully', agentList)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | getAgentsAssignmentsController | Error in fetching agent list`)
     sendHTTPResponse.error(response, 'Error while fetching agent list', error)
@@ -192,13 +188,18 @@ exports.getAgentAssignmentsController = async (request, response) => {
 exports.getAssignmentByIDController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
-  const userID = request.userID
+  const userID = 1
   const assignmentID = request.params.assignmentID
   try {
     const detailedAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getDetailedAssignmentUnderAgentByAssignmentID(CONSTANTS.BUILDING_DATABASE), [assignmentID, userID])
-    return sendHTTPResponse.success(response, 'Fetched assignment details successfully', detailedAssignment)
+    normalizedAgentList = {
+      ...detailedAssignment,
+      agent_uploads: Array.isArray(detailedAssignment.agent_uploads) ? detailedAssignment.agent_uploads : detailedAssignment.agent_uploads ? [detailedAssignment.agent_uploads] : [],
+      issueImages: Array.isArray(detailedAssignment.issueImages) ? detailedAssignment.issueImages : detailedAssignment.issueImages ? [detailedAssignment.issueImages] : []
+    }
+    return sendHTTPResponse.success(response, 'Fetched assignment details successfully', normalizedAgentList)
   } catch (error) {
-    Log.error(`[${domain} | OrganisationID:${orgID}] | getAssignmentByIDController | Error in fetching assignment details`)
+    Log.error(`[${domain} | OrganisationID:${orgID}] | getAssignmentByIDController | Error in fetching assignment details`, error)
     sendHTTPResponse.error(response, 'Error while fetching assignment details', error)
   }
 }
