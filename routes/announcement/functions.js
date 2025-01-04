@@ -18,9 +18,10 @@ const getProjectNames = (projectList, projectNames) => {
 }
 
 const formatAnnouncements = (announcementList, projectList, isFiltered) => {
-  return announcementList
+  const uniqueAnnouncements  = [...new Map(announcementList.map(item => [item.id, item])).values()]
+  return uniqueAnnouncements 
     ?.map((announcement) => {
-      const projectIDs = !_.isEmpty(announcement.project_id) ? JSON.parse(announcement.project_id)?.map((project) => parseInt(project)) : []
+      const projectIDs = Array.isArray(announcement.project_id) ? announcement.project_id : !_.isEmpty(announcement.project_id) ? JSON.parse(announcement.project_id)?.map((project) => parseInt(project)): [];
       const projectAssociated = getProjectNames(projectIDs, projectList)
 
       // Exclude items with empty projectAssociated when isFiltered is true
