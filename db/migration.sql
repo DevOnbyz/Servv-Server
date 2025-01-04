@@ -136,7 +136,7 @@ CREATE TABLE `resident` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `identity_id` INT,
   `firstname` VARCHAR(255) NOT NULL,
-  `lastname` VARCHAR(255) NOT NULL,
+  `lastname` VARCHAR(255),
   `email_id` VARCHAR(255) DEFAULT NULL,
   `status` TINYINT DEFAULT 1,
   `org_id` INT,

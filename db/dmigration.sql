@@ -103,3 +103,6 @@ DROP FOREIGN KEY fk_agent_assignment_ibfk_4;
 ALTER TABLE agent_assignment
 ADD CONSTRAINT fk_agent_assignment_ibfk_3 FOREIGN KEY (created_by) REFERENCES agent (id) ON DELETE CASCADE,
 ADD CONSTRAINT fk_agent_assignment_ibfk_4 FOREIGN KEY (updated_by) REFERENCES agent (id) ON DELETE CASCADE;
+
+-- 04-01-2025
+ALTER TABLE resident MODIFY COLUMN `lastname` VARCHAR(255) NULL;

@@ -16,7 +16,7 @@ exports.getResidentController = async (request, response) => {
     const residentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentDataUnderOrg(CONSTANTS.BUILDING_DATABASE), [orgID])
     const groupedData = residentDetails?.reduce((acc, row) => {
       const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
-      const fullName = `${firstname} ${lastname}`.trim()
+      const fullName = `${firstname} ${lastname ?? ""}`.trim()
       let resident = acc.find((r) => r.phNum === ph_num)
       if (!resident) {
         resident = {
