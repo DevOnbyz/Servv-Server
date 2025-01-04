@@ -40,10 +40,12 @@ exports.getAnnouncementsController = async (request, response) => {
         return sendHTTPResponse.success(response, "Announcement List fetched successfully", [])
       }
 
-      const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg, true)
+      const currentDate = moment().startOf('day');
+      const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg, true).filter(announcement => moment(announcement.expire_date, "DD-MM-YYYY").isSameOrAfter(currentDate))
+
       return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
     }
-    let formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg)
+    const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg)
     const announcementResponse = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAnnouncementResponses(CONSTANTS.BUILDING_DATABASE), announcementIDList)
     if(!_.isEmpty(announcementResponse)){
       for (const announcement of formattedAnnouncements) {
@@ -56,14 +58,6 @@ exports.getAnnouncementsController = async (request, response) => {
         announcementResponses[0].associatedProject = (await getProjectAssocaitedWithResident(announcementResponses[0].resident_id, projectListUnderOrg))?.map((item) => item.name)
         announcement.announcementResponses = announcementResponses    
       } 
-    }
-
-    if (request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.AGENT) {
-      const currentDate = moment().startOf('day')
-      formattedAnnouncements = formattedAnnouncements.filter(announcement => {
-        const expiryDate = moment(announcement.expire_date, "DD-MM-YYYY").startOf('day')
-        return expiryDate.isSameOrAfter(currentDate)
-      })
     }
 
     return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
