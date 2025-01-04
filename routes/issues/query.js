@@ -72,7 +72,8 @@ module.exports = {
         WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} LIMIT 1) as isSatisfied,
         (SELECT feedback_comments
         FROM ${database}.agent_assignment
-        WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} LIMIT 1) as feedbackComments
+        WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} LIMIT 1) as feedbackComments,
+        AA.visit_scheduled_time
     FROM ${database}.issue_event IE
     LEFT JOIN ${database}.admin A ON IE.creator_id = A.id
     LEFT JOIN ${database}.agent_assignment AA ON IE.issue_id = AA.issue_id
