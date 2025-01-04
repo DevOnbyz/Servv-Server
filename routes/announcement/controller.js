@@ -30,7 +30,6 @@ exports.getAnnouncementsController = async (request, response) => {
       runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAnnouncementsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID]),
       runQuery(CONSTANTS.BUILDING_DATABASE, getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE), orgID),
     ])
-
     
     const announcementIDList = announcementList.map((announcement) => announcement.id)
 
@@ -42,32 +41,36 @@ exports.getAnnouncementsController = async (request, response) => {
         return sendHTTPResponse.success(response, "Announcement List fetched successfully", [])
       }
 
-      const currentDate = moment().startOf('day');
-      const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg, true).filter(announcement => moment(announcement.expire_date, "DD-MM-YYYY").isSameOrAfter(currentDate))
+      const currentDate = moment().startOf('day')
+      const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg, true).filter(announcement => {
+        const isNotExpired = moment(announcement.expire_date, "DD-MM-YYYY").isSameOrAfter(currentDate)
+        const announcementProjectIds = JSON.parse(announcement?.project_id)
+        const isForResidentProject = announcementProjectIds?.some(projId => apartmentList.includes(Number(projId)))
+        return isNotExpired && isForResidentProject
+    })
 
       return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
     }
+
     const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg)
-
-
+    const announcementResponse = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAnnouncementResponses(CONSTANTS.BUILDING_DATABASE), [announcementIDList])
     
-    const announcementResponse = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAnnouncementResponses(CONSTANTS.BUILDING_DATABASE), announcementIDList)
     if (!_.isEmpty(announcementResponse)) {
       for (const announcement of formattedAnnouncements) {
-        const announcementID = announcement.id;
+        const announcementID = announcement.id
         const announcementResponses = announcementResponse.filter(
           (response) => response.announcement_id === announcementID
-        );
+        )
     
-        if (_.isEmpty(announcementResponses)) continue;
+        if (_.isEmpty(announcementResponses)) continue
     
         for (const response of announcementResponses) {
           const residentDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE,getResidentByIDs(CONSTANTS.BUILDING_DATABASE),[response.resident_id])
-          response.name = `${residentDetails.firstname} ${residentDetails.lastname}`;
-          response.phNum = residentDetails.ph_num;
+          response.name = `${residentDetails.firstname} ${residentDetails.lastname}`
+          response.phNum = residentDetails.ph_num
           response.associatedProject = (await getProjectAssocaitedWithResident(response.resident_id,projectListUnderOrg))?.map((item) => item.name)
         }
-          announcement.announcementResponses = announcementResponses;
+          announcement.announcementResponses = announcementResponses
       }
     }    
 
