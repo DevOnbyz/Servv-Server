@@ -43,7 +43,7 @@ exports.getAnnouncementsController = async (request, response) => {
       const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg, true)
       return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
     }
-    const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg)
+    let formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg)
     const announcementResponse = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAnnouncementResponses(CONSTANTS.BUILDING_DATABASE), announcementIDList)
     if(!_.isEmpty(announcementResponse)){
       for (const announcement of formattedAnnouncements) {
@@ -54,10 +54,18 @@ exports.getAnnouncementsController = async (request, response) => {
         announcementResponses[0].name = residentDetails.firstname + ' ' + residentDetails.lastname
         announcementResponses[0].phNum = residentDetails.ph_num
         announcementResponses[0].associatedProject = (await getProjectAssocaitedWithResident(announcementResponses[0].resident_id, projectListUnderOrg))?.map((item) => item.name)
-        announcement.announcementResponses = announcementResponses
-        
+        announcement.announcementResponses = announcementResponses    
       } 
     }
+
+    if (request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.AGENT) {
+      const currentDate = moment().startOf('day')
+      formattedAnnouncements = formattedAnnouncements.filter(announcement => {
+        const expiryDate = moment(announcement.expire_date, "DD-MM-YYYY").startOf('day')
+        return expiryDate.isSameOrAfter(currentDate)
+      })
+    }
+
     return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
   } catch (error) {
     Log.error(`[Servv | OrganisationID:${orgID}] | getAnnouncemntsController | Error in fetching announcement list | Error: ${error.message}`)
