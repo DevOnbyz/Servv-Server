@@ -19,7 +19,7 @@ const formatPaymentHistory = (paymentHistory) => {
         issueId: payment.issue_id,
         invoiceId: payment.invoice_id,
         orderAmount: payment.amount,
-        orderStatus: payment.status === CONSTANTS.ORDER_STATUS.CANCELLED ? 'COMPLETED' : payment.status === CONSTANTS.ORDER_STATUS.CANCELLED ? 'CANCELLED' : 'PENDING',
+        orderStatus: payment.status === CONSTANTS.ORDER_STATUS.COMPLETED ? 'COMPLETED' : payment.status === CONSTANTS.ORDER_STATUS.CANCELLED ? 'CANCELLED' : 'PENDING',
         paymentMethod: payment.payment_method,
         razorpayOrderId: payment.razorpay_order_id,
         orderCreatedAt: payment.created_at,
