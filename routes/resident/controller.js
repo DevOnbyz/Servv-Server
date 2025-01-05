@@ -324,7 +324,7 @@ exports.getResidentPaymentHistoryController = async (request, response) => {
     if (_.isEmpty(residentDetails.razorpay_route_account_id)) return sendHTTPResponse.error(response, 'Razorpay route account not found for the organisation - org_id:' + residentDetails.org_id, null, 400)
       
 
-    const paymentHistory = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.getPaymentWithOrderByOrgID(CONSTANTS.BUILDING_DATABASE),[residentDetails.org_id])
+    const paymentHistory = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.getPaymentCompletedWithOrderByOrgID(CONSTANTS.BUILDING_DATABASE),[residentDetails.org_id])
 
     residentDetails.paymentHistory = formatPaymentHistory(paymentHistory)
 

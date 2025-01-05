@@ -1,3 +1,5 @@
+const { PAYMENT_STATUS } = require("../../lib/constants");
+
 module.exports = {
   addResident(database) {
     return `INSERT INTO ${database}.resident SET ?`;
@@ -142,6 +144,14 @@ WHERE
   },
   addSupport: (database) => {
     return `INSERT INTO ${database}.support SET ?`
+  },
+  getPaymentCompletedWithOrderByOrgID: (database) => {
+    return `SELECT p.*, o.*, s.name as serviceName
+    FROM ${database}.payment p
+    JOIN ${database}.order o ON p.order_id = o.id
+    JOIN ${database}.issue i ON o.issue_id = i.id
+    JOIN ${database}.service s ON i.service_type = s.id
+    WHERE p.org_id = ? AND p.status = ${PAYMENT_STATUS.COMPLETED};`
   },
   getPaymentWithOrderByOrgID: (database) => {
     return `SELECT p.*, o.*

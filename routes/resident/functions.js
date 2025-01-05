@@ -4,6 +4,7 @@ const formatPaymentHistory = (paymentHistory) => {
     return paymentHistory.map(payment => ({
       paymentId: payment.id,
       orgId: payment.org_id,
+      serviceName: payment.serviceName,
       orderId: payment.order_id,
       razorpayPaymentId: payment.razorpay_payment_id,
       totalAmount: payment.total_amount,
