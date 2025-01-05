@@ -134,7 +134,7 @@ CREATE TABLE `resident_identity` (
 
 CREATE TABLE `resident` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
-  `identity_id` INT,
+  `identity_id` INT NOT NULL,
   `firstname` VARCHAR(255) NOT NULL,
   `lastname` VARCHAR(255),
   `email_id` VARCHAR(255) DEFAULT NULL,

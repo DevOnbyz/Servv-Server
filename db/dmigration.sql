@@ -106,3 +106,6 @@ ADD CONSTRAINT fk_agent_assignment_ibfk_4 FOREIGN KEY (updated_by) REFERENCES ag
 
 -- 04-01-2025
 ALTER TABLE resident MODIFY COLUMN `lastname` VARCHAR(255) NULL;
+
+-- 05-01-2025
+ALTER TABLE resident MODIFY COLUMN `identity_id` INT NOT NULL;
