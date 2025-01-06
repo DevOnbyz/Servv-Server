@@ -81,6 +81,9 @@ const preferredTimeSchema = Joi.object({
   preferredDatetime: Joi.string().isoDate().required().messages({
     'string.isoDate': 'preferredDatetime must be in a valid ISO 8601 format (e.g., 2024-12-04T20:11:14.168Z)',
   }),
+  isSkipped: Joi.boolean().required().messages({
+    'string.empty': 'isSkipped is required',
+  }),
 })
 const workOrderFeedbackSchema = Joi.object({
   satisfied: Joi.boolean().required().messages({
