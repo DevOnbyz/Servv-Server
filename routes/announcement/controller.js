@@ -36,7 +36,7 @@ exports.getAnnouncementsController = async (request, response) => {
     if (request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER) {
       const residentID = request.userID
       const apartmentList = await getApartmentListByResidentID(residentID)
-      
+      const announcementList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAnnouncementsByOrgIDWithInterest(CONSTANTS.BUILDING_DATABASE), [orgID,residentID])
       
       if (_.isEmpty(apartmentList)) {
         return sendHTTPResponse.success(response, "Announcement List fetched successfully", [])
