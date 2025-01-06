@@ -21,7 +21,7 @@ const formatAnnouncements = (announcementList, projectList, isFiltered) => {
   const uniqueAnnouncements  = [...new Map(announcementList.map(item => [item.id, item])).values()]
   return uniqueAnnouncements 
     ?.map((announcement) => {
-      const projectIDs = Array.isArray(announcement.project_id) ? announcement.project_id : !_.isEmpty(announcement.project_id) ? JSON.parse(announcement.project_id)?.map((project) => parseInt(project)): [];
+      const projectIDs = parseProjectIDs(announcement.project_id)
       const projectAssociated = getProjectNames(projectIDs, projectList)
 
       // Exclude items with empty projectAssociated when isFiltered is true
@@ -60,11 +60,34 @@ async function getProjectAssocaitedWithResident(residentID, projectList){
   return projectList?.filter((project) => projectUnderResident?.includes(project.id))
 }
 
+function filterAnnouncementsByProjects(announcementList, projectAssociatedWithResident) {
+  return announcementList.filter((announcement) => {
+      const projectIDs = parseProjectIDs(announcement.project_id);
+      return projectAssociatedWithResident.some((project) => projectIDs.includes(project.id));
+  });
+}
+
+function parseProjectIDs(projectID) {
+  if (Array.isArray(projectID)) return projectID;
+  if (_.isEmpty(projectID)) return [];
+  return JSON.parse(projectID).map((project) => parseInt(project));
+}
+
+function formatAndFilterAnnouncements(filteredAnnouncement, projectListUnderOrg) {
+  const currentDate = moment().startOf('day');
+  return formatAnnouncements(filteredAnnouncement, projectListUnderOrg, true).filter((announcement) => {
+      return moment(announcement.expire_date, "DD-MM-YYYY").isSameOrAfter(currentDate);
+  });
+}
+
+
 module.exports = {
   getApartmentListByResidentID,
   getProjectIDByApartmentID,
   getProjectNames,
   formatAnnouncements,
   convertToUTC,
-  getProjectAssocaitedWithResident
+  getProjectAssocaitedWithResident,
+  filterAnnouncementsByProjects,
+  formatAndFilterAnnouncements
 }

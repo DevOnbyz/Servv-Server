@@ -10,7 +10,7 @@ const path = require('path')
 const fs = require('fs')
 const { v4: uuidv4 } = require('uuid')
 const { getAllProjectsByOrgID, getResidentByIDs } = require('../../db/query')
-const { getApartmentListByResidentID, formatAnnouncements, getProjectAssocaitedWithResident } = require('./functions')
+const { getApartmentListByResidentID, formatAnnouncements, getProjectAssocaitedWithResident, filterAnnouncementsByProjects, formatAndFilterAnnouncements } = require('./functions')
 
 const formDataLogger = (formData) => {
   if (formData) {
@@ -36,18 +36,14 @@ exports.getAnnouncementsController = async (request, response) => {
     if (request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER) {
       const residentID = request.userID
       const apartmentList = await getApartmentListByResidentID(residentID)
-
+      
+      
       if (_.isEmpty(apartmentList)) {
         return sendHTTPResponse.success(response, "Announcement List fetched successfully", [])
       }
-
-      const currentDate = moment().startOf('day')
-      const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg, true).filter(announcement => {
-        const isNotExpired = moment(announcement.expire_date, "DD-MM-YYYY").isSameOrAfter(currentDate)
-        const announcementProjectIds = JSON.parse(announcement?.project_id)
-        const isForResidentProject = announcementProjectIds?.some(projId => apartmentList.includes(Number(projId)))
-        return isNotExpired && isForResidentProject
-    })
+      const projectAssociatedWithResident= await getProjectAssocaitedWithResident(residentID,projectListUnderOrg)
+      const filteredAnnouncement = filterAnnouncementsByProjects(announcementList, projectAssociatedWithResident);
+      const formattedAnnouncements = formatAndFilterAnnouncements(filteredAnnouncement, projectListUnderOrg);
 
       return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
     }
