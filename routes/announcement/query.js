@@ -8,6 +8,15 @@ module.exports = {
     ORDER BY a.id DESC;
   `;
   },
+  getAllAnnouncementsByOrgIDWithInterest(database){
+    return `SELECT a.*,
+    CASE WHEN ai.id IS NOT NULL THEN true ELSE false END AS interest
+    FROM ${database}.announcement a
+    LEFT JOIN ${database}.announcement_interest ai ON a.id = ai.announcement_id AND ai.resident_id = ?
+    WHERE a.org_id = ?
+    ORDER BY a.id DESC;
+  `;
+  },
   addAnnouncementToOrg(database) {
     return `INSERT INTO ${database}.announcement SET ?`;
   },

@@ -37,13 +37,13 @@ exports.getAnnouncementsController = async (request, response) => {
       const residentID = request.userID
       const apartmentList = await getApartmentListByResidentID(residentID)
       
-      
-      if (_.isEmpty(apartmentList)) {
+      if (_.isEmpty(apartmentList))
         return sendHTTPResponse.success(response, "Announcement List fetched successfully", [])
-      }
+    
+      const announcementList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAnnouncementsByOrgIDWithInterest(CONSTANTS.BUILDING_DATABASE), [residentID,orgID])
       const projectAssociatedWithResident= await getProjectAssocaitedWithResident(residentID,projectListUnderOrg)
-      const filteredAnnouncement = filterAnnouncementsByProjects(announcementList, projectAssociatedWithResident);
-      const formattedAnnouncements = formatAndFilterAnnouncements(filteredAnnouncement, projectListUnderOrg);
+      const filteredAnnouncement = filterAnnouncementsByProjects(announcementList, projectAssociatedWithResident)
+      const formattedAnnouncements = formatAndFilterAnnouncements(filteredAnnouncement, projectListUnderOrg)
 
       return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
     }
