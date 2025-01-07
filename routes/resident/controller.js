@@ -303,7 +303,7 @@ exports.addSupportController = async (request, response) => {
   try {
     const title = request.body.title
     const description = request.body.description
-    const residentID = parseInt(request.params.id)
+    const residentID = request.params.id ? parseInt(request.params.id) : null
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addSupport(CONSTANTS.BUILDING_DATABASE), [{ title, description, resident_id: residentID }])
 
