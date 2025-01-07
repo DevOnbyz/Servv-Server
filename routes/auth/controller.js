@@ -66,6 +66,9 @@ exports.loginController = async (request, response) => {
 
       const adminData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAdminData(CONSTANTS.BUILDING_DATABASE), [username])
 
+      if(!await bcrypt.compare(password, adminData.password))
+        return sendHTTPResponse.error(response, 'Invalid credentials', null, 400)
+
       if(_.isEmpty(adminData))
         return sendHTTPResponse.error(response, 'Invalid credentials', null, 400)
 
