@@ -12,11 +12,6 @@ module.exports = {
         (SELECT COUNT(*) FROM ${database}.issue WHERE org_id = ${orgId} AND status = ${CONSTANTS.ISSUE_STATUS.INPROGRESS}) as inProgressRequests,
         (SELECT COUNT(*) FROM ${database}.issue WHERE org_id = ${orgId} AND status = ${CONSTANTS.ISSUE_STATUS.ONHOLD}) as onHoldRequests,
         (SELECT COUNT(*) FROM ${database}.issue WHERE org_id = ${orgId} AND status = ${CONSTANTS.ISSUE_STATUS.CLOSED}) as completedRequests,
-
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.OPEN}) openIssues,
         
         (SELECT COUNT(DISTINCT ie.issue_id) 
          FROM ${database}.issue_event ie 
@@ -78,20 +73,6 @@ module.exports = {
          JOIN ${database}.issue i ON i.id = ie.issue_id 
          WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT}) invoiceSent,
         
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID}) paid,
-        
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED}) closed,
-        
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.ONHOLD}) onhold,
         (SELECT JSON_ARRAYAGG(JSON_OBJECT('serviceName', service.name,'count', IFNULL(serviceUsage.count, 0)))
         FROM ${database}.service AS service
         LEFT JOIN (SELECT I.service_type, COUNT(*) AS count FROM ${database}.issue I WHERE I.org_id = ${orgId} GROUP BY I.service_type) AS serviceUsage
