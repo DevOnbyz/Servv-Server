@@ -58,7 +58,7 @@ module.exports = {
     END as status,
     AA.visit_scheduled_time as scheduledTime,
     P.city as city, P.district as district, P.state as state, P.country as country,
-    CONCAT(R.firstname, ' ', R.lastname) as ResidentName
+    CONCAT(R.firstname, ' ',  COALESCE(R.lastname, '')) as ResidentName
     FROM ${database}.agent_assignment AA
     LEFT JOIN ${database}.issue I ON AA.issue_id = I.id
     LEFT JOIN ${database}.apartment A ON I.apartment_id = A.id
