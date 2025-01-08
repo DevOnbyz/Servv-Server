@@ -7,6 +7,7 @@ const announcementRouter = require('./announcement')
 const issueRouter = require('./issues') 
 const reportRouter = require('./report')
 const paymentRouter = require('./payment')
+const dashboardRouter = require('./dashboard')
 const { downloadRouter } = require('./controller')
 
 
@@ -18,6 +19,7 @@ router.use('/announcement', announcementRouter)
 router.use('/issue', issueRouter)
 router.use('/report', reportRouter)
 router.use('/payment', paymentRouter)
+router.use('/dashboard', dashboardRouter)
 router.get('/download/:filename', downloadRouter)
 
 module.exports = router
