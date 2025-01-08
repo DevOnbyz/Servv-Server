@@ -5,73 +5,85 @@ module.exports = {
         return `
         SELECT
         (SELECT COUNT(*) FROM ${database}.issue WHERE org_id = ${orgId}) as totalServiceRequests,
-        (SELECT COUNT(*) FROM ${database}.resident WHERE org_id = ${orgId}) as totalResidents,
-        (SELECT COUNT(*) FROM ${database}.agent WHERE org_id = ${orgId}) as totalAgents,
+        (SELECT COUNT(*) FROM ${database}.resident WHERE org_id = ${orgId} AND status = 1) as totalResidents,
+        (SELECT COUNT(*) FROM ${database}.agent WHERE org_id = ${orgId} AND status = 1) as totalAgents,
         (SELECT COALESCE(SUM(INV.total_charge), 0) FROM ${database}.invoice INV JOIN ${database}.issue I ON INV.issue_id = I.id WHERE I.org_id = ${orgId} AND INV.status = ${CONSTANTS.QUOTATION_STATUS.PAID} AND I.status = ${CONSTANTS.ISSUE_STATUS.CLOSED} AND I.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID}) as totalRevenue,
         (SELECT COUNT(*) FROM ${database}.issue WHERE org_id = ${orgId} AND status = ${CONSTANTS.ISSUE_STATUS.OPEN}) as newRequests,
         (SELECT COUNT(*) FROM ${database}.issue WHERE org_id = ${orgId} AND status = ${CONSTANTS.ISSUE_STATUS.INPROGRESS}) as inProgressRequests,
         (SELECT COUNT(*) FROM ${database}.issue WHERE org_id = ${orgId} AND status = ${CONSTANTS.ISSUE_STATUS.ONHOLD}) as onHoldRequests,
         (SELECT COUNT(*) FROM ${database}.issue WHERE org_id = ${orgId} AND status = ${CONSTANTS.ISSUE_STATUS.CLOSED}) as completedRequests,
         
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}) siteVisitAssigned,
+    (SELECT COUNT(*) 
+         FROM ${database}.issue 
+         WHERE org_id = ${orgId} 
+         AND status = ${CONSTANTS.ISSUE_STATUS.INPROGRESS} 
+         AND sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}) as siteVisitAssigned,
         
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}) siteVisitCompleted,
+        (SELECT COUNT(*) 
+         FROM ${database}.issue 
+         WHERE org_id = ${orgId} 
+         AND status = ${CONSTANTS.ISSUE_STATUS.INPROGRESS} 
+         AND sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}) as siteVisitCompleted,
         
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED}) siteVisitCancelled,
+        (SELECT COUNT(*) 
+         FROM ${database}.issue 
+         WHERE org_id = ${orgId} 
+         AND status = ${CONSTANTS.ISSUE_STATUS.INPROGRESS} 
+         AND sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED}) as siteVisitCancelled,
         
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED}) estimateDraft,
+        (SELECT COUNT(*) 
+         FROM ${database}.issue 
+         WHERE org_id = ${orgId} 
+         AND status = ${CONSTANTS.ISSUE_STATUS.INPROGRESS} 
+         AND sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT}) as estimateDraft,
         
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}) estimateSent,
+        (SELECT COUNT(*) 
+         FROM ${database}.issue 
+         WHERE org_id = ${orgId} 
+         AND status = ${CONSTANTS.ISSUE_STATUS.INPROGRESS} 
+         AND sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}) as estimateSent,
         
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}) estimateApproved,
+        (SELECT COUNT(*) 
+         FROM ${database}.issue 
+         WHERE org_id = ${orgId} 
+         AND status = ${CONSTANTS.ISSUE_STATUS.INPROGRESS} 
+         AND sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}) as estimateApproved,
         
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}) estimateRejected,
+        (SELECT COUNT(*) 
+         FROM ${database}.issue 
+         WHERE org_id = ${orgId} 
+         AND status = ${CONSTANTS.ISSUE_STATUS.INPROGRESS} 
+         AND sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}) as estimateRejected,
         
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}) workAssigned,
+        (SELECT COUNT(*) 
+         FROM ${database}.issue 
+         WHERE org_id = ${orgId} 
+         AND status = ${CONSTANTS.ISSUE_STATUS.INPROGRESS} 
+         AND sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}) as workAssigned,
         
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}) workCompleted,
+        (SELECT COUNT(*) 
+         FROM ${database}.issue 
+         WHERE org_id = ${orgId} 
+         AND status = ${CONSTANTS.ISSUE_STATUS.INPROGRESS} 
+         AND sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}) as workCompleted,
         
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}) workCancelled,
+        (SELECT COUNT(*) 
+         FROM ${database}.issue 
+         WHERE org_id = ${orgId} 
+         AND status = ${CONSTANTS.ISSUE_STATUS.INPROGRESS} 
+         AND sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}) as workCancelled,
         
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED}) invoiceDraft,
+        (SELECT COUNT(*) 
+         FROM ${database}.issue 
+         WHERE org_id = ${orgId} 
+         AND status = ${CONSTANTS.ISSUE_STATUS.INPROGRESS} 
+         AND sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED}) as invoiceDraft,
         
-        (SELECT COUNT(DISTINCT ie.issue_id) 
-         FROM ${database}.issue_event ie 
-         JOIN ${database}.issue i ON i.id = ie.issue_id 
-         WHERE i.org_id = ${orgId} AND ie.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT}) invoiceSent,
+        (SELECT COUNT(*) 
+         FROM ${database}.issue 
+         WHERE org_id = ${orgId} 
+         AND status = ${CONSTANTS.ISSUE_STATUS.INPROGRESS} 
+         AND sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT}) as invoiceSent,
         
         (SELECT JSON_ARRAYAGG(JSON_OBJECT('serviceName', service.name,'count', IFNULL(serviceUsage.count, 0)))
         FROM ${database}.service AS service
