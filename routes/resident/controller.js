@@ -172,6 +172,8 @@ exports.addResidentBulkController = async (request, response) => {
     const csvFile = request.file.buffer.toString('utf8')
     const completeResidentDetails = await neatCSV(csvFile)
 
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addResidentBulkController | ${JSON.stringify(completeResidentDetails)}`)
+
     if(_.isEmpty(completeResidentDetails))
       return sendHTTPResponse.error(response, 'Resident details file should not be empty', null, 400)
 
