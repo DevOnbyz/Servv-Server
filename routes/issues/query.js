@@ -26,14 +26,16 @@ module.exports = {
   },
   getIssueStat(database) {
     return `SELECT 
-             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 1 END) AS estimateApproved,
-             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} THEN 1 END) AS estimateRejected,
-             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED} THEN 1 END) AS invoiceGenerated,
-             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN 1 END) AS siteVisitCompleted,
-             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT} THEN 1 END) AS estimateDraft,
-             COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 1 END) AS workCompleted,
-             COUNT(CASE WHEN customer_preferred_time = CURDATE() THEN 1 END) AS dueToday 
-             FROM ${database}.issue WHERE org_id = ?
+        COUNT(CASE WHEN sub_status  = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN 1 END) AS siteVisitAssigned,
+        COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN 1 END) AS siteVisitCompleted,
+        COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN 1 END) AS estimateSent,
+        COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED} THEN 1 END) AS estimateApproved,
+        COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} THEN 1 END) AS estimateRejected,
+        COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN 1 END) AS workAssigned,
+        COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN 1 END) AS workCompleted,
+        COUNT(CASE WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN 1 END) AS invoiceSent,
+        COUNT(CASE WHEN customer_preferred_time = CURDATE() THEN 1 END) AS dueToday 
+        FROM ${database}.issue WHERE org_id = ?
              `
   },
   getIssuesEvent(database) {
