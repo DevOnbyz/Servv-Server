@@ -5,7 +5,7 @@ module.exports = {
     return `INSERT INTO ${database}.issue SET ?`;
   },
   getIssues(database) {
-    return `SELECT I.id, A.name as doorNo, P.name as projectName, CONCAT(AG.firstname, ' ', AG.lastname) as agentName, I.agent_id as agentID ,CONCAT(R.firstname, ' ', R.lastname) as name,I.rating as rating,
+    return `SELECT I.id, A.name as doorNo, P.name as projectName, CONCAT(AG.firstname, ' ', AG.lastname) as agentName, I.agent_id as agentID ,CONCAT(R.firstname, ' ',  COALESCE(R.lastname, '')) as name,I.rating as rating,
     CONCAT(P.city, ', ', P.district, ', ', P.state, ', ', P.country) as location,
     CASE WHEN I.status = ${ISSUE_STATUS.OPEN} THEN '${ISSUE_STATUS_STRING.OPEN}' 
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
@@ -125,7 +125,7 @@ module.exports = {
     ORDER BY IE.created_at DESC`;
   },
   getIssuesUnderResident(database, limit, offset) {
-    return `SELECT I.id, A.name as doorNo, P.name as projectName, CONCAT(R.firstname, ' ', R.lastname) as name,
+    return `SELECT I.id, A.name as doorNo, P.name as projectName, CONCAT(R.firstname, ' ',  COALESCE(R.lastname, '')) as name,
     CONCAT(P.city, ', ', P.district, ', ', P.state, ', ', P.country) as location, SOR.name as serviceSubTypeName,
     CASE WHEN I.status = ${ISSUE_STATUS.OPEN} THEN '${ISSUE_STATUS_STRING.OPEN}' 
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
@@ -144,7 +144,7 @@ module.exports = {
   },
   getIssueByID(database) {
     return `SELECT I.id, A.name as doorNo, P.name as projectName, 
-    CONCAT(R.firstname, ' ', R.lastname) as name, CONCAT(P.city, ', ', P.district, ', ', P.state, ', ', P.country) as location, 
+    CONCAT(R.firstname, ' ', COALESCE(R.lastname, '')) as name, CONCAT(P.city, ', ', P.district, ', ', P.state, ', ', P.country) as location, 
     SOR.name as serviceSubTypeName,
     CASE 
     WHEN I.status = ${ISSUE_STATUS.OPEN} THEN '${ISSUE_STATUS_STRING.OPEN}' 
@@ -201,7 +201,7 @@ module.exports = {
     where issue_id = ? and type = ${AGENT_ASSIGNMENT_TYPE.SITE_VISIT} ORDER BY AA.created_at DESC`;
   },
   getSiteVisitUnderIssueWithDetails(database) {
-    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', R.lastname) as ResidentName ,AA.issue_id as issueId, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.assigned_time as assignedTime, AA.visit_scheduled_time as siteVisitTime,
+    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', COALESCE(R.lastname, '')) as ResidentName ,AA.issue_id as issueId, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.assigned_time as assignedTime, AA.visit_scheduled_time as siteVisitTime,
     CASE
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
