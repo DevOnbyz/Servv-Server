@@ -211,7 +211,7 @@ exports.addResidentBulkController = async (request, response) => {
       const residentOrgDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [item?.residentIdentityID, orgID])
       const residentID = !_.isEmpty(residentOrgDetails) ? residentOrgDetails.id : (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addResident(CONSTANTS.BUILDING_DATABASE), [residentDetails]))?.insertId
       item.residentID = residentID
-      const doorNo = unifyDoorNumber(item?.doorNo)
+      const doorNo = unifyDoorNumber(item?.doorNumber)
       const projectID = item?.projectID
       const apartmentData = {
         project_id: projectID,
