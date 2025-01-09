@@ -4,7 +4,7 @@ const getIssueReportDetails = (database, startDate, endDate) => {
   const addOnClause = startDate && endDate ? `AND DATE(I.created_at) >= '${startDate}' AND DATE(I.created_at) <= '${endDate}'` : ''
   return `SELECT 
   I.id AS IssueID, 
-  CONCAT(R.firstname, ' ', R.lastname) AS ResidentName, 
+  CONCAT(R.firstname, ' ', COALESCE(R.lastname, '')) AS ResidentName, 
   P.name AS ProjectName, 
   A.name AS DoorNo, 
   I.initial_activity_time AS InitialActivityTime, 

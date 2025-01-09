@@ -10,7 +10,7 @@ const addResidentSchema = Joi.object({
 
 const editResidentSchema = Joi.object({
   firstname: Joi.string().optional(),
-  lastname: Joi.string().optional(),
+  lastname: Joi.string().optional().allow(null),
   emailID: Joi.string().optional().allow(null),
   apartments: Joi.array().optional(),
   status: Joi.number().optional(),

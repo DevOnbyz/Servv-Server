@@ -7,7 +7,8 @@ const _ = require('lodash')
 const runQueryOne = require('../../db/runQueryOne')
 const { unifyDoorNumber } = require('../../lib/function')
 const { getAllProjectsByOrgID, getAllApartmentsUnderProject, getResidentByIDs } = require('../../db/query')
-const { formatPaymentHistory } = require('./functions')
+const { formatPaymentHistory, validateKeys, validateProjectNames, validateDoorNoAndAttachProjectID, validateResidentPhNum, addAndAttachResidentID } = require('./functions')
+const neatCSV = require('neat-csv')
 
 exports.getResidentController = async (request, response) => {
   const orgID = request.orgID
@@ -157,6 +158,83 @@ exports.addResidentController = async (request, response) => {
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | addResidentController | Error on adding resident | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on adding resident', error.message)
+  }
+}
+
+exports.addResidentBulkController = async (request, response) => {
+  const orgID = request.orgID
+  const userID = request.userID
+  const domain = request.domain
+  try {
+    if(request.file.mimetype != 'text/csv')
+      return sendHTTPResponse.error(response, 'Resident details file should be in CSV format')
+  
+    const csvFile = request.file.buffer.toString('utf8')
+    const completeResidentDetails = await neatCSV(csvFile)
+
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addResidentBulkController | ${JSON.stringify(completeResidentDetails)}`)
+
+    if(_.isEmpty(completeResidentDetails))
+      return sendHTTPResponse.error(response, 'Resident details file should not be empty', null, 400)
+
+    // Validations starts
+    validateKeys(completeResidentDetails[0])
+
+    const projectNames = completeResidentDetails.map((item) => item.projectName)
+    const distinctProjectNames = [...new Set(projectNames)]
+
+    const projectsUnderOrg = await runQuery(CONSTANTS.BUILDING_DATABASE, getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
+    await validateProjectNames(orgID, distinctProjectNames, projectsUnderOrg)
+
+    const projectIDNameList = projectsUnderOrg.map((project) => ({id: project.id, name: project.name?.toLowerCase()}))
+    await validateDoorNoAndAttachProjectID(orgID, completeResidentDetails, projectIDNameList)
+
+    validateResidentPhNum(completeResidentDetails)
+    // Validations ends
+
+    await addAndAttachResidentID(orgID, userID, completeResidentDetails)
+    
+    const newResidentList = completeResidentDetails?.filter((item) => item.residentID === null)
+    const existingResidentList = completeResidentDetails?.filter((item) => item.residentID !== null)
+
+    if(_.isEmpty(newResidentList) && !_.isEmpty(existingResidentList)){
+      Log.info(`[${domain} | OrganisationID:${orgID}] | addResidentController | Residents already exist for the selected projects. To make changes, please edit them in settings.`)
+      return sendHTTPResponse.error(response, 'Residents already exist for the selected projects. To make changes, please edit them in settings.', null, 400)
+    }
+
+    for(item of newResidentList) {
+      const residentDetails = {
+        firstname: item?.residentName,
+        lastname: null,
+        identity_id: item?.residentIdentityID,
+        org_id: orgID,
+        created_by: userID
+      }
+      const residentOrgDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [item?.residentIdentityID, orgID])
+      const residentID = !_.isEmpty(residentOrgDetails) ? residentOrgDetails.id : (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addResident(CONSTANTS.BUILDING_DATABASE), [residentDetails]))?.insertId
+      item.residentID = residentID
+      const doorNo = unifyDoorNumber(item?.doorNumber)
+      const projectID = item?.projectID
+      const apartmentData = {
+        project_id: projectID,
+        name: doorNo,
+        created_by: userID,
+      }
+      const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
+      const residentApartmentRel = {
+        resident_id: residentID,
+        apartment_id: apartmentID,
+        created_by: userID,
+      }
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartmentResidentRel(CONSTANTS.BUILDING_DATABASE), [residentApartmentRel])
+    }
+
+    const existingResidentNames = existingResidentList.map((item) => item.residentName).join(', ')
+    Log.info(`[${domain} | OrganisationID:${orgID}] | addResidentBulkController | Resident added successfully. But some residents already exists in the system : ${existingResidentNames}`)
+    return sendHTTPResponse.success(response, 'Resident added successfully', completeResidentDetails)
+  } catch (error) {
+    Log.error(`[${domain} | OrganisationID:${orgID}] | addResidentBulkController | Error on adding resident bulk | Error: ${error.message}`)
+    return sendHTTPResponse.error(response, 'Error on adding resident in bulk', error.message)
   }
 }
 
