@@ -238,7 +238,6 @@ exports.workOrderIssueController = async (request, response) => {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
       agent_id: agentID,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED,
-      customer_preferred_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
