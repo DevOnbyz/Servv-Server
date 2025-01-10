@@ -27,6 +27,9 @@ const scheduleSiteVisitSchema = Joi.object({
     'string.empty': 'agentID is required',
   }),
   scheduleTime: Joi.string().optional().allow(null),
+  isCustomerPreferred: Joi.boolean().required().messages({
+    'string.empty': 'isSkipped is required',
+  }),
 })
 
 const reAssignAgentSchema = Joi.object({

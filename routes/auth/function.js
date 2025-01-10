@@ -13,13 +13,14 @@ exports.generateAdminToken = async (adminData) => {
     const firstname = adminData.firstname
     const lastname = adminData.lastname
     const username = adminData.username
+    const fullName = lastname ? `${firstname} ${lastname}` : firstname
     const orgID = adminData.org_id
     const role = adminData.role_id ?? null
     const projectID = adminData.project_id ?? null
     const orgDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getOrgDetails(CONSTANTS.BUILDING_DATABASE), [orgID])
     const domain = orgDetails.domain
     const orgName = orgDetails.name
-    const accessToken = await jwtSign({id,name: `${firstname} ${lastname}`, username, orgID, domain, orgName, role, projectID, userType: CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN}, {expiresIn: CONSTANTS.ACCESS_TOKEN_EXPIRY})
+    const accessToken = await jwtSign({id,name:fullName, username, orgID, domain, orgName, role, projectID, userType: CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN}, {expiresIn: CONSTANTS.ACCESS_TOKEN_EXPIRY})
     const refreshToken = await jwtSign({id}, {expiresIn: CONSTANTS.REFRESH_TOKEN_EXPIRY})
     return {error: false, data:{accessToken, refreshToken}}
   }
@@ -36,6 +37,7 @@ exports.generateCustomerToken = async (customerData) => {
     const identityID = customerData.identity_id
     const firstname = customerData.firstname
     const lastname = customerData.lastname
+    const fullName = lastname ? `${firstname} ${lastname}` : firstname
     const associatedOrganisationList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getDistichOrgOfResidentsByIdentityID(CONSTANTS.BUILDING_DATABASE), [identityID])
     const orgIDs = associatedOrganisationList?.map(org => org.org_id)
     const orgsDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getOrgDetailsByIDs(CONSTANTS.BUILDING_DATABASE), [orgIDs])
@@ -47,7 +49,7 @@ exports.generateCustomerToken = async (customerData) => {
     const orgDomains = (orgsDetails?.map(org => org.domain))?.join(',')
     const domain = `MOBILE-${orgDomains}`
     
-    const accessToken = await jwtSign({id, name: `${firstname} ${lastname}`, identityID, domain, associatedOrganisation, userType: CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER})
+    const accessToken = await jwtSign({id, name: fullName, identityID, domain, associatedOrganisation, userType: CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER})
     return {error: false, data:{accessToken}}
   }
   catch(error){
@@ -63,6 +65,7 @@ exports.generateAgentToken = async (agentData) => {
     const identityID = agentData.identity_id
     const firstname = agentData.firstname
     const lastname = agentData.lastname
+    const fullName = lastname ? `${firstname} ${lastname}` : firstname
     const associatedOrganisationList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getDistichOrgOfAgentsByIdentityID(CONSTANTS.BUILDING_DATABASE), [identityID])
     const orgIDs = associatedOrganisationList?.map(org => org.org_id)
     const orgsDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getOrgDetailsByIDs(CONSTANTS.BUILDING_DATABASE), [orgIDs])
@@ -74,7 +77,7 @@ exports.generateAgentToken = async (agentData) => {
     const orgDomains = (orgsDetails?.map(org => org.domain))?.join(',')
     const domain = `MOBILE-${orgDomains}`
 
-    const accessToken = await jwtSign({id, name: `${firstname} ${lastname}`, identityID, domain, associatedOrganisation, userType: CONSTANTS.SERVV_USER_TYPE_STRING.AGENT})
+    const accessToken = await jwtSign({id, name: fullName, identityID, domain, associatedOrganisation, userType: CONSTANTS.SERVV_USER_TYPE_STRING.AGENT})
     const refreshToken = await jwtSign({id}, {expiresIn: CONSTANTS.REFRESH_TOKEN_EXPIRY})
 
     return {error: false, data:{accessToken,refreshToken}}

@@ -91,7 +91,7 @@ exports.getIssueByIDController = async (request, response) => {
 
     const activeAgentAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveAgentAssignment(CONSTANTS.BUILDING_DATABASE), [issueID])
     issue.agentOTP = activeAgentAssignment ? activeAgentAssignment.otp_code : null
-    issue.isWorkFeedbackCompleted = lastCompletetedWorkOrder?.is_satisfied == 1 || (lastCompletetedWorkOrder?.is_satisfied == 0 && !_.isEmpty(lastCompletetedWorkOrder?.feedback_comments))
+    issue.isWorkFeedbackCompleted = lastCompletetedWorkOrder?.is_satisfied == CONSTANTS.SATISFACTION_STATUS.SATISFIED || (lastCompletetedWorkOrder?.is_satisfied == CONSTANTS.SATISFACTION_STATUS.PENDING && !_.isEmpty(lastCompletetedWorkOrder?.feedback_comments))
     issue.img_src = issue.img_src ? issue.img_src.split(',') : null
     issue.reviewed = issue.reviewed === CONSTANTS.REVIEW_STATUS.COMPLETED
     const issuesEventsQuery = isCustomer ? queryBuilder.getIssuesEventForCustomer(CONSTANTS.BUILDING_DATABASE) : queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE)
@@ -179,7 +179,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const { agentID, notes, scheduleTime } = request.body
+    const { agentID, notes, scheduleTime, isCustomerPreferred } = request.body
 
     const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
@@ -189,8 +189,10 @@ exports.scheduleVisitIssueController = async (request, response) => {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
       agent_id: agentID,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED,
-      customer_preferred_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null
     }
+    if (!isCustomerPreferred)
+      newIssueData.customer_preferred_time = null
+    
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
     const agentAssignmentData = {
@@ -232,7 +234,7 @@ exports.workOrderIssueController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const { agentID, notes, scheduleTime } = request.body
+    const { agentID, notes, scheduleTime,isCustomerPreferred } = request.body
     const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if (notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status == CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, `You can't add a work order for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
@@ -241,8 +243,10 @@ exports.workOrderIssueController = async (request, response) => {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
       agent_id: agentID,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED,
-      customer_preferred_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null
     }
+    if (!isCustomerPreferred)
+      newIssueData.customer_preferred_time = null
+
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
     const agentAssignmentData = {
@@ -300,7 +304,7 @@ exports.reAssignWorkOrderController = async (request, response) => {
     const newAgentAssignmentData = {
       agent_id: agentID,
       otp_code: generateOTP(),
-      notes:modifiedNote ?? null
+      notes: modifiedNote ?? null
     }
     if (modifiedVisit) {
       newIssueData.customer_preferred_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
@@ -398,7 +402,7 @@ exports.reAssignSiteVisitController = async (request, response) => {
     const newAgentAssignmentData = {
       agent_id: agentID,
       otp_code: generateOTP(),
-      notes : modifiedNote
+      notes: modifiedNote
     }
     // sent notification to the agent regarding the issue
     if (modifiedVisit) {
