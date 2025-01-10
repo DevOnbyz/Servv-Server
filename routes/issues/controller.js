@@ -56,11 +56,13 @@ exports.getIssuesUnderResidentController = async (request, response) => {
   const isCustomer = request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER
   try {
     const issues = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesUnderResident(CONSTANTS.BUILDING_DATABASE, itemsPerPage, offset), [residentID, orgID])
+    const lastCompletetedWorkOrder = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getCompletedWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
     for (const issue of issues) {
       const activeAgentAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveAgentAssignment(CONSTANTS.BUILDING_DATABASE), [issue.id])
       issue.agentOTP = activeAgentAssignment ? activeAgentAssignment.otp_code : null
       issue.img_src = issue.img_src ? issue.img_src.split(',') : null
       const issueEventQuery = isCustomer ? queryBuilder.getIssuesEventForCustomer(CONSTANTS.BUILDING_DATABASE) : queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE)
+      issue.isWorkFeedbackCompleted = lastCompletetedWorkOrder?.is_satisfied == 1 || (lastCompletetedWorkOrder?.is_satisfied == 0 && !_.isEmpty(lastCompletetedWorkOrder?.feedback_comments))
       const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, issueEventQuery, [issue.id])
       issue.issuesEvents = issuesEvents
     }
