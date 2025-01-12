@@ -88,6 +88,7 @@ ALTER TABLE `report` CHANGE `end_date` `end_date` TIMESTAMP NULL;
 
 -- 11-12-2024
 ALTER TABLE `organisation` ADD COLUMN `razorpay_customer_id` VARCHAR(255) DEFAULT NULL AFTER `domain`;
+ALTER TABLE `organisation` ADD COLUMN `razorpay_route_account_id` VARCHAR(255) DEFAULT NULL AFTER `razorpay_customer_id`;
 -- 13-12-2024
 ALTER TABLE agent_assignment ADD COLUMN is_satisfied TINYINT DEFAULT 0 AFTER updated_by;
 ALTER TABLE agent_assignment ADD COLUMN feedback_comments TEXT DEFAULT NULL AFTER is_satisfied;
