@@ -21,8 +21,12 @@ exports.loginController = async (request, response) => {
 
     if(userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER){
 
-      const decodedToken = await admin.auth().verifyIdToken(token)
-      const phNum = decodedToken.phone_number
+      const decodedToken = !_.isEmpty(token) ? await admin.auth().verifyIdToken(token) : null
+      const phNum = decodedToken?.phone_number || request.body?.phNum
+
+      if(_.isEmpty(phNum))
+        return sendHTTPResponse.error(response, 'Invalid credentials', null, 400)
+
       const customerData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getCustomerData(CONSTANTS.BUILDING_DATABASE), [phNum])
 
       if(_.isEmpty(customerData))
@@ -39,8 +43,12 @@ exports.loginController = async (request, response) => {
 
     if(userType == CONSTANTS.SERVV_USER_TYPE_STRING.AGENT){  
 
-      const decodedToken = await admin.auth().verifyIdToken(token)      
-      const phNum = decodedToken.phone_number
+      const decodedToken = !_.isEmpty(token) ? await admin.auth().verifyIdToken(token) : null
+      const phNum = decodedToken?.phone_number || request.body?.phNum
+
+      if(_.isEmpty(phNum))
+        return sendHTTPResponse.error(response, 'Invalid credentials', null, 400)
+
       const agentData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentData(CONSTANTS.BUILDING_DATABASE), [phNum])
 
       if(_.isEmpty(agentData))  
@@ -127,6 +135,8 @@ exports.checkResidentPhoneController = async (request, response) => {
     const residentData = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentbyPhNum(CONSTANTS.BUILDING_DATABASE), [phone])
     if(_.isEmpty(residentData))
       return sendHTTPResponse.error(response, 'Invalid phone number', null, 400)
+
+    await Fn.sendOTP(phone)
     return sendHTTPResponse.success(response, 'Resident found', null, 200)
   }catch(error){
     Log.error(`[Servv] | checkPhoneController | Error in check phone number ${phone} | ${error.message}`)
@@ -146,3 +156,14 @@ exports.checkAgentPhoneController = async (request, response) => {
     sendHTTPResponse.error(response, 'Error in check phone number', error)
   }
 }
+
+// exports.sendOTPResidentController = async (request, response) => {
+//   const {phone} = request.body
+//   try{
+//     const otp = await Fn.sendOTP(phone)
+//     return sendHTTPResponse.success(response, 'OTP sent successfully', otp, 200)
+//   }catch(error){
+//     Log.error(`[Servv] | sendOTPResidentController | Error in sending OTP ${phone} | ${error.message}`)
+//     sendHTTPResponse.error(response, 'Error in sending OTP', error)
+//   }
+// }

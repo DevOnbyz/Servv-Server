@@ -8,6 +8,7 @@ const loginSchema = Joi.object({
     'string.empty': 'User type is required',
   }),
   fcmToken: Joi.string().optional().allow(null),
+  phNum: Joi.string().optional().allow(null, '',),
 })
 const tokenSchema = Joi.object({
   refreshToken: Joi.string().required().messages({
