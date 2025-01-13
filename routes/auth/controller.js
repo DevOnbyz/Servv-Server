@@ -136,7 +136,6 @@ exports.checkResidentPhoneController = async (request, response) => {
     if(_.isEmpty(residentData))
       return sendHTTPResponse.error(response, 'Invalid phone number', null, 400)
 
-    await Fn.sendOTP(phone)
     return sendHTTPResponse.success(response, 'Resident found', null, 200)
   }catch(error){
     Log.error(`[Servv] | checkPhoneController | Error in check phone number ${phone} | ${error.message}`)
