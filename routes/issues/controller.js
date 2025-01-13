@@ -57,11 +57,14 @@ exports.getIssuesUnderResidentController = async (request, response) => {
   try {
     const issues = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuesUnderResident(CONSTANTS.BUILDING_DATABASE, itemsPerPage, offset), [residentID, orgID])
     for (const issue of issues) {
+      const lastCompletetedWorkOrder = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getCompletedWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issue.id])
       const activeAgentAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveAgentAssignment(CONSTANTS.BUILDING_DATABASE), [issue.id])
       issue.agentOTP = activeAgentAssignment ? activeAgentAssignment.otp_code : null
       issue.img_src = issue.img_src ? issue.img_src.split(',') : null
       const issueEventQuery = isCustomer ? queryBuilder.getIssuesEventForCustomer(CONSTANTS.BUILDING_DATABASE) : queryBuilder.getIssuesEvent(CONSTANTS.BUILDING_DATABASE)
+      issue.isWorkFeedbackCompleted = lastCompletetedWorkOrder?.is_satisfied == 1 || (lastCompletetedWorkOrder?.is_satisfied == 0 && !_.isEmpty(lastCompletetedWorkOrder?.feedback_comments))
       const issuesEvents = await runQuery(CONSTANTS.BUILDING_DATABASE, issueEventQuery, [issue.id])
+      issue.reviewed = issue.reviewed === CONSTANTS.REVIEW_STATUS.COMPLETED
       issue.issuesEvents = issuesEvents
     }
     Log.info(`[${domain} | OrganisationID:${orgID} | residentID:${residentID}] | getIssuesUnderResidentController | Issues fetched for resident successfully`)
