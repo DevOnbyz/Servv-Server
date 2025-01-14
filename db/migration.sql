@@ -492,7 +492,7 @@ CREATE TABLE `payment` (
     `status` TINYINT DEFAULT 0, -- 0=pending, 1=completed, 2=cancelled
     `payment_type` TINYINT DEFAULT 0,
     `final_amount` DECIMAL(10,2) NOT NULL,
-    `transfer_id` VARCHAR(255) NOT NULL,
+    `transfer_id` VARCHAR(255),
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
 );
