@@ -135,7 +135,7 @@ module.exports = {
         AA.updated_at
     FROM ${database}.issue_event IE
     LEFT JOIN ${database}.admin A ON IE.creator_id = A.id
-    LEFT JOIN ${database}.agent_assignment AA ON IE.issue_id = AA.issue_id
+    LEFT JOIN ${database}.agent_assignment AA ON IE.issue_id = AA.issue_id AND AA.status = 1
     WHERE IE.issue_id = ? AND IE.sub_status not in (${ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT})
     ORDER BY IE.created_at DESC`;
   },
