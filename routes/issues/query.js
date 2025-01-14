@@ -67,11 +67,11 @@ module.exports = {
           WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
         END as assignee,
         CASE
-        WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.PAID}) THEN (SELECT total_charge FROM ${database}.invoice WHERE id = IE.entity_id)
+        WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.PAID}) THEN (SELECT total_charge FROM ${database}.invoice WHERE issue_id = IE.issue_id)
         ELSE NULL
         END as invoice_total_charge,
         CASE
-        WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}) THEN (SELECT total_charge FROM ${database}.estimate WHERE id = IE.entity_id)
+        WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}) THEN (SELECT total_charge FROM ${database}.estimate WHERE issue_id = IE.issue_id)
         ELSE NULL
         END as estimate_total_charge,
         IE.sub_status, 
@@ -116,11 +116,11 @@ module.exports = {
           WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
         END as assignee,
         CASE
-        WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.PAID}) THEN (SELECT total_charge FROM ${database}.invoice WHERE id = IE.entity_id)
+        WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.PAID}) THEN (SELECT total_charge FROM ${database}.invoice WHERE issue_id = IE.issue_id)
         ELSE NULL
         END as invoice_total_charge,
         CASE
-        WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}) THEN (SELECT total_charge FROM ${database}.estimate WHERE id = IE.entity_id)
+        WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}) THEN (SELECT total_charge FROM ${database}.estimate WHERE issue_id = IE.issue_id)
         ELSE NULL
         END as estimate_total_charge,
         IE.sub_status, 
