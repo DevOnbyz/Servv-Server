@@ -113,11 +113,15 @@ WHERE
     return `SELECT * FROM ${database}.resident WHERE id = ?`
   },
   getResidentByIDUnderOrg(database) {
-    return `SELECT r.*, o.* 
-    FROM ${database}.resident r
-    JOIN ${database}.organisation o ON r.org_id = o.id
-    WHERE r.id = ?`
-  },
+    return `
+      SELECT 
+      R.id, R.org_id,
+      O.id AS organisation_id, O.razorpay_route_account_id
+      FROM ${database}.resident R
+      INNER JOIN ${database}.organisation O ON R.org_id = O.id
+      WHERE R.id = ?;
+    `;
+  },  
   updateApartmentDetails(database) {
     return `UPDATE ${database}.apartment SET ? WHERE id = ?`
   },
@@ -151,7 +155,7 @@ WHERE
     JOIN ${database}.order o ON p.order_id = o.id
     JOIN ${database}.issue i ON o.issue_id = i.id
     JOIN ${database}.service s ON i.service_type = s.id
-    WHERE p.org_id = ? AND p.status = ${PAYMENT_STATUS.COMPLETED};`
+    WHERE p.org_id = ?;`
   },
   getPaymentWithOrderByOrgID: (database) => {
     return `SELECT p.*, o.*
