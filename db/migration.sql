@@ -314,7 +314,6 @@ CREATE TABLE `agent_assignment` (
     `type` TINYINT DEFAULT NULL,
     `notes` TEXT,
     `assigned_by` INT,
-    `assigned_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `visit_scheduled_time` DATETIME,
     `otp_sent_time` DATETIME,
     `otp_code` VARCHAR(10),

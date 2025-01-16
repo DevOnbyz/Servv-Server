@@ -70,7 +70,7 @@ module.exports = {
     ORDER BY AA.created_at DESC`;
   },
   getDetailedAssignmentUnderAgentByAssignmentID(database) {
-    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', R.lastname) as ResidentName, RI.ph_num as ResidentPhone, AA.issue_id as issueId, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.assigned_time as assignedTime, AA.visit_scheduled_time as siteVisitTime,
+    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', R.lastname) as ResidentName, RI.ph_num as ResidentPhone, AA.issue_id as issueId, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as siteVisitTime,
     CASE
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
