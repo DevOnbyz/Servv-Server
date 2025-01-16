@@ -114,3 +114,7 @@ ALTER TABLE resident MODIFY COLUMN `identity_id` INT NOT NULL;
 --14-01-2025 already updated in production and dev
 ALTER TABLE payment MODIFY COLUMN transfer_id VARCHAR(255) NULL;
 ALTER TABLE payment ADD COLUMN org_id INT NOT NULL AFTER id;
+
+--16-01-2025
+ALTER TABLE issue_event
+MODIFY COLUMN `event_time` DATETIME DEFAULT NULL;

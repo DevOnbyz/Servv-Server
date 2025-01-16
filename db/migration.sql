@@ -296,7 +296,7 @@ CREATE TABLE `issue_event` (
     `event_type` VARCHAR(50) NOT NULL,
     `sub_status` TINYINT DEFAULT NULL,
     `entity_id` INT DEFAULT NULL, -- Can be agent_assignment_id, estimate_id wrt to the substatus added
-    `event_time` DATETIME DEFAULT CURRENT_TIMESTAMP,
+    `event_time` DATETIME DEFAULT NULL,
     `description` TEXT,
     `creator_id` INT,
     `creator_type` TINYINT,

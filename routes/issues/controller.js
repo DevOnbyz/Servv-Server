@@ -215,6 +215,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.SITE_VISIT_ASSIGNED,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED,
       entity_id: entityID,
+      event_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null,
       description: notes,
       creator_id: request.userID,
       creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
@@ -269,6 +270,7 @@ exports.workOrderIssueController = async (request, response) => {
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.WORK_ASSIGNED,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED,
       entity_id: entityID,
+      event_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null,
       description: notes,
       creator_id: request.userID,
       creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
@@ -308,8 +310,9 @@ exports.reAssignWorkOrderController = async (request, response) => {
       notes: modifiedNote ?? null
     }
     if (modifiedVisit) {
-      newIssueData.customer_preferred_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
+      newIssueData.customer_preferred_time =  null
       newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssueEvent(CONSTANTS.BUILDING_DATABASE), [{event_time:modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null}, issueID])
     }
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
@@ -408,8 +411,10 @@ exports.reAssignSiteVisitController = async (request, response) => {
     // sent notification to the agent regarding the issue
     if (modifiedVisit) {
       newIssueData.customer_preferred_time = null
+      const scheduleTime = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
       // newIssueData.customer_preferred_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
-      newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
+      newAgentAssignmentData.visit_scheduled_time = scheduleTime
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssueEvent(CONSTANTS.BUILDING_DATABASE), [{event_time:scheduleTime}, issueID])
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentIDInAgentAssignmentofActiveIssue(CONSTANTS.BUILDING_DATABASE), [newAgentAssignmentData, issueID])
