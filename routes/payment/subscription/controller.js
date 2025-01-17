@@ -37,7 +37,7 @@ exports.getActiveSubscriptionByOrgID = async (request, response) => {
         
         const subscriptions = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.getActiveSubscriptions(CONSTANTS.BUILDING_DATABASE),[orgID])
         if (!subscriptions || subscriptions.length === 0)
-            return sendHTTPResponse.error(response, 'No active subscription found')
+            return sendHTTPResponse.success(response, 'No active subscription found')
         
         const subscriptionIDs = subscriptions.map(sub => sub.id)
         const paymentLogs = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.getSubscriptionPaymentLogs(CONSTANTS.BUILDING_DATABASE),[subscriptionIDs])

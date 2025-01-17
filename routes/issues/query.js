@@ -79,7 +79,7 @@ module.exports = {
         IE.creator_id, 
         IE.entity_id, 
         IE.creator_type, 
-        (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}) ORDER BY created_at DESC LIMIT 1) as event_time,
+        (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.ONHOLD}) ORDER BY created_at DESC LIMIT 1) as event_time,
         IE.created_at,
         (SELECT is_satisfied FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} ORDER BY created_at DESC LIMIT 1) as isSatisfied,
         (SELECT feedback_comments FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} ORDER BY created_at DESC LIMIT 1) as feedbackComments,
