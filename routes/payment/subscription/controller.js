@@ -85,7 +85,7 @@ exports.activateSubscription = async (request, response) => {
         })
 
         const subscriptionData = {
-            org_id: userID,
+            org_id: orgID,
             razorpay_subscription_id: subscription.id,
             status: CONSTANTS.SUBSCRIPTION_STATUS.PENDING,
             start_date: moment.unix(subscription.created_at).utc().format('YYYY-MM-DD HH:mm:ss'),
