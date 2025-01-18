@@ -79,7 +79,7 @@ module.exports = {
         IE.creator_id, 
         IE.entity_id, 
         IE.creator_type, 
-        (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.ONHOLD}) ORDER BY created_at DESC LIMIT 1) as event_time,
+        IE.event_time,
         IE.created_at,
         (SELECT is_satisfied FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} ORDER BY created_at DESC LIMIT 1) as isSatisfied,
         (SELECT feedback_comments FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} ORDER BY created_at DESC LIMIT 1) as feedbackComments,
@@ -128,7 +128,7 @@ module.exports = {
         IE.creator_id, 
         IE.entity_id, 
         IE.creator_type, 
-        (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}) ORDER BY created_at DESC LIMIT 1) as event_time,
+        IE.event_time,
         IE.created_at,
         (SELECT is_satisfied FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} ORDER BY created_at DESC LIMIT 1) as isSatisfied,
         (SELECT feedback_comments FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} ORDER BY created_at DESC LIMIT 1) as feedbackComments,
@@ -312,7 +312,7 @@ module.exports = {
     return `SELECT * FROM ${database}.estimate where issue_id = ?`;
   },
   getEstimates(database) {
-    return `SELECT E.id, E.issue_id, E.material_charge, E.labour_charge, E.total_charge, E.is_18_percent_gst_applied, E.is_inclusive_tax, E.is_exclusive_tax, E.expiry_date, E.notes, E.filename, E.created_at, E.src,
+    return `SELECT E.id, E.issue_id, E.material_charge, E.labour_charge, E.total_charge, E.is_18_percent_gst_applied, E.is_inclusive_tax, E.is_exclusive_tax, E.expiry_date, E.notes, E.filename,E.reject_reason, E.created_at, E.src,
     CASE
     WHEN E.status = ${QUOTATION_STATUS.DRAFTED} THEN 'drafted'
     WHEN E.status = ${QUOTATION_STATUS.APPROVED} THEN 'approved' 

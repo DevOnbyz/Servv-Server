@@ -160,6 +160,7 @@ exports.addIssueController = async (request, response) => {
     const issueLogData = {
       issue_id: insertID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.OPEN,
+      event_time:_.isEmpty(request.body.scheduledTime) ? moment().utc().format('YYYY-MM-DD HH:mm:ss') : moment(convertToUTC(request.body.scheduledTime, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.OPEN,
       description: '',
       creator_id: request.userID,
@@ -215,7 +216,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.SITE_VISIT_ASSIGNED,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED,
       entity_id: entityID,
-      event_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null,
+      event_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       description: notes,
       creator_id: request.userID,
       creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
@@ -268,9 +269,9 @@ exports.workOrderIssueController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.WORK_ASSIGNED,
+      event_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED,
       entity_id: entityID,
-      event_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null,
       description: notes,
       creator_id: request.userID,
       creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
@@ -368,6 +369,7 @@ exports.closeIssueController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.CLOSED,
+      event_time:moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED,
       creator_id: request.userID,
       creator_type: request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN ? CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN : CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER
@@ -454,6 +456,7 @@ exports.cancelSiteVisitController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.SITE_VISIT_CANCELLED,
+      event_time:moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED,
       entity_id: activeSiteVisitID,
       creator_id: request.userID,
@@ -518,6 +521,7 @@ exports.completeSiteVisitController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.SITE_VISIT_COMPLETED,
+      event_time:moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED,
       entity_id: activeSiteVisitID,
       creator_id: request.userID,
@@ -618,6 +622,7 @@ exports.addAndSendEstimateController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
       description: notes,
       creator_id: request.userID,
@@ -675,6 +680,7 @@ exports.approveEstimateController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_APPROVED,
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED,
       creator_id: request.userID,
       creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
@@ -712,6 +718,7 @@ exports.sendEstimateController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
       creator_id: request.userID,
       creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
@@ -806,6 +813,7 @@ exports.editEstimateController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
       creator_id: request.userID,
       creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
@@ -825,6 +833,8 @@ exports.rejectEstimateController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
+    const rejectReason = request.body.rejectReason ?? null;
+
     const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if (_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
 
@@ -834,6 +844,7 @@ exports.rejectEstimateController = async (request, response) => {
 
     const estimateData = {
       status: CONSTANTS.QUOTATION_STATUS.REJECTED,
+      reject_reason: rejectReason,
       approved_rejected_by: request.userID,
       approved_rejected_by_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
@@ -849,6 +860,7 @@ exports.rejectEstimateController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_REJECTED,
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED,
       creator_id: request.userID,
       creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
@@ -960,6 +972,7 @@ exports.addAndSentInvoiceController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_SENT,
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT,
       description: notes,
       creator_id: request.userID,
@@ -1067,6 +1080,7 @@ exports.editInvoiceController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_SENT,
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT,
       creator_id: request.userID,
       creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
@@ -1107,6 +1121,7 @@ exports.approveInvoiceController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_APPROVED,
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED,
       creator_id: request.userID,
       creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
@@ -1152,6 +1167,7 @@ exports.recordPaymentController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.PAID,
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID,
       creator_id: request.userID,
       creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
@@ -1218,6 +1234,7 @@ exports.holdIssueController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.ONHOLD,
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ONHOLD,
       creator_id: request.userID,
       creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
@@ -1254,6 +1271,7 @@ exports.cancelWorkOrderController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.WORK_CANCELLED,
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_CANCELLED,
       entity_id: activeWorkOrderID, //since it have multiple workorders
       creator_id: request.userID,
@@ -1315,6 +1333,7 @@ exports.completeWorkOrderController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.WORK_COMPLETED,
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_COMPLETED,
       entity_id: activeWorkOrderID,
       creator_id: request.userID,

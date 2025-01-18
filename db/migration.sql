@@ -350,6 +350,7 @@ CREATE TABLE `estimate` (
     `approved_rejected_by` INT DEFAULT NULL,
     `approved_rejected_by_type` TINYINT DEFAULT 0,
     `updated_by` INT DEFAULT NULL,
+    `reject_reason` TEXT DEFAULT NULL,
     `created_at` DATETIME DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_estimate_ibfk_1` FOREIGN KEY (issue_id) REFERENCES issue (id) ON DELETE CASCADE,
