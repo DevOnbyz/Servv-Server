@@ -134,6 +134,7 @@ async function handleChargedPayment(payload, response) {
     const issueLogData = {
         issue_id: paymentEntity.notes.issue_id,
         event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.PAID,
+        event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
         sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID,
         creator_id: paymentEntity.notes.user_id,
         creator_type: paymentEntity.notes.user_type == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN

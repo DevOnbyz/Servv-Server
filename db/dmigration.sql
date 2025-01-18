@@ -116,5 +116,8 @@ ALTER TABLE payment MODIFY COLUMN transfer_id VARCHAR(255) NULL;
 ALTER TABLE payment ADD COLUMN org_id INT NOT NULL AFTER id;
 
 --16-01-2025
-ALTER TABLE issue_event MODIFY COLUMN `event_time` DATETIME DEFAULT NULL;
-ALTER TABLE agent_assignment DROP COLUMN `assigned_time`;
+ALTER TABLE `issue_event` MODIFY COLUMN `event_time` DATETIME DEFAULT NULL;
+ALTER TABLE `agent_assignment` DROP COLUMN `assigned_time`;
+
+--18-01-2025
+ALTER TABLE `estimate` ADD COLUMN `reject_reason` TEXT DEFAULT NULL AFTER `updated_by`;
