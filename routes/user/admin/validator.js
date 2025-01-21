@@ -19,7 +19,9 @@ const addAdminSchema = Joi.object({
   phNum: Joi.string().required().messages({
     'string.empty': 'Phone Number is required',
   }),
-  roleID: Joi.number().optional().allow(null),
+  roleId: Joi.number().required().messages({
+    'number.empty': 'roleId is required',
+  }),
   project: Joi.array().required().messages({
     'string.empty': 'Project List is required',
   }),
@@ -42,7 +44,9 @@ const editAdminSchema = Joi.object({
   phNum: Joi.string().required().messages({
     'string.empty': 'Phone Number is required',
   }),
-  roleID: Joi.number().optional().allow(null),
+  roleId: Joi.number().required().messages({
+    'number.empty': 'roleId is required',
+  }),
   project: Joi.array().required().messages({
     'string.empty': 'Project List is required',
   }),

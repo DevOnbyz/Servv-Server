@@ -39,10 +39,10 @@ exports.addAdminController = async (request, response) => {
     const username = request.body.username
     const email = request.body.email
     const password = request.body.password
-    const roleID = request.body.roleID
     const phNum = request.body.phNum
     const projectList = request.body.project
     const serviceList = request.body.serviceList ?? []
+    const roleId = request.body.roleId ?? null
 
     const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAdminIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum])
 
@@ -54,7 +54,7 @@ exports.addAdminController = async (request, response) => {
       lastname,
       username,
       email,
-      role_id: roleID,
+      role_id: roleId,
       org_id: orgID,
       ph_num: phNum,
       password: await hashPassword(password),
@@ -79,7 +79,7 @@ exports.editAdminController = async (request, response) => {
     const lastname = request.body.lastname
     const username = request.body.username
     const email = request.body.email
-    const roleID = request.body.roleID
+    const roleId = request.body.roleId ?? null
     const phNum = request.body.phNum
     const projectList = request.body.project
     const isPassordChanged = !!request.body.isPasswordChanged
@@ -91,7 +91,7 @@ exports.editAdminController = async (request, response) => {
       lastname,
       username,
       email,
-      role_id: roleID,
+      role_id: roleId,
       ph_num: phNum,
       project_id: JSON.stringify(projectList)
     }

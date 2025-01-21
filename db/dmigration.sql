@@ -121,3 +121,43 @@ ALTER TABLE `agent_assignment` DROP COLUMN `assigned_time`;
 
 --18-01-2025
 ALTER TABLE `estimate` ADD COLUMN `reject_reason` TEXT DEFAULT NULL AFTER `updated_by`;
+
+--21-01-2025
+ALTER TABLE `role` ADD COLUMN `user_type` TINYINT NOT NULL AFTER `org_id`;
+ALTER TABLE `role` MODIFY COLUMN `updated_by` INT DEFAULT NULL;
+ALTER TABLE `role` ADD COLUMN `created_by` INT DEFAULT NULL AFTER `user_type`;
+ALTER TABLE `role` ADD UNIQUE (`org_id`, `name`);
+
+ALTER TABLE `permission` DROP COLUMN `org_id`;
+ALTER TABLE `permission` ADD COLUMN `created_by` INT DEFAULT NULL AFTER `code`;
+ALTER TABLE `permission` MODIFY COLUMN `updated_by` INT DEFAULT NULL;
+
+--insert roles in org_id  1
+INSERT INTO `role` (`name`, `org_id`, `user_type`, `created_by`, `updated_by`) 
+VALUES 
+('Manager', 1, 0, NULL, NULL),
+('Technician', 1, 1, NULL, NULL),
+('Supervisor', 1, 1, NULL, NULL);
+
+--insert roles in org_id  1
+
+INSERT INTO `permission` (`name`, `code`) 
+VALUES 
+('Create Invoice', 'CREATE_INVOICE'),
+('Approve Invoice', 'APPROVE_INVOICE'),
+('Reject Invoice', 'REJECT_INVOICE'),
+('Add Technician', 'ADD_TECHNICIAN'),
+('Complete Work Order', 'COMPLETE_WORK_ORDER');
+
+
+INSERT INTO `role_permission_rel` (`role_id`, `permission_id`)
+VALUES 
+(1, 1), -- Manager: Create Invoice
+(1, 2), -- Manager: Approve Invoice
+(1, 3), -- Manager: Reject Invoice
+(3, 4), -- Supervisor: Add Technician
+(2, 5); -- Technician: Complete Work Order
+
+
+ALTER TABLE `agent` ADD COLUMN `role_id` INT;
+ALTER TABLE `agent` ADD CONSTRAINT `fk_agent_ibfk_5` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE CASCADE;

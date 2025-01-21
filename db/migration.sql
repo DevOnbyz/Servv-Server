@@ -16,19 +16,22 @@ CREATE TABLE `role` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
     `org_id` INT,
+    `user_type` TINYINT NOT NULL,
+    `created_by` INT DEFAULT NULL,
+    `updated_by` INT DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_by` INT,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_role_ibfk_1` FOREIGN KEY (org_id) REFERENCES organisation (id) ON DELETE CASCADE
+    ADD UNIQUE (`org_id`, `name`);
 );
 
 CREATE TABLE `permission` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `name` VARCHAR(255) NOT NULL,
     `code` VARCHAR(255) NOT NULL,
-    `org_id` INT,
+    `created_by` INT DEFAULT NULL,
+    `updated_by` INT DEFAULT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_by` INT,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_permission_ibfk_1` FOREIGN KEY (org_id) REFERENCES organisation (id) ON DELETE CASCADE
 );
@@ -219,6 +222,7 @@ CREATE TABLE `agent` (
     `state` VARCHAR(255),
     `country` VARCHAR(255),
     `email_id` VARCHAR(255),
+    `role_id` INT,
     `proficient_service` JSON,
     `location` VARCHAR(255),
     `created_by` INT,
@@ -229,6 +233,7 @@ CREATE TABLE `agent` (
     CONSTRAINT `fk_agent_ibfk_2` FOREIGN KEY (updated_by) REFERENCES admin (id),
     CONSTRAINT `fk_agent_ibfk_3` FOREIGN KEY (identity_id) REFERENCES agent_identity (id),
     CONSTRAINT `fk_agent_ibfk_4` FOREIGN KEY (org_id) REFERENCES organisation (id)
+    CONSTRAINT `fk_agent_ibfk_5` FOREIGN KEY (role_id) REFERENCES role (id) ON DELETE CASCADE
 );
 
 CREATE TABLE `agent_service_rel` (
