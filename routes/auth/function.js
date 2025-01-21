@@ -78,8 +78,9 @@ exports.generateAgentToken = async (agentData) => {
     const orgDomains = (orgsDetails?.map(org => org.domain))?.join(',')
     const domain = `MOBILE-${orgDomains}`
     const permissions = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getPermissionsByRoleID(CONSTANTS.BUILDING_DATABASE), [agentData.role_id])
+    const role = agentData.role_id ?? null
 
-    const accessToken = await jwtSign({id, name: fullName, identityID, domain, associatedOrganisation, userType: CONSTANTS.SERVV_USER_TYPE_STRING.AGENT, permissions})
+    const accessToken = await jwtSign({id, name: fullName, identityID, domain,role, associatedOrganisation, userType: CONSTANTS.SERVV_USER_TYPE_STRING.AGENT, permissions})
     const refreshToken = await jwtSign({id}, {expiresIn: CONSTANTS.REFRESH_TOKEN_EXPIRY})
 
     return {error: false, data:{accessToken,refreshToken}}
