@@ -2,6 +2,13 @@ module.exports = {
   getAdminData(database) {
     return `SELECT * FROM ${database}.admin where BINARY username = ?`
   },
+  getPermissionsByRoleID(database) {
+    return `
+      SELECT p.id AS id, p.code AS code FROM ${database}.role_permission_rel AS rpr 
+      LEFT JOIN ${database}.permission AS p ON rpr.permission_id = p.id
+      WHERE rpr.role_id = ?;`;
+  }
+  ,
   getAgentData(database) {
     return `SELECT * FROM ${database}.agent A INNER JOIN ${database}.agent_identity AI ON A.identity_id = AI.id WHERE AI.ph_num = ?`
   },
