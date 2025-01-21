@@ -1,6 +1,9 @@
 module.exports = {
-  getAllProjectsByOrgID(database) {
-    return `SELECT * FROM ${database}.project WHERE org_id = ?`;
+  getAllProjectsByOrgID(database, isUnderResident) {
+    return `
+      SELECT DISTINCT p.* FROM ${database}.project p
+      ${isUnderResident ? `INNER JOIN ${database}.apartment a ON p.id = a.project_id` : ''}
+      WHERE p.org_id = ?`;
   },
   getProjectById(database) {
     return `SELECT * FROM ${database}.project WHERE org_id = ? AND id = ?`;

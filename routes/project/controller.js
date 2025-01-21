@@ -8,8 +8,10 @@ const queryBuilder = require('./query')
 
 exports.getProjectsController = async (request, response) => {
   const orgID = request.orgID
+  const isUnderResident = request.query?.underResident === "true"
+  
   try {
-    const projects = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
+    const projects = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE,isUnderResident), [orgID])
     for (const project of projects) {
       const serviceList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllActiveServicesByProject(CONSTANTS.BUILDING_DATABASE), [project.id])
       project.serviceList = serviceList // Add serviceList to the project
