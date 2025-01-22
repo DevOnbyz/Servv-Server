@@ -4,7 +4,7 @@ module.exports = {
   },
   getPermissionsByRoleID(database) {
     return `
-      SELECT p.id AS id, p.code AS code FROM ${database}.role_permission_rel AS rpr 
+      SELECT p.code AS code FROM ${database}.role_permission_rel AS rpr 
       LEFT JOIN ${database}.permission AS p ON rpr.permission_id = p.id
       WHERE rpr.role_id = ?;`;
   }

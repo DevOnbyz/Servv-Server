@@ -18,7 +18,8 @@ exports.generateAdminToken = async (adminData) => {
     const role = adminData.role_id ?? null
     const projectID = adminData.project_id ?? null
     const orgDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getOrgDetails(CONSTANTS.BUILDING_DATABASE), [orgID])
-    const permissions = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getPermissionsByRoleID(CONSTANTS.BUILDING_DATABASE), [adminData.role_id])
+    const permissionCodes = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getPermissionsByRoleID(CONSTANTS.BUILDING_DATABASE), [adminData.role_id])
+    const permissions = permissionCodes.map(permission => permission.code);
     const domain = orgDetails.domain
     const orgName = orgDetails.name
     const accessToken = await jwtSign({id,name:fullName, username, orgID, domain, orgName, role, projectID, userType: CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN,permissions}, {expiresIn: CONSTANTS.ACCESS_TOKEN_EXPIRY})
@@ -26,7 +27,7 @@ exports.generateAdminToken = async (adminData) => {
     return {error: false, data:{accessToken, refreshToken}}
   }
   catch(error){
-    Log.error(`[Servv] | generateAdminToken | Error in generating admin token`,error)
+    Log.error(`[Servv] | generateAdminToken | Error in generating admin token`,error.message)
     return {error: true, data: null}
   }
   
@@ -54,7 +55,7 @@ exports.generateCustomerToken = async (customerData) => {
     return {error: false, data:{accessToken}}
   }
   catch(error){
-    Log.error(`[Servv] | generateCustomerToken | Error in generating customer token`,error)
+    Log.error(`[Servv] | generateCustomerToken | Error in generating customer token`,error.message)
     return {error: true, data: null}
   }
   
@@ -77,7 +78,8 @@ exports.generateAgentToken = async (agentData) => {
     }))
     const orgDomains = (orgsDetails?.map(org => org.domain))?.join(',')
     const domain = `MOBILE-${orgDomains}`
-    const permissions = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getPermissionsByRoleID(CONSTANTS.BUILDING_DATABASE), [agentData.role_id])
+    const permissionCodes = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getPermissionsByRoleID(CONSTANTS.BUILDING_DATABASE), [agentData.role_id])
+    const permissions = permissionCodes.map(permission => permission.code);
     const role = agentData.role_id ?? null
 
     const accessToken = await jwtSign({id, name: fullName, identityID, domain,role, associatedOrganisation, userType: CONSTANTS.SERVV_USER_TYPE_STRING.AGENT, permissions})
@@ -86,7 +88,7 @@ exports.generateAgentToken = async (agentData) => {
     return {error: false, data:{accessToken,refreshToken}}
   }
   catch(error){
-    Log.error(`[Servv] | generateAgentToken | Error in generating agent token`,error)
+    Log.error(`[Servv] | generateAgentToken | Error in generating agent token`,error.message)
     return {error: true, data: null}
   }
   
