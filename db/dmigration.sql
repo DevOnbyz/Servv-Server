@@ -128,6 +128,7 @@ ALTER TABLE `role` MODIFY COLUMN `updated_by` INT DEFAULT NULL;
 ALTER TABLE `role` ADD COLUMN `created_by` INT DEFAULT NULL AFTER `user_type`;
 ALTER TABLE `role` ADD UNIQUE (`org_id`, `name`);
 
+ALTER TABLE `permission` DROP FOREIGN KEY fk_permission_ibfk_1;
 ALTER TABLE `permission` DROP COLUMN `org_id`;
 ALTER TABLE `permission` ADD COLUMN `created_by` INT DEFAULT NULL AFTER `code`;
 ALTER TABLE `permission` MODIFY COLUMN `updated_by` INT DEFAULT NULL;
