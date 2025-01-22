@@ -77,6 +77,7 @@ exports.addAgentController = async (request, response) => {
     const district = request.body.district ?? null
     const state = request.body.state ?? null
     const country = request.body.country ?? null
+    const roleId = request.body.roleId ?? null
 
     const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum])
     const agentIdentityID = _.isEmpty(phNumDetails) ? (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAgentIdentity(CONSTANTS.BUILDING_DATABASE), [{ ph_num: phNum, created_by: userID }]))?.insertId : phNumDetails[0]?.id
@@ -97,7 +98,8 @@ exports.addAgentController = async (request, response) => {
       district,
       state,
       country,
-      created_by: userID
+      created_by: userID,
+      role_id:roleId
     }
 
     const agentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAgent(CONSTANTS.BUILDING_DATABASE), [agentDetails]))?.insertId
@@ -135,6 +137,7 @@ exports.editAgentController = async (request, response) => {
     const district = request.body.district ?? null
     const state = request.body.state ?? null
     const country = request.body.country ?? null
+    const roleId = request.body.roleId ?? null
 
     const agentDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [id])
     const agentEntityID = agentDetails?.identity_id
@@ -148,7 +151,8 @@ exports.editAgentController = async (request, response) => {
       city,
       district,
       state,
-      country
+      country,
+      role_id:roleId
     }
     const existingServiceList = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllServicesByAgentID(CONSTANTS.BUILDING_DATABASE), [id]))?.map((item) => (item.service_id))
     const newServiceList = _.difference(serviceList, existingServiceList)

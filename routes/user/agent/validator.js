@@ -26,6 +26,9 @@ const addAgentSchema = Joi.object({
   country: Joi.string().required().messages({
     'string.empty': 'Country is required',
   }),
+  roleId: Joi.number().required().messages({
+    'number.empty': 'roleId is required',
+  }),
 })
 
 const editAgentSchema = Joi.object({
@@ -53,6 +56,9 @@ const editAgentSchema = Joi.object({
   }),
   country: Joi.string().required().messages({
     'string.empty': 'Country is required',
+  }),
+  roleId: Joi.number().required().messages({
+    'number.empty': 'roleId is required',
   }),
 })
 
