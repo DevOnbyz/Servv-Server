@@ -17,7 +17,7 @@ module.exports = {
     return `INSERT INTO ${database}.agent_service_rel SET ?`;
   },
   getAllAgentsUnderOrg(database) {
-    return `SELECT AG.id, AG.org_id, AG.identity_id, AG.status, AG.firstname, AG.lastname, AG.email_id as email, AG.city, AG.district, AG.state, AG.country ,AGI.ph_num as ph_num,AG.role_id as role_id, AG.created_at as created_at FROM ${database}.agent AG INNER JOIN ${database}.agent_identity AGI ON AG.identity_id = AGI.id WHERE AG.org_id = ? order by id desc`;
+    return `SELECT AG.id, AG.org_id, AG.identity_id, AG.status, AG.firstname, AG.lastname, AG.email_id as email, AG.city, AG.district, AG.state, AG.country ,AGI.ph_num as ph_num,AG.role_id as role_id,R.name AS role, AG.created_at as created_at FROM ${database}.agent AG INNER JOIN ${database}.agent_identity AGI ON AG.identity_id = AGI.id LEFT JOIN ${database}.role R ON AG.role_id = R.id  WHERE AG.org_id = ? order by id desc`;
   },
   getAllAgentsByAgentIDandOrg(database) {
     return `SELECT AG.id, AG.org_id, AG.identity_id, AG.status, AG.firstname, AG.lastname, AG.email_id, AG.city, AG.district, AG.state, AG.country ,AGI.ph_num as phNum FROM ${database}.agent AG INNER JOIN ${database}.agent_identity AGI ON AG.identity_id = AGI.id WHERE AG.id in (?) AND AG.org_id = ?`;

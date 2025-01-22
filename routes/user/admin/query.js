@@ -3,7 +3,13 @@ module.exports = {
     return `SELECT * FROM ${database}.admin where ph_num = ?`
   },
   getAllAdminsUnderOrg(database) {
-    return `SELECT id, firstname, lastname, email, ph_num, username, org_id, project_id, status, reports_to, role_id, created_at FROM ${database}.admin WHERE org_id = ? order by id desc`;
+    return `
+    SELECT a.id, a.firstname, a.lastname, a.email, a.ph_num, a.username, a.org_id, a.project_id, a.status, a.reports_to, a.role_id, r.name as role, a.created_at 
+    FROM ${database}.admin a
+    LEFT JOIN ${database}.role r 
+    ON a.role_id = r.id
+    WHERE a.org_id = ? ORDER BY  a.id DESC
+`;
   },
   addAdmin(database) {
     return `INSERT INTO ${database}.admin SET ?`
