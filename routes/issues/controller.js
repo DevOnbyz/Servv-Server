@@ -672,6 +672,7 @@ exports.approveEstimateController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [estimateData, estimate.id])
     const newIssueData = {
+      customer_preferred_time: null,
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED
     }
