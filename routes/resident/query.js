@@ -151,7 +151,7 @@ WHERE
     return `INSERT INTO ${database}.support SET ?`
   },
   getRazorpayPaymentByResidentID: (database) => {
-    return `SELECT p.final_amount,p.created_at as event_time, o.issue_id, s.name as serviceName
+    return `SELECT p.total_amount,p.created_at as event_time, o.issue_id, s.name as serviceName
     FROM ${database}.payment p
     JOIN ${database}.order o ON p.order_id = o.id 
     JOIN ${database}.issue i ON o.issue_id = i.id
@@ -161,7 +161,7 @@ WHERE
   getManualPaymentByResidentID: (database) => {
     return `
     SELECT 
-    i.total_charge as final_amount,
+    i.total_charge as total_amount,
     i.issue_id,
     s.name AS serviceName,
     ie.event_time AS event_time

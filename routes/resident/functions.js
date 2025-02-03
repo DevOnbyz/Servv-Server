@@ -9,10 +9,10 @@ const getE164 = require("../../lib/getE164");
 
 const formatPaymentHistory = (paymentHistory) => {
   return paymentHistory.map(payment => ({
-    finalAmount: payment.final_amount,
-    createdAt: payment.event_time,
+    totalAmount: payment.total_amount,
+    updatedAt: payment.event_time,
     issueId: payment.issue_id,
-    serviceName: payment.serviceName,
+    serviceName: payment.serviceName
   }));
 };
 
