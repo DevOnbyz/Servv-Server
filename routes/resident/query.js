@@ -155,7 +155,7 @@ WHERE
     JOIN ${database}.order o ON p.order_id = o.id
     JOIN ${database}.issue i ON o.issue_id = i.id
     JOIN ${database}.service s ON i.service_type = s.id
-    WHERE p.org_id = ?;`
+    WHERE p.org_id = ? AND i.resident_id = ?;`
   },
   getPaymentWithOrderByOrgID: (database) => {
     return `SELECT p.*, o.*
