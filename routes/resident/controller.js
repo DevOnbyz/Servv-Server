@@ -166,15 +166,15 @@ exports.addResidentBulkController = async (request, response) => {
   const userID = request.userID
   const domain = request.domain
   try {
-    if(request.file.mimetype != 'text/csv')
+    if (request.file.mimetype != 'text/csv')
       return sendHTTPResponse.error(response, 'Resident details file should be in CSV format')
-  
+
     const csvFile = request.file.buffer.toString('utf8')
     const completeResidentDetails = await neatCSV(csvFile)
 
     Log.info(`[${domain} | OrganisationID:${orgID}] | addResidentBulkController | ${JSON.stringify(completeResidentDetails)}`)
 
-    if(_.isEmpty(completeResidentDetails))
+    if (_.isEmpty(completeResidentDetails))
       return sendHTTPResponse.error(response, 'Resident details file should not be empty', null, 400)
 
     // Validations starts
@@ -186,23 +186,23 @@ exports.addResidentBulkController = async (request, response) => {
     const projectsUnderOrg = await runQuery(CONSTANTS.BUILDING_DATABASE, getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
     await validateProjectNames(orgID, distinctProjectNames, projectsUnderOrg)
 
-    const projectIDNameList = projectsUnderOrg.map((project) => ({id: project.id, name: project.name?.toLowerCase()}))
+    const projectIDNameList = projectsUnderOrg.map((project) => ({ id: project.id, name: project.name?.toLowerCase() }))
     await validateDoorNoAndAttachProjectID(orgID, completeResidentDetails, projectIDNameList)
 
     validateResidentPhNum(completeResidentDetails)
     // Validations ends
 
     await addAndAttachResidentID(orgID, userID, completeResidentDetails)
-    
+
     const newResidentList = completeResidentDetails?.filter((item) => item.residentID === null)
     const existingResidentList = completeResidentDetails?.filter((item) => item.residentID !== null)
 
-    if(_.isEmpty(newResidentList) && !_.isEmpty(existingResidentList)){
+    if (_.isEmpty(newResidentList) && !_.isEmpty(existingResidentList)) {
       Log.info(`[${domain} | OrganisationID:${orgID}] | addResidentController | Residents already exist for the selected projects. To make changes, please edit them in settings.`)
       return sendHTTPResponse.error(response, 'Residents already exist for the selected projects. To make changes, please edit them in settings.', null, 400)
     }
 
-    for(item of newResidentList) {
+    for (item of newResidentList) {
       const residentDetails = {
         firstname: item?.residentName,
         lastname: null,
@@ -394,17 +394,19 @@ exports.addSupportController = async (request, response) => {
 }
 exports.getResidentPaymentHistoryController = async (request, response) => {
   const residentID = parseInt(request.params.id)
-  
+
   try {
     const [residentDetails] = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByIDUnderOrg(CONSTANTS.BUILDING_DATABASE), [residentID])
 
     if (_.isEmpty(residentDetails)) return sendHTTPResponse.success(response, [])
     if (_.isEmpty(residentDetails.razorpay_route_account_id)) return sendHTTPResponse.error(response, 'Razorpay route account not found for the organisation - org_id:' + residentDetails.org_id, null, 400)
-      
-    const paymentHistory = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.getPaymentCompletedWithOrderByOrgID(CONSTANTS.BUILDING_DATABASE),[residentDetails.org_id,residentID])
-    residentDetails.paymentHistory = formatPaymentHistory(paymentHistory)
 
-    return sendHTTPResponse.success(response, 'Resident List fetched successfully',residentDetails)
+    const razorpayPaymentHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getRazorpayPaymentByResidentID(CONSTANTS.BUILDING_DATABASE), [residentDetails.org_id, residentID])
+    const manualPaymentHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getManualPaymentByResidentID(CONSTANTS.BUILDING_DATABASE), [residentDetails.org_id, residentID])
+
+    residentDetails.paymentHistory = formatPaymentHistory([...razorpayPaymentHistory,...manualPaymentHistory])
+
+    return sendHTTPResponse.success(response, 'Resident List fetched successfully', residentDetails)
   } catch (error) {
     Log.error(`[ residentID:${residentID}] | addSupportController | Error on adding Support | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on adding Support', error.message)

@@ -1,3 +1,4 @@
+const CONSTANTS = require("../../lib/constants");
 const { PAYMENT_STATUS } = require("../../lib/constants");
 
 module.exports = {
@@ -121,7 +122,7 @@ WHERE
       INNER JOIN ${database}.organisation O ON R.org_id = O.id
       WHERE R.id = ?;
     `;
-  },  
+  },
   updateApartmentDetails(database) {
     return `UPDATE ${database}.apartment SET ? WHERE id = ?`
   },
@@ -149,13 +150,34 @@ WHERE
   addSupport: (database) => {
     return `INSERT INTO ${database}.support SET ?`
   },
-  getPaymentCompletedWithOrderByOrgID: (database) => {
-    return `SELECT p.*, o.*, s.name as serviceName
+  getRazorpayPaymentByResidentID: (database) => {
+    return `SELECT p.final_amount,p.created_at as event_time, o.issue_id, s.name as serviceName
     FROM ${database}.payment p
-    JOIN ${database}.order o ON p.order_id = o.id
+    JOIN ${database}.order o ON p.order_id = o.id 
     JOIN ${database}.issue i ON o.issue_id = i.id
     JOIN ${database}.service s ON i.service_type = s.id
     WHERE p.org_id = ? AND i.resident_id = ?;`
+  },
+  getManualPaymentByResidentID: (database) => {
+    return `
+    SELECT 
+    i.total_charge as final_amount,
+    i.issue_id,
+    s.name AS serviceName,
+    ie.event_time AS event_time
+    FROM ${database}.invoice i
+    JOIN ${database}.issue iss ON i.issue_id = iss.id
+    JOIN ${database}.issue_event ie ON ie.issue_id = iss.id
+    AND ie.event_time = (
+        SELECT MAX(event_time) 
+        FROM ${database}.issue_event
+        WHERE issue_id = iss.id
+    )
+    JOIN ${database}.service s ON iss.service_type = s.id
+    WHERE iss.org_id = ? 
+    AND i.status = ${CONSTANTS.QUOTATION_STATUS.PAID}
+    AND iss.resident_id = ?
+`
   },
   getPaymentWithOrderByOrgID: (database) => {
     return `SELECT p.*, o.*
