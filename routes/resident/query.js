@@ -172,12 +172,7 @@ WHERE
         SELECT MAX(event_time) 
         FROM ${database}.issue_event
         WHERE issue_id = iss.id
-    )
-    AND ie.sub_status = (
-        SELECT sub_status 
-        FROM ${database}.issue_event
-        WHERE sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID}
-        AND issue_id = iss.id
+        AND sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID}
     )
     JOIN ${database}.service s ON iss.service_type = s.id
     WHERE iss.org_id = ? 
