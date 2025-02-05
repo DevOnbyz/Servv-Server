@@ -22,7 +22,7 @@ const addIssueSchema = Joi.object({
 })
 
 const scheduleSiteVisitSchema = Joi.object({
-  notes: Joi.string().optional().allow(null),
+  notes: Joi.string().optional().allow(null,""),
   agentID: Joi.number().required().messages({
     'string.empty': 'agentID is required',
   }),

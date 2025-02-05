@@ -70,7 +70,7 @@ module.exports = {
     ORDER BY AA.created_at DESC`;
   },
   getDetailedAssignmentUnderAgentByAssignmentID(database) {
-    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', COALESCE(R.lastname, '')) as ResidentName, RI.ph_num as ResidentPhone, AA.issue_id as issueId, CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as siteVisitTime,
+    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', COALESCE(R.lastname, '')) as ResidentName, RI.ph_num as ResidentPhone, AA.issue_id as issueId, CONCAT(B.firstname, ' ', COALESCE(B.lastname, '')) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as siteVisitTime,
     CASE
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
@@ -82,7 +82,7 @@ module.exports = {
     I.description as issueDescription,
     I.img_src as issueImages,
     P.city as city, P.district as district, P.state as state, P.country as country,
-    AA.created_at as AgentAssignmentCreatedTime,
+    I.created_at as AgentAssignmentCreatedTime,
     AA.updated_at as AgentAssignmentLastUpdatedTime,
     CASE
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING} THEN 'PENDING'

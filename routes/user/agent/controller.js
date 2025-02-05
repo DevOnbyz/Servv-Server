@@ -210,14 +210,14 @@ exports.getAgentAssignmentsController = async (request, response) => {
 exports.getAssignmentByIDController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
-  const userID = request.userID 
+  const userID = 2
   const assignmentID = request.params.assignmentID
   try {
     const detailedAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getDetailedAssignmentUnderAgentByAssignmentID(CONSTANTS.BUILDING_DATABASE), [assignmentID, userID])
     normalizedAgentList = {
       ...detailedAssignment,
-      agent_uploads: Array.isArray(detailedAssignment.agent_uploads) ? detailedAssignment.agent_uploads : detailedAssignment.agent_uploads ? [detailedAssignment.agent_uploads] : [],
-      issueImages: Array.isArray(detailedAssignment.issueImages) ? detailedAssignment.issueImages : detailedAssignment.issueImages ? [detailedAssignment.issueImages] : []
+      agent_uploads: Array.isArray(detailedAssignment?.agent_uploads) ? detailedAssignment?.agent_uploads : detailedAssignment?.agent_uploads ? [detailedAssignment?.agent_uploads] : [],
+      issueImages: Array.isArray(detailedAssignment?.issueImages) ? detailedAssignment?.issueImages : detailedAssignment?.issueImages ? [detailedAssignment?.issueImages] : []
     }
     return sendHTTPResponse.success(response, 'Fetched assignment details successfully', normalizedAgentList)
   } catch (error) {
