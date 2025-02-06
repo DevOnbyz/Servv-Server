@@ -210,7 +210,7 @@ exports.getAgentAssignmentsController = async (request, response) => {
 exports.getAssignmentByIDController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
-  const userID = 2
+  const userID = request.userID
   const assignmentID = request.params.assignmentID
   try {
     const detailedAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getDetailedAssignmentUnderAgentByAssignmentID(CONSTANTS.BUILDING_DATABASE), [assignmentID, userID])
