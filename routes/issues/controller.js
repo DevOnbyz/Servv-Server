@@ -680,6 +680,7 @@ exports.approveEstimateController = async (request, response) => {
 
     const issueLogData = {
       issue_id: issueID,
+      entity_id: estimate.id,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_APPROVED,
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED,
@@ -718,6 +719,7 @@ exports.sendEstimateController = async (request, response) => {
 
     const issueLogData = {
       issue_id: issueID,
+      entity_id: estimate.id,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
@@ -813,6 +815,7 @@ exports.editEstimateController = async (request, response) => {
 
     const issueLogData = {
       issue_id: issueID,
+      entity_id: estimate.id,
       event_type: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
@@ -860,6 +863,7 @@ exports.rejectEstimateController = async (request, response) => {
 
     const issueLogData = {
       issue_id: issueID,
+      entity_id: estimate.id,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_REJECTED,
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED,
@@ -1080,6 +1084,7 @@ exports.editInvoiceController = async (request, response) => {
 
     const issueLogData = {
       issue_id: issueID,
+      entity_id: invoiceData.id,
       event_type: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_SENT,
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT,
@@ -1121,6 +1126,7 @@ exports.approveInvoiceController = async (request, response) => {
 
     const issueLogData = {
       issue_id: issueID,
+      entity_id:invoice.id,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_APPROVED,
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED,
@@ -1167,6 +1173,7 @@ exports.recordPaymentController = async (request, response) => {
 
     const issueLogData = {
       issue_id: issueID,
+      entity_id:paymentDetails.id,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.PAID,
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID,
@@ -1204,10 +1211,10 @@ exports.addPreferredTimeController = async (request, response) => {
 
 
 exports.getIssueHistoryController = async (request, response) => {
-  const orgID = request.orgID
+  const orgID = 1
   const domain = request.domain
   const issueID = request.params.issueID
-  const isCustomer = request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER
+  const isCustomer = true
   try {
     const query = isCustomer ? queryBuilder.getIssueHistoryForCustomer(CONSTANTS.BUILDING_DATABASE) : queryBuilder.getIssueHistory(CONSTANTS.BUILDING_DATABASE)
     const issueHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, query, [issueID])
