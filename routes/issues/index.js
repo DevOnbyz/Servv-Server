@@ -5,6 +5,7 @@ const controller = require('./controller')
 const { addIssueSchema, scheduleSiteVisitSchema, reAssignAgentSchema, recordPaymentSchema, preferredTimeSchema, workOrderFeedbackSchema, issueFeedbackSchema } = require('./validator')
 const multer = require('multer')
 const Fn = require('./functions')
+const Log = require('../../log')
 
 router.get('/', controller.getIssuesController)
 router.get('/stat', controller.getIssueStatController)
@@ -15,6 +16,7 @@ router.post('/',
   (req, res, next) => {
     Fn.uploadImage(req, res, (err) => {
       if (err instanceof multer.MulterError || err) {
+        Log.error(`[ addIssueController | ${err.message ?? JSON.stringify(err)}`)
         return sendHTTPResponse.error(res, 'Error while uploading image', err.message)
       }
       controller.addIssueController(req, res, next)
@@ -32,6 +34,7 @@ router.patch('/:issueID/site-visit/complete',
   (req, res, next) => {
     Fn.uploadImage(req, res, (err) => {
       if (err instanceof multer.MulterError || err) {
+        Log.error(`[ completeSiteVisitController | ${err.message ?? JSON.stringify(err)}`)
         return sendHTTPResponse.error(res, 'Error while uploading image', err.message)
       }
       controller.completeSiteVisitController(req, res, next)
@@ -50,6 +53,7 @@ router.patch('/:issueID/work-order/complete',
   (req, res, next) => {
     Fn.uploadImage(req, res, (err) => {
       if (err instanceof multer.MulterError || err) {
+        Log.error(`[ completeWorkOrderController | ${err.message ?? JSON.stringify(err)}`)
         return sendHTTPResponse.error(res, 'Error while uploading image', err.message)
       }
       controller.completeWorkOrderController(req, res, next)
@@ -66,6 +70,7 @@ router.post('/:issueID/estimate',
   (req, res, next) => {
     Fn.uploadImageAndFile(req, res, (err) => {
       if (err instanceof multer.MulterError || err) {
+        Log.error(`[ addAndSendEstimateController | ${err.message ?? JSON.stringify(err)}`)
         return sendHTTPResponse.error(res, 'Error while uploading file', err.message)
       }
       controller.addAndSendEstimateController(req, res, next)
@@ -76,6 +81,7 @@ router.patch('/:issueID/estimate/edit',
   (req, res, next) => {
     Fn.uploadImageAndFile(req, res, (err) => {
       if (err instanceof multer.MulterError || err) {
+        Log.error(`[ editEstimateController | ${err.message ?? JSON.stringify(err)}`)
         return sendHTTPResponse.error(res, 'Error while uploading file', err.message)
       }
       controller.editEstimateController(req, res, next)
@@ -92,6 +98,7 @@ router.post('/:issueID/invoice',
   (req, res, next) => {
     Fn.uploadImageAndFile(req, res, (err) => {
       if (err instanceof multer.MulterError || err) {
+        Log.error(`[ addAndSentInvoiceController | ${err.message ?? JSON.stringify(err)}`)
         return sendHTTPResponse.error(res, 'Error while uploading file', err.message)
       }
       controller.addAndSentInvoiceController(req, res, next)
@@ -102,6 +109,7 @@ router.patch('/:issueID/invoice/edit',
   (req, res, next) => {
     Fn.uploadImageAndFile(req, res, (err) => {
       if (err instanceof multer.MulterError || err) {
+        Log.error(`[ editInvoiceController | ${err.message ?? JSON.stringify(err)}`)
         return sendHTTPResponse.error(res, 'Error while uploading file', err.message)
       }
       controller.editInvoiceController(req, res, next)
