@@ -8,7 +8,7 @@ const fs = require('fs')
 const path = require('path')
 const { v4: uuidv4 } = require('uuid')
 const { addIssueEvent } = require('../../db/query')
-const { generateOTP, getSubStatusStringById, blastPushNotification } = require('../../lib/function')
+const { generateOTP, getSubStatusStringById, blastPushNotification, createResidentMessage, createAgentMessage } = require('../../lib/function')
 const moment = require('moment')
 const runQueryOne = require('../../db/runQueryOne')
 const Fn = require('./functions')
@@ -223,6 +223,12 @@ exports.scheduleVisitIssueController = async (request, response) => {
     }
 
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
+    const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails.resident_id]))?.fcmToken
+    const jobTitle = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getJobTitleByServiceSubType(CONSTANTS.BUILDING_DATABASE), [issueDetails.service_subtype]))?.name
+    const message = createResidentMessage(CONSTANTS.RESIDENT_MESSAGE_TYPE.SITE_VISIT_SCHEDULED, { requestId: issueDetails.id, jobTitle: jobTitle })
+    blastPushNotification(residentFCMToken, 'Site Visit Scheduled', message)
+
     Log.info(`[${domain} | OrganisationID:${orgID}] | scheduleVisitIssueController | Issue visit scheduled successfully | IssueID: ${issueID} | LogID: ${logID}`)
     return sendHTTPResponse.success(response, 'Issue visit scheduled successfully', { entityID, logID })
   } catch (error) {
@@ -444,6 +450,7 @@ exports.cancelSiteVisitController = async (request, response) => {
       updated_by: request.userID
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
 
     const activeSiteVisitID = activeSiteVisit.id
     const updatedAgentAssignmentData = {
@@ -467,6 +474,19 @@ exports.cancelSiteVisitController = async (request, response) => {
 
     // await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.cancelSiteVisit(CONSTANTS.BUILDING_DATABASE), [issueID])
     Log.info(`[${domain} | OrganisationID:${orgID}] | cancelSiteVisitController | Site visit has been cancelled | IssueID: ${issueID} | LogID: ${logID}`)
+    const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails.resident_id]))?.fcmToken
+
+    const agentDetails = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentDetailsById(CONSTANTS.BUILDING_DATABASE), [issueDetails.agent_id]))?.fcmToken
+    const agentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [agentDetails.identity_id]))?.fcmToken
+  
+    const residentMessage = createResidentMessage(CONSTANTS.RESIDENT_MESSAGE_TYPE.WORK_CANCELED, { requestId: issueID, jobTitle: jobTitle })
+    blastPushNotification(residentFCMToken, 'Site Visit Canceled', residentMessage)
+
+  
+    const jobTitle = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getJobTitleByServiceSubType(CONSTANTS.BUILDING_DATABASE), [issueDetails.service_subtype]))?.name
+    const agentMessage = createAgentMessage(CONSTANTS.RESIDENT_MESSAGE_TYPE.ESTIMATE_AVAILABLE, { requestId: issueDetails.id, jobTitle: jobTitle })
+    blastPushNotification(agentFCMToken, 'Site Visit Canceled', agentMessage)
+
     return sendHTTPResponse.success(response, 'Site visit has been cancelled')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | cancelSiteVisitController | ${error.message}`)
@@ -644,7 +664,10 @@ exports.addAndSendEstimateController = async (request, response) => {
       const issueDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
       const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails.resident_id]))?.fcmToken
       Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | ResidentFCMToken: ${residentFCMToken} | IssueID: ${issueID} | Notification sent successfully`)
-      blastPushNotification(residentFCMToken, 'Estimate Generated', `An estimate has been generated for your service request.`)
+
+      const jobTitle = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getJobTitleByServiceSubType(CONSTANTS.BUILDING_DATABASE), [issueDetails.service_subtype]))?.name
+      const message = createResidentMessage(CONSTANTS.RESIDENT_MESSAGE_TYPE.ESTIMATE_AVAILABLE, { requestId: issueDetails.id, jobTitle: jobTitle })
+      blastPushNotification(residentFCMToken, 'Estimate Available', message)
     }
     Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | The Estimate has been ${isDraft ? "drafted" : "sent"} successfully | IssueID: ${issueID}`)
     return sendHTTPResponse.success(response, `The Estimate has been ${isDraft ? "drafted" : "sent"} successfully`, { logID })
@@ -999,7 +1022,10 @@ exports.addAndSentInvoiceController = async (request, response) => {
       const issueDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
       const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails.resident_id]))?.fcmToken
       Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | ResidentFCMToken: ${residentFCMToken} | IssueID: ${issueID} | Notification sent successfully`)
-      blastPushNotification(residentFCMToken, 'Invoice Generated', `An invoice has been generated for your service request.`)
+
+      const jobTitle = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getJobTitleByServiceSubType(CONSTANTS.BUILDING_DATABASE), [issueDetails.service_subtype]))?.name
+      const message = createResidentMessage(CONSTANTS.RESIDENT_MESSAGE_TYPE.WORK_CANCELED, { requestId: issueID, jobTitle: jobTitle })
+      blastPushNotification(residentFCMToken, 'Invoice Ready', message)
     }
     Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | The invoice has been ${isDraft ? 'drafted' : 'sent'} successfully | IssueID: ${issueID}`)
     return sendHTTPResponse.success(response, `The invoice has been ${isDraft ? 'drafted' : 'sent'} successfully`, { logID })
@@ -1265,6 +1291,8 @@ exports.cancelWorkOrderController = async (request, response) => {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_CANCELLED
     }
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
     const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
 
@@ -1287,6 +1315,16 @@ exports.cancelWorkOrderController = async (request, response) => {
     }
 
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
+    const jobTitle = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getJobTitleByServiceSubType(CONSTANTS.BUILDING_DATABASE), [issueDetails.service_subtype]))?.name
+    const residentMessage = createResidentMessage(CONSTANTS.RESIDENT_MESSAGE_TYPE.WORK_CANCELED, { requestId: issueID, jobTitle: jobTitle })
+    blastPushNotification(residentFCMToken, 'Work Canceled', residentMessage)
+
+    const agentDetails = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentDetailsById(CONSTANTS.BUILDING_DATABASE), [issueDetails.agent_id]))?.fcmToken
+    const agentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [agentDetails.identity_id]))?.fcmToken
+    const agentMessage = createAgentMessage(CONSTANTS.RESIDENT_MESSAGE_TYPE.ESTIMATE_AVAILABLE, { requestId: issueDetails.id, jobTitle: jobTitle })
+    blastPushNotification(agentFCMToken, 'Estimate Available', agentMessage)
+
     Log.info(`[${domain} | OrganisationID:${orgID}] | cancelWorkOrderController | The work order has been cancelled | IssueID: ${issueID} | LogID: ${logID}`)
     return sendHTTPResponse.success(response, 'The work order has been cancelled')
   } catch (error) {
