@@ -1211,10 +1211,10 @@ exports.addPreferredTimeController = async (request, response) => {
 
 
 exports.getIssueHistoryController = async (request, response) => {
-  const orgID = request.orgID
+  const orgID = 1
   const domain = request.domain
   const issueID = request.params.issueID
-  const isCustomer = request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER
+  const isCustomer = true
   try {
     const query = isCustomer ? queryBuilder.getIssueHistoryForCustomer(CONSTANTS.BUILDING_DATABASE) : queryBuilder.getIssueHistory(CONSTANTS.BUILDING_DATABASE)
     const issueHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, query, [issueID])
