@@ -41,9 +41,7 @@ const reAssignAgentSchema = Joi.object({
   modifiedVisit: Joi.boolean().required().messages({
     'string.empty': 'modifiedVisit is required',
   }),
-  modifiedDate: Joi.string().required().messages({
-    'string.empty': 'date and time is required',
-  }),
+  modifiedDate: Joi.string().optional().allow(null),
   modifiedNote: Joi.string().optional().allow(null, ''),
 })
 
