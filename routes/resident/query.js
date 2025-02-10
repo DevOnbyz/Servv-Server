@@ -17,6 +17,9 @@ module.exports = {
   addResidentIdentity(database) {
     return `INSERT INTO ${database}.resident_identity SET ?`
   },
+  updateResidentIdentity(database) {
+    return `UPDATE ${database}.resident_identity SET ? WHERE id = ?`
+  },
   addApartment(database) {
     return `INSERT INTO ${database}.apartment SET ?`
   },

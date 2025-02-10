@@ -249,6 +249,7 @@ exports.editResidentController = async (request, response) => {
     const email = request.body.emailID
     const apartments = request.body.apartments
     const status = request.body.status
+    const phNum = request.body.phNum
     const residentOwnedApartmentRelDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentApartmentRelByResidentID(CONSTANTS.BUILDING_DATABASE), [residentID])
     const ownedApartmentID = residentOwnedApartmentRelDetails?.map((item) => item.apartment_id)
     const residentOwnedApartmentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getApartmentsByIDs(CONSTANTS.BUILDING_DATABASE), [ownedApartmentID])
@@ -257,6 +258,21 @@ exports.editResidentController = async (request, response) => {
       projectID: item.project_id,
       doorNo: item.name,
     }))
+
+    const currentResidentDetails = await runQueryOne(
+      CONSTANTS.BUILDING_DATABASE,
+      queryBuilder.getResidentByID(CONSTANTS.BUILDING_DATABASE),
+      [residentID]
+    )
+    const currentIdentityID = currentResidentDetails?.identity_id
+
+    const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum])
+
+    if (!_.isEmpty(phNumDetails) && phNumDetails[0]?.id !== currentIdentityID)
+      return sendHTTPResponse.error(response, 'Resident with same phone number already exists', null, 400)
+
+    if (_.isEmpty(phNumDetails))
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentIdentity(CONSTANTS.BUILDING_DATABASE), [{ ph_num: phNum, created_by: userID },currentIdentityID])
 
     for (item of apartments) {
       const doorNo = unifyDoorNumber(item?.doorNo)
@@ -404,7 +420,7 @@ exports.getResidentPaymentHistoryController = async (request, response) => {
     const razorpayPaymentHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getRazorpayPaymentByResidentID(CONSTANTS.BUILDING_DATABASE), [residentDetails.org_id, residentID])
     const manualPaymentHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getManualPaymentByResidentID(CONSTANTS.BUILDING_DATABASE), [residentDetails.org_id, residentID])
 
-    residentDetails.paymentHistory = formatPaymentHistory([...razorpayPaymentHistory,...manualPaymentHistory])
+    residentDetails.paymentHistory = formatPaymentHistory([...razorpayPaymentHistory, ...manualPaymentHistory])
 
     return sendHTTPResponse.success(response, 'Resident List fetched successfully', residentDetails)
   } catch (error) {
