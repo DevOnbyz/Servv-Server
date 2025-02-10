@@ -249,6 +249,7 @@ exports.editResidentController = async (request, response) => {
     const email = request.body.emailID
     const apartments = request.body.apartments
     const status = request.body.status
+    const phNum = request.body.phNum
     const residentOwnedApartmentRelDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentApartmentRelByResidentID(CONSTANTS.BUILDING_DATABASE), [residentID])
     const ownedApartmentID = residentOwnedApartmentRelDetails?.map((item) => item.apartment_id)
     const residentOwnedApartmentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getApartmentsByIDs(CONSTANTS.BUILDING_DATABASE), [ownedApartmentID])
@@ -257,6 +258,23 @@ exports.editResidentController = async (request, response) => {
       projectID: item.project_id,
       doorNo: item.name,
     }))
+
+    const currentResidentDetails = await runQueryOne(
+      CONSTANTS.BUILDING_DATABASE,
+      queryBuilder.getResidentByID(CONSTANTS.BUILDING_DATABASE),
+      [residentID]
+    )
+    const currentIdentityID = currentResidentDetails?.identity_id
+
+      const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.getResidentIdentityByPhNum(CONSTANTS.BUILDING_DATABASE),[phNum])
+
+      if (!_.isEmpty(phNumDetails) && phNumDetails[0]?.id !== currentIdentityID)
+          return sendHTTPResponse.error(response, 'Resident with same phone number already exists', null, 400)
+
+      if (_.isEmpty(phNumDetails)) {
+        const newIdentityID = (await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.addResidentIdentity(CONSTANTS.BUILDING_DATABASE),[{ ph_num: phNum, created_by: userID }]))?.insertId
+        await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.updateResidentDetails(CONSTANTS.BUILDING_DATABASE),[{ identity_id: newIdentityID }, residentID])
+      }
 
     for (item of apartments) {
       const doorNo = unifyDoorNumber(item?.doorNo)
