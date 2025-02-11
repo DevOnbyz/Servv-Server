@@ -128,11 +128,7 @@ module.exports = {
         IE.creator_id, 
         IE.entity_id, 
         IE.creator_type, 
-        CASE 
-        WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED}, ${ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}, ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}) 
-        THEN (SELECT customer_preferred_time FROM ${database}.issue WHERE id = IE.issue_id)
-        ELSE IE.event_time
-        END as event_time,
+        IE.event_time, 
         (SELECT is_satisfied FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} ORDER BY created_at DESC LIMIT 1) as isSatisfied,
         (SELECT feedback_comments FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} ORDER BY created_at DESC LIMIT 1) as feedbackComments,
         AA.updated_at
@@ -140,7 +136,7 @@ module.exports = {
     LEFT JOIN ${database}.admin A ON IE.creator_id = A.id
     LEFT JOIN ${database}.agent_assignment AA ON IE.issue_id = AA.issue_id AND AA.status = 1
     WHERE IE.issue_id = ? AND IE.sub_status not in (${ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT})
-    ORDER BY IE.created_at DESC`;
+    ORDER BY IE.created_at DESC`; 
   },
   getIssuesUnderResident(database, limit, offset) {
     return `SELECT I.id, A.name as doorNo, P.name as projectName, CONCAT(R.firstname, ' ',  COALESCE(R.lastname, '')) as name,
