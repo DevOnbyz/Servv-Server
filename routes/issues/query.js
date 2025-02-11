@@ -375,16 +375,16 @@ module.exports = {
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN 'Invoice Sent'
     ELSE 'Unknown Event' END as event_type,
     CASE
-    WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = creator_id LIMIT 1)
-    WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = creator_id LIMIT 1)
-    WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.resident WHERE id = creator_id LIMIT 1) END as name,
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = creator_id LIMIT 1)
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = creator_id LIMIT 1)
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.resident WHERE id = creator_id LIMIT 1) END as name,
     CASE
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN 'Admin'
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN 'Agent'
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN 'Resident' END as userType,
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
     END as agentName,
     CASE
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1)
@@ -395,8 +395,8 @@ module.exports = {
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN (SELECT total_charge FROM ${database}.estimate WHERE id = entity_id LIMIT 1)
     END as totalCharge,
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
     END as createdBy
     FROM ${database}.issue_event where issue_id = ? ORDER BY created_at ASC`;
   },
