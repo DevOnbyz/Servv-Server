@@ -125,7 +125,7 @@ CREATE TABLE `project_service_rel` (
 );
 CREATE TABLE `resident_identity` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `ph_num` VARCHAR(255) UNIQUE NOT NULL,  -- Phone number stays unique here
+    `ph_num` VARCHAR(255) NOT NULL,  -- Phone number is not unique becuase same number can have different org
     `email_id` VARCHAR(255),
     `fcm_token` TEXT,
     `created_by` INT,

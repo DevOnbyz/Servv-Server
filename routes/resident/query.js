@@ -14,6 +14,9 @@ module.exports = {
   getResidentIdentityByPhNum(database) {
     return `SELECT * FROM ${database}.resident_identity where ph_num = ?`
   },
+  getResidentIdentityByPhNumAndOrg(database) {
+    return `SELECT RI.* FROM ${database}.resident_identity RI JOIN ${database}.resident R ON R.identity_id = RI.id WHERE RI.ph_num = ? AND R.org_id = ?`
+  },
   addResidentIdentity(database) {
     return `INSERT INTO ${database}.resident_identity SET ?`
   },

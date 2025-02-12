@@ -162,3 +162,6 @@ VALUES
 
 ALTER TABLE `agent` ADD COLUMN `role_id` INT;
 ALTER TABLE `agent` ADD CONSTRAINT `fk_agent_ibfk_5` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE CASCADE;
+
+--12-02-2025
+ALTER TABLE `resident_identity` DROP INDEX ph_num;
