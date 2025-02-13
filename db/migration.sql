@@ -133,6 +133,7 @@ CREATE TABLE `resident_identity` (
     `updated_by` INT,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     CONSTRAINT `fk_resident_identity_ibfk_1` FOREIGN KEY (created_by) REFERENCES admin (id)
+    INDEX `idx_ph_num` (`ph_num`)  -- Regular index on ph_num  
 );
 
 CREATE TABLE `resident` (

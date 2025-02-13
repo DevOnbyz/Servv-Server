@@ -165,3 +165,4 @@ ALTER TABLE `agent` ADD CONSTRAINT `fk_agent_ibfk_5` FOREIGN KEY (`role_id`) REF
 
 --12-02-2025
 ALTER TABLE `resident_identity` DROP INDEX ph_num;
+ALTER TABLE `resident_identity` ADD INDEX `idx_ph_num` (`ph_num`);
