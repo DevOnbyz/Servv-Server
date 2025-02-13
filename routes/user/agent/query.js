@@ -93,7 +93,7 @@ module.exports = {
     CONCAT(A.firstname, ' ', A.lastname) as agentAssignmentCreatedBy,
     CONCAT(B.firstname, ' ', B.lastname) as issueCreatedBy
     FROM ${database}.agent_assignment AA
-    LEFT JOIN ${database}.agent A ON A.id = AA.agent_id
+    LEFT JOIN ${database}.admin A ON A.id = AA.assigned_by
     LEFT JOIN ${database}.admin B ON B.id = AA.created_by
     LEFT JOIN ${database}.issue I ON I.id = AA.issue_id
     LEFT JOIN ${database}.apartment AP ON AP.id = I.apartment_id
