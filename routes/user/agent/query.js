@@ -89,6 +89,10 @@ module.exports = {
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
     END as status,
+    CASE 
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN IE.event_time 
+    ELSE NULL 
+    END as assignmentCompletedTime,
     AP.name as doorNo, P.name as projectName, S.name as serviceType, SOR.name as serviceSubTypeName,
     CONCAT(A.firstname, ' ', A.lastname) as agentAssignmentCreatedBy,
     CONCAT(B.firstname, ' ', B.lastname) as issueCreatedBy
@@ -102,6 +106,7 @@ module.exports = {
     LEFT JOIN ${database}.service_organisation_rel SOR ON SOR.id = I.service_subtype
     LEFT JOIN ${database}.resident R ON R.id = I.resident_id
     LEFT JOIN ${database}.resident_identity RI ON RI.id = R.identity_id
+    LEFT JOIN ${database}.issue_event IE ON IE.issue_id = I.id AND IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED})
     where AA.id = ? AND AA.agent_id = ? ORDER BY AA.created_at DESC`;
   }
 };
