@@ -8,12 +8,14 @@ const runQueryOne = require("../../db/runQueryOne");
 const getE164 = require("../../lib/getE164");
 
 const formatPaymentHistory = (paymentHistory) => {
-  return paymentHistory.map(payment => ({
-    totalAmount: payment.total_amount,
-    updatedAt: payment.event_time,
-    issueId: payment.issue_id,
-    serviceName: payment.serviceName
-  }));
+  return paymentHistory
+    .sort((a, b) => new Date(b.event_time) - new Date(a.event_time))
+    .map(payment => ({
+      totalAmount: payment.total_amount,
+      updatedAt: payment.event_time,
+      issueId: payment.issue_id,
+      serviceName: payment.serviceName
+    }));
 };
 
 const validateKeys = (data) => {
