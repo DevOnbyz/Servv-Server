@@ -162,3 +162,10 @@ VALUES
 
 ALTER TABLE `agent` ADD COLUMN `role_id` INT;
 ALTER TABLE `agent` ADD CONSTRAINT `fk_agent_ibfk_5` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE CASCADE;
+
+
+
+
+
+ALTER TABLE `invoice` MODIFY COLUMN `total_charge` FLOAT NOT NULL;
+ALTER TABLE `estimate` MODIFY COLUMN `total_charge` FLOAT NOT NULL;
