@@ -648,6 +648,12 @@ exports.addAndSendEstimateController = async (request, response) => {
       status: isDraft ? CONSTANTS.QUOTATION_STATUS.DRAFTED : CONSTANTS.QUOTATION_STATUS.SEND,
       created_by: request.userID
     }
+
+    const infoJSON = {
+      estimate_amount: totalCharge,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
     const issueLogData = {
       issue_id: issueID,
       event_type: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
@@ -655,7 +661,8 @@ exports.addAndSendEstimateController = async (request, response) => {
       sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
       description: notes,
       creator_id: request.userID,
-      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      info: JSON.stringify(infoJSON)
     }
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
@@ -707,6 +714,12 @@ exports.approveEstimateController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
+    const infoJSON = {
+      estimate_amount: estimate.total_charge,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
     const issueLogData = {
       issue_id: issueID,
       entity_id: estimate.id,
@@ -714,7 +727,8 @@ exports.approveEstimateController = async (request, response) => {
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED,
       creator_id: request.userID,
-      creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      info: JSON.stringify(infoJSON)
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
@@ -746,6 +760,12 @@ exports.sendEstimateController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
+    const infoJSON = {
+      estimate_amount: estimate.total_charge,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type:CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
     const issueLogData = {
       issue_id: issueID,
       entity_id: estimate.id,
@@ -753,7 +773,8 @@ exports.sendEstimateController = async (request, response) => {
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
       creator_id: request.userID,
-      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      info: JSON.stringify(infoJSON)
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
@@ -843,9 +864,9 @@ exports.editEstimateController = async (request, response) => {
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [estimateData, estimate.id])
 
     const infoJSON = {
-      estimate_amount: estimate.total_charge,
-      approved_rejected_by: estimate.approved_rejected_by || null,
-      approved_rejected_by_type: estimate.approved_rejected_by_type || null
+      estimate_amount: totalCharge,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
 
     const issueLogData = {
@@ -897,6 +918,12 @@ exports.rejectEstimateController = async (request, response) => {
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
+    const infoJSON = {
+      estimate_amount: estimate.total_charge,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
     const issueLogData = {
       issue_id: issueID,
       entity_id: estimate.id,
@@ -904,7 +931,8 @@ exports.rejectEstimateController = async (request, response) => {
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED,
       creator_id: request.userID,
-      creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      info: JSON.stringify(infoJSON)
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
     Log.info(`[${domain} | OrganisationID:${orgID}] | rejectEstimateController | The estimate has been rejected | estimateID: ${estimate.id} | logID: ${logID}`)
@@ -1010,6 +1038,11 @@ exports.addAndSentInvoiceController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
+    const infoJSON = {
+      invoice_amount: totalCharge,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
     const issueLogData = {
       issue_id: issueID,
       event_type: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_SENT,
@@ -1017,7 +1050,8 @@ exports.addAndSentInvoiceController = async (request, response) => {
       sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT,
       description: notes,
       creator_id: request.userID,
-      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      info: JSON.stringify(infoJSON)
     }
 
     if (_.isEmpty(exsitingInvoiceDetails)) {
@@ -1167,6 +1201,12 @@ exports.approveInvoiceController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
+    const infoJSON = {
+      invoice_amount: invoice.total_charge,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
     const issueLogData = {
       issue_id: issueID,
       entity_id: invoice.id,
@@ -1174,7 +1214,8 @@ exports.approveInvoiceController = async (request, response) => {
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED,
       creator_id: request.userID,
-      creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      info: JSON.stringify(infoJSON)
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 

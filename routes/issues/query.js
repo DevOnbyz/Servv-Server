@@ -136,7 +136,7 @@ module.exports = {
     LEFT JOIN ${database}.admin A ON IE.creator_id = A.id
     LEFT JOIN ${database}.agent_assignment AA ON IE.issue_id = AA.issue_id AND AA.status = 1
     WHERE IE.issue_id = ? AND IE.sub_status not in (${ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT})
-    ORDER BY IE.created_at DESC`; 
+    ORDER BY IE.created_at DESC`;
   },
   getIssuesUnderResident(database, limit, offset) {
     return `SELECT I.id, A.name as doorNo, P.name as projectName, CONCAT(R.firstname, ' ',  COALESCE(R.lastname, '')) as name,
@@ -387,13 +387,37 @@ module.exports = {
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1) 
     END as visitTime,
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN (SELECT total_charge FROM ${database}.invoice WHERE id = entity_id LIMIT 1)
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN (SELECT total_charge FROM ${database}.estimate WHERE id = entity_id LIMIT 1)
-    END as totalCharge,
+    WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} ,${ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT}) THEN 
+        CASE 
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.estimate_amount')) IS NOT NULL 
+            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.estimate_amount')) AS DECIMAL(10,2))
+            ELSE (SELECT total_charge FROM ${database}.estimate WHERE id = entity_id LIMIT 1)
+        END
+    WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED}, ${ISSUE_SUB_STATUS_NUM.PAID}) THEN 
+        CASE 
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.invoice_amount')) IS NOT NULL 
+            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.invoice_amount')) AS DECIMAL(10,2))
+            ELSE (SELECT total_charge FROM ${database}.invoice WHERE id = entity_id LIMIT 1)
+        END
+    END as totalCharge, 
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
-    END as createdBy
+    WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.PAID} ,${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}) THEN 
+        CASE
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by')) IS NOT NULL AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by_type')) = ${SERVV_USER_TYPE_NUM.ADMIN}
+            THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by')) LIMIT 1)
+            ELSE (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
+        END
+    END as createdBy,
+    CASE
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} AND info IS NOT NULL AND JSON_VALID(info) AND JSON_CONTAINS_PATH(info, 'one', '$.agent_ids') THEN 
+        (
+            SELECT JSON_ARRAYAGG(CONCAT(firstname, ' ', COALESCE(lastname, ''))) FROM ${database}.agent
+            WHERE id IN (
+                SELECT jt.agent_id
+                FROM JSON_TABLE( JSON_EXTRACT(info, '$.agent_ids'), '$[*]' COLUMNS ( agent_id INT PATH '$' )
+            ) AS jt)
+        )
+    END as previousAgents
     FROM ${database}.issue_event where issue_id = ? ORDER BY created_at ASC`;
   },
   getIssueHistoryForCustomer(database) {
@@ -431,12 +455,26 @@ module.exports = {
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1) 
     END as visitTime,
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN (SELECT total_charge FROM ${database}.invoice WHERE id = entity_id LIMIT 1)
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN (SELECT total_charge FROM ${database}.estimate WHERE id = entity_id LIMIT 1)
-    END as totalCharge,
+    WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}) THEN 
+        CASE 
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.estimate_amount')) IS NOT NULL 
+            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.estimate_amount')) AS DECIMAL(10,2))
+            ELSE (SELECT total_charge FROM ${database}.estimate WHERE id = entity_id LIMIT 1)
+        END
+    WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.PAID}) THEN 
+        CASE 
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.invoice_amount')) IS NOT NULL 
+            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.invoice_amount')) AS DECIMAL(10,2))
+            ELSE (SELECT total_charge FROM ${database}.invoice WHERE id = entity_id LIMIT 1)
+        END
+    END as totalCharge, 
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
+    WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.PAID} ,${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}) THEN 
+        CASE
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by')) IS NOT NULL AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by_type')) = ${SERVV_USER_TYPE_NUM.ADMIN}
+            THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by')) LIMIT 1)
+            ELSE (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
+        END
     END as createdBy
     FROM ${database}.issue_event where issue_id = ? ORDER BY created_at ASC`;
   },
@@ -461,10 +499,10 @@ module.exports = {
   getResidentFCMTokenByResidentID(database) {
     return `SELECT RI.fcm_token as fcmToken FROM ${database}.resident_identity RI join ${database}.resident R on RI.id = R.identity_id where R.id = ?`;
   },
-  getIssueEventByIssueIdAndEntityId(database){
+  getIssueEventByIssueIdAndEntityId(database) {
     return `SELECT * FROM ${database}.issue_event WHERE issue_id = ? AND entity_id = ? AND sub_status = ? `
   },
-  updateIssueEventById(database){
+  updateIssueEventById(database) {
     return `UPDATE ${database}.issue_event SET ? WHERE id = ?`;
   }
 };
