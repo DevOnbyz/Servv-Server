@@ -165,3 +165,10 @@ ALTER TABLE `agent` ADD CONSTRAINT `fk_agent_ibfk_5` FOREIGN KEY (`role_id`) REF
 
 --21-01-2025
 ALTER TABLE `issue_event` ADD COLUMN `info` JSON AFTER description;
+
+
+
+
+
+ALTER TABLE `invoice` MODIFY COLUMN `total_charge` FLOAT NOT NULL;
+ALTER TABLE `estimate` MODIFY COLUMN `total_charge` FLOAT NOT NULL;
