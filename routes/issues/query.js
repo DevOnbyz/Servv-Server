@@ -462,7 +462,7 @@ module.exports = {
     return `SELECT RI.fcm_token as fcmToken FROM ${database}.resident_identity RI join ${database}.resident R on RI.id = R.identity_id where R.id = ?`;
   },
   getIssueEventByIssueIdAndEntityId(database){
-    return `SELECT * FROM ${database}.issue_event WHERE issue_id = ? AND entity_id = ? AND sub_status =  ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} `
+    return `SELECT * FROM ${database}.issue_event WHERE issue_id = ? AND entity_id = ? AND sub_status = ? `
   },
   updateIssueEventById(database){
     return `UPDATE ${database}.issue_event SET ? WHERE id = ?`;

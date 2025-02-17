@@ -160,7 +160,7 @@ exports.addIssueController = async (request, response) => {
     const issueLogData = {
       issue_id: insertID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.OPEN,
-      event_time:_.isEmpty(request.body.scheduledTime) ? moment().utc().format('YYYY-MM-DD HH:mm:ss') : moment(convertToUTC(request.body.scheduledTime, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss'),
+      event_time: _.isEmpty(request.body.scheduledTime) ? moment().utc().format('YYYY-MM-DD HH:mm:ss') : moment(convertToUTC(request.body.scheduledTime, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.OPEN,
       description: '',
       creator_id: request.userID,
@@ -237,7 +237,7 @@ exports.workOrderIssueController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const { agentID, notes, scheduleTime,isCustomerPreferred } = request.body
+    const { agentID, notes, scheduleTime, isCustomerPreferred } = request.body
     const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if (notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status == CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, `You can't add a work order for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
@@ -296,8 +296,22 @@ exports.reAssignWorkOrderController = async (request, response) => {
   const modifiedNote = request.body.modifiedNote
   const modifiedDate = request.body.modifiedDate
   try {
-    const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
-    if (_.isEmpty(activeSiteVisit)) return sendHTTPResponse.error(response, 'No active work order found for this issue')
+    const activeWorkOrder = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    if (_.isEmpty(activeWorkOrder)) return sendHTTPResponse.error(response, 'No active work order found for this issue')
+
+    const currentIssueEvent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueEventByIssueIdAndEntityId(CONSTANTS.BUILDING_DATABASE), [issueID, activeWorkOrder.id, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED])
+
+    let infoJSON = {
+      agent_ids: [activeWorkOrder.agent_id]
+    }
+
+    if (currentIssueEvent && currentIssueEvent.info) {
+      const existingInfo = JSON.parse(currentIssueEvent.info)
+      infoJSON.agent_ids = Array.isArray(existingInfo.agent_ids) ? [...existingInfo.agent_ids, activeWorkOrder.agent_id] : [existingInfo.agent_id, activeWorkOrder.agent_id]
+    }
+
+    if (currentIssueEvent)
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssueEventById(CONSTANTS.BUILDING_DATABASE), [{ info: JSON.stringify(infoJSON) }, currentIssueEvent.id])
 
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
@@ -398,20 +412,16 @@ exports.reAssignSiteVisitController = async (request, response) => {
     const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
     if (_.isEmpty(activeSiteVisit)) return sendHTTPResponse.error(response, 'No active site visit found for this issue')
 
-    const currentIssueEvent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueEventByIssueIdAndEntityId(CONSTANTS.BUILDING_DATABASE), [issueID, activeSiteVisit.id])
+    const currentIssueEvent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueEventByIssueIdAndEntityId(CONSTANTS.BUILDING_DATABASE), [issueID, activeSiteVisit.id, CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED])
 
-    console.log(currentIssueEvent);
-    
     let infoJSON = {
-      agent_id: activeSiteVisit.agent_id
+      agent_ids: [activeSiteVisit.agent_id]
     }
-    
+
     if (currentIssueEvent && currentIssueEvent.info) {
       const existingInfo = JSON.parse(currentIssueEvent.info)
-      infoJSON = { ...existingInfo, ...infoJSON }
-      console.log(currentIssueEvent.info);
+      infoJSON.agent_ids = Array.isArray(existingInfo.agent_ids) ? [...existingInfo.agent_ids, activeSiteVisit.agent_id] : [existingInfo.agent_id, activeSiteVisit.agent_id]
     }
-    console.log(currentIssueEvent.info);
 
     if (currentIssueEvent)
       await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssueEventById(CONSTANTS.BUILDING_DATABASE), [{ info: JSON.stringify(infoJSON) }, currentIssueEvent.id])
@@ -863,7 +873,7 @@ exports.rejectEstimateController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const rejectReason = request.body.rejectReason ?? null;
+    const rejectReason = request.body.rejectReason ?? null
 
     const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if (_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
