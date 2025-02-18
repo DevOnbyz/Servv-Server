@@ -389,14 +389,14 @@ module.exports = {
     CASE
     WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} ,${ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT}) THEN 
         CASE 
-            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.estimate_amount')) IS NOT NULL 
-            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.estimate_amount')) AS DECIMAL(10,2))
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) IS NOT NULL 
+            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) AS DECIMAL(10,2))
             ELSE (SELECT total_charge FROM ${database}.estimate WHERE id = entity_id LIMIT 1)
         END
     WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED}, ${ISSUE_SUB_STATUS_NUM.PAID}) THEN 
         CASE 
-            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.invoice_amount')) IS NOT NULL 
-            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.invoice_amount')) AS DECIMAL(10,2))
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) IS NOT NULL 
+            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) AS DECIMAL(10,2))
             ELSE (SELECT total_charge FROM ${database}.invoice WHERE id = entity_id LIMIT 1)
         END
     END as totalCharge, 
@@ -457,14 +457,14 @@ module.exports = {
     CASE
     WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}) THEN 
         CASE 
-            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.estimate_amount')) IS NOT NULL 
-            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.estimate_amount')) AS DECIMAL(10,2))
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) IS NOT NULL 
+            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) AS DECIMAL(10,2))
             ELSE (SELECT total_charge FROM ${database}.estimate WHERE id = entity_id LIMIT 1)
         END
     WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.PAID}) THEN 
         CASE 
-            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.invoice_amount')) IS NOT NULL 
-            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.invoice_amount')) AS DECIMAL(10,2))
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) IS NOT NULL 
+            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) AS DECIMAL(10,2))
             ELSE (SELECT total_charge FROM ${database}.invoice WHERE id = entity_id LIMIT 1)
         END
     END as totalCharge, 

@@ -307,7 +307,12 @@ exports.reAssignWorkOrderController = async (request, response) => {
 
     if (currentIssueEvent && currentIssueEvent.info) {
       const existingInfo = JSON.parse(currentIssueEvent.info)
-      infoJSON.agent_ids = Array.isArray(existingInfo.agent_ids) ? [...existingInfo.agent_ids, activeWorkOrder.agent_id] : [existingInfo.agent_id, activeWorkOrder.agent_id]
+      const lastAgentId = existingInfo.agent_ids[existingInfo.agent_ids.length - 1]
+      if (lastAgentId !== activeWorkOrder.agent_id) {
+        infoJSON.agent_ids = [...existingInfo.agent_ids, activeWorkOrder.agent_id]
+      } else {
+        infoJSON.agent_ids = [...existingInfo.agent_ids]
+      }
     }
 
     if (currentIssueEvent)
@@ -420,7 +425,12 @@ exports.reAssignSiteVisitController = async (request, response) => {
 
     if (currentIssueEvent && currentIssueEvent.info) {
       const existingInfo = JSON.parse(currentIssueEvent.info)
-      infoJSON.agent_ids = Array.isArray(existingInfo.agent_ids) ? [...existingInfo.agent_ids, activeSiteVisit.agent_id] : [existingInfo.agent_id, activeSiteVisit.agent_id]
+      const lastAgentId = existingInfo.agent_ids[existingInfo.agent_ids.length - 1]
+      if (lastAgentId !== activeSiteVisit.agent_id) {
+        infoJSON.agent_ids = [...existingInfo.agent_ids, activeSiteVisit.agent_id]
+      } else {
+        infoJSON.agent_ids = [...existingInfo.agent_ids]
+      }
     }
 
     if (currentIssueEvent)
@@ -650,7 +660,7 @@ exports.addAndSendEstimateController = async (request, response) => {
     }
 
     const infoJSON = {
-      estimate_amount: totalCharge,
+      amount: totalCharge,
       approved_rejected_by: request.userID,
       approved_rejected_by_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
@@ -715,7 +725,7 @@ exports.approveEstimateController = async (request, response) => {
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
     const infoJSON = {
-      estimate_amount: estimate.total_charge,
+      amount: estimate.total_charge,
       approved_rejected_by: request.userID,
       approved_rejected_by_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
@@ -761,9 +771,9 @@ exports.sendEstimateController = async (request, response) => {
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
     const infoJSON = {
-      estimate_amount: estimate.total_charge,
+      amount: estimate.total_charge,
       approved_rejected_by: request.userID,
-      approved_rejected_by_type:CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      approved_rejected_by_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
 
     const issueLogData = {
@@ -864,7 +874,7 @@ exports.editEstimateController = async (request, response) => {
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [estimateData, estimate.id])
 
     const infoJSON = {
-      estimate_amount: totalCharge,
+      amount: totalCharge,
       approved_rejected_by: request.userID,
       approved_rejected_by_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
@@ -919,7 +929,7 @@ exports.rejectEstimateController = async (request, response) => {
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
     const infoJSON = {
-      estimate_amount: estimate.total_charge,
+      amount: estimate.total_charge,
       approved_rejected_by: request.userID,
       approved_rejected_by_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
@@ -1039,7 +1049,7 @@ exports.addAndSentInvoiceController = async (request, response) => {
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
     const infoJSON = {
-      invoice_amount: totalCharge,
+      amount: totalCharge,
       approved_rejected_by: request.userID,
       approved_rejected_by_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
@@ -1153,7 +1163,7 @@ exports.editInvoiceController = async (request, response) => {
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateInvoice(CONSTANTS.BUILDING_DATABASE), [invoiceDBData, invoiceData.id])
 
     const infoJSON = {
-      invoice_amount: invoiceData.total_charge,
+      amount: invoiceData.total_charge,
       approved_rejected_by: invoiceData.approved_rejected_by || null,
       approved_rejected_by_type: invoiceData.approved_rejected_by_type || null
     }
@@ -1202,7 +1212,7 @@ exports.approveInvoiceController = async (request, response) => {
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
     const infoJSON = {
-      invoice_amount: invoice.total_charge,
+      amount: invoice.total_charge,
       approved_rejected_by: request.userID,
       approved_rejected_by_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
     }
