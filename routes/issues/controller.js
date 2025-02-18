@@ -308,7 +308,7 @@ exports.reAssignWorkOrderController = async (request, response) => {
     if (currentIssueEvent && currentIssueEvent.info) {
       const existingInfo = JSON.parse(currentIssueEvent.info)
       const lastAgentId = existingInfo.agent_ids[existingInfo.agent_ids.length - 1]
-      if (lastAgentId !== activeWorkOrder.agent_id) {
+      if (lastAgentId !== activeWorkOrder.agent_id && agentID !== activeWorkOrder.agent_id) {
         infoJSON.agent_ids = [...existingInfo.agent_ids, activeWorkOrder.agent_id]
       } else {
         infoJSON.agent_ids = [...existingInfo.agent_ids]
@@ -426,7 +426,7 @@ exports.reAssignSiteVisitController = async (request, response) => {
     if (currentIssueEvent && currentIssueEvent.info) {
       const existingInfo = JSON.parse(currentIssueEvent.info)
       const lastAgentId = existingInfo.agent_ids[existingInfo.agent_ids.length - 1]
-      if (lastAgentId !== activeSiteVisit.agent_id) {
+      if (lastAgentId !== activeSiteVisit.agent_id && agentID !== activeSiteVisit.agent_id) {
         infoJSON.agent_ids = [...existingInfo.agent_ids, activeSiteVisit.agent_id]
       } else {
         infoJSON.agent_ids = [...existingInfo.agent_ids]
