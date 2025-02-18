@@ -409,7 +409,7 @@ module.exports = {
         END
     END as createdBy,
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} AND info IS NOT NULL AND JSON_VALID(info) AND JSON_CONTAINS_PATH(info, 'one', '$.agent_ids') THEN 
+    WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}) AND info IS NOT NULL AND JSON_VALID(info) AND JSON_CONTAINS_PATH(info, 'one', '$.agent_ids') THEN 
         (
             SELECT JSON_ARRAYAGG(CONCAT(firstname, ' ', COALESCE(lastname, ''))) FROM ${database}.agent
             WHERE id IN (
