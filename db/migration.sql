@@ -123,24 +123,13 @@ CREATE TABLE `project_service_rel` (
     CONSTRAINT `fk_project_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES service_organisation_rel (id) ON DELETE CASCADE,
     CONSTRAINT `fk_project_service_rel_ibfk_3` FOREIGN KEY (created_by) REFERENCES admin (id)
 );
-CREATE TABLE `resident_identity` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `ph_num` VARCHAR(255) NOT NULL,  -- Phone number is not unique becuase same number can have different org
-    `email_id` VARCHAR(255),
-    `fcm_token` TEXT,
-    `created_by` INT,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_by` INT,
-    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_resident_identity_ibfk_1` FOREIGN KEY (created_by) REFERENCES admin (id)
-    INDEX `idx_ph_num` (`ph_num`)  -- Regular index on ph_num  
-);
 
 CREATE TABLE `resident` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `identity_id` INT NOT NULL,
   `firstname` VARCHAR(255) NOT NULL,
   `lastname` VARCHAR(255),
+  `ph_num` VARCHAR(255) NOT NULL,
   `email_id` VARCHAR(255) DEFAULT NULL,
   `status` TINYINT DEFAULT 1,
   `org_id` INT,
@@ -151,8 +140,8 @@ CREATE TABLE `resident` (
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
    CONSTRAINT `fk_resident_ibfk_1` FOREIGN KEY (created_by) REFERENCES admin (id),
    CONSTRAINT `fk_resident_ibfk_2` FOREIGN KEY (updated_by) REFERENCES admin (id),
-   CONSTRAINT `fk_resident_ibfk_3` FOREIGN KEY (identity_id) REFERENCES resident_identity (id),
    CONSTRAINT `fk_resident_ibfk_4` FOREIGN KEY (org_id) REFERENCES organisation (id)
+   ADD UNIQUE (`org_id`, `ph_num`);
 );
 
 CREATE TABLE `apartment` (

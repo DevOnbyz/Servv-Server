@@ -163,16 +163,20 @@ VALUES
 ALTER TABLE `agent` ADD COLUMN `role_id` INT;
 ALTER TABLE `agent` ADD CONSTRAINT `fk_agent_ibfk_5` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE CASCADE;
 
---21-01-2025
+--16-02-2025
 ALTER TABLE `issue_event` ADD COLUMN `info` JSON AFTER description;
-
-
-
-
-
 ALTER TABLE `invoice` MODIFY COLUMN `total_charge` FLOAT NOT NULL;
 ALTER TABLE `estimate` MODIFY COLUMN `total_charge` FLOAT NOT NULL;
 
---12-02-2025
-ALTER TABLE `resident_identity` DROP INDEX ph_num;
-ALTER TABLE `resident_identity` ADD INDEX `idx_ph_num` (`ph_num`);
+--17-02-2025
+ALTER TABLE `resident` ADD COLUMN `ph_num` VARCHAR(255) NOT NULL AFTER `lastname`;
+
+--copy all data to resident table
+UPDATE `resident` R
+JOIN `resident_identity` RI ON R.identity_id = RI.id 
+SET R.ph_num = RI.ph_num, R.email_id = COALESCE(R.email_id, RI.email_id),R.fcm_token = COALESCE(R.fcm_token, RI.fcm_token);
+
+ALTER TABLE `resident` DROP FOREIGN KEY `fk_resident_ibfk_3`;
+ALTER TABLE `resident` DROP COLUMN `identity_id`;
+ALTER TABLE `resident` ADD CONSTRAINT `unique_org_phone` UNIQUE (`org_id`, `ph_num`);
+DROP TABLE `resident_identity`;
