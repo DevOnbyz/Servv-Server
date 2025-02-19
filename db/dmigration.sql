@@ -163,6 +163,9 @@ VALUES
 ALTER TABLE `agent` ADD COLUMN `role_id` INT;
 ALTER TABLE `agent` ADD CONSTRAINT `fk_agent_ibfk_5` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE CASCADE;
 
+--21-01-2025
+ALTER TABLE `issue_event` ADD COLUMN `info` JSON AFTER description;
+
 
 
 
