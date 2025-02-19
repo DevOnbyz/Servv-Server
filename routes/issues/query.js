@@ -409,13 +409,11 @@ module.exports = {
         END
     END as createdBy,
     CASE
-    WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}) AND info IS NOT NULL AND JSON_VALID(info) AND JSON_CONTAINS_PATH(info, 'one', '$.agent_ids') THEN 
+WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}) AND info IS NOT NULL AND JSON_VALID(info) AND JSON_CONTAINS_PATH(info, 'one', '$.agent_ids') THEN 
         (
-            SELECT JSON_ARRAYAGG(CONCAT(firstname, ' ', COALESCE(lastname, ''))) FROM ${database}.agent
-            WHERE id IN (
-                SELECT jt.agent_id
-                FROM JSON_TABLE( JSON_EXTRACT(info, '$.agent_ids'), '$[*]' COLUMNS ( agent_id INT PATH '$' )
-            ) AS jt)
+            SELECT CONCAT('[', GROUP_CONCAT(CONCAT('"', CONCAT(firstname, ' ', COALESCE(lastname, '')), '"')), ']')
+            FROM ${database}.agent
+            WHERE JSON_CONTAINS(JSON_EXTRACT(info, '$.agent_ids'), CAST(id AS JSON))
         )
     END as previousAgents
     FROM ${database}.issue_event where issue_id = ? ORDER BY created_at ASC`;
