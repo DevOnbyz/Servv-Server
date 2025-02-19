@@ -89,11 +89,21 @@ module.exports = {
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
     END as status,
+    CASE 
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} 
+      THEN (SELECT event_time FROM ${database}.issue_event WHERE issue_id = I.id AND sub_status = 
+              CASE 
+                  WHEN AA.type = 0 THEN ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}
+                  WHEN AA.type = 1 THEN ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}
+              END
+            LIMIT 1)
+      ELSE NULL 
+    END as assignmentCompletedTime,
     AP.name as doorNo, P.name as projectName, S.name as serviceType, SOR.name as serviceSubTypeName,
     CONCAT(A.firstname, ' ', A.lastname) as agentAssignmentCreatedBy,
     CONCAT(B.firstname, ' ', B.lastname) as issueCreatedBy
     FROM ${database}.agent_assignment AA
-    LEFT JOIN ${database}.agent A ON A.id = AA.agent_id
+    LEFT JOIN ${database}.admin A ON A.id = AA.assigned_by
     LEFT JOIN ${database}.admin B ON B.id = AA.created_by
     LEFT JOIN ${database}.issue I ON I.id = AA.issue_id
     LEFT JOIN ${database}.apartment AP ON AP.id = I.apartment_id
