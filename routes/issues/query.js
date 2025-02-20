@@ -149,7 +149,6 @@ module.exports = {
     left join ${database}.apartment A on I.apartment_id = A.id 
     left join ${database}.project P on A.project_id = P.id
     left join ${database}.resident R on I.resident_id = R.id
-    left join ${database}.resident R on I.resident_id = R.id
     left join ${database}.service S on I.service_type = S.id
     left join ${database}.service_organisation_rel SOR on I.service_subtype = SOR.id
     where I.resident_id = ? AND I.org_id = ?

@@ -141,7 +141,7 @@ CREATE TABLE `resident` (
    CONSTRAINT `fk_resident_ibfk_1` FOREIGN KEY (created_by) REFERENCES admin (id),
    CONSTRAINT `fk_resident_ibfk_2` FOREIGN KEY (updated_by) REFERENCES admin (id),
    CONSTRAINT `fk_resident_ibfk_4` FOREIGN KEY (org_id) REFERENCES organisation (id)
-   ADD UNIQUE (`org_id`, `ph_num`);
+   UNIQUE KEY `unique_org_phone` (`org_id`, `ph_num`);
 );
 
 CREATE TABLE `apartment` (
