@@ -6,13 +6,13 @@ module.exports = {
     return `INSERT INTO ${database}.resident SET ?`;
   },
   getResidentByPhNumIDAndOrgID(database) {
-    return `SELECT * FROM ${database}.resident WHERE identity_id = ? AND org_id = ?`;
-  },
-  getResidentByNameAndIdentity(database) {
-    return `SELECT * FROM ${database}.resident WHERE firstname = ? AND lastname = ? AND email = ? AND identity_id = ?`;
+    return `SELECT * FROM ${database}.resident WHERE ph_num  = ? AND org_id = ?`;
   },
   getResidentIdentityByPhNum(database) {
-    return `SELECT * FROM ${database}.resident_identity where ph_num = ?`
+    return `SELECT * FROM ${database}.resident where ph_num = ?`
+  },
+  getResidentByPhNumAndOrg(database) {
+    return `SELECT * FROM ${database}.resident WHERE ph_num = ? AND org_id = ?`
   },
   addResidentIdentity(database) {
     return `INSERT INTO ${database}.resident_identity SET ?`
@@ -50,7 +50,7 @@ AND
     SELECT
     r.id,
     arr.id AS apartmentResidentRelID,
-    i.ph_num,            
+    r.ph_num,            
     r.email_id,
     r.firstname,
     r.lastname,
@@ -63,9 +63,7 @@ AND
     p.state AS state, 
     p.country AS country
 FROM 
-    ${database}.resident_identity i
-JOIN 
-    ${database}.resident r ON i.id = r.identity_id
+    ${database}.resident r
 JOIN 
     ${database}.apartment_resident_rel arr ON r.id = arr.resident_id
 JOIN 
@@ -81,7 +79,7 @@ WHERE
     SELECT
     r.id,
     arr.id AS apartmentResidentRelID,
-    i.ph_num,            
+    r.ph_num,            
     r.email_id,
     r.firstname,
     r.lastname,
@@ -94,9 +92,7 @@ WHERE
     p.state AS state, 
     p.country AS country
 FROM 
-    ${database}.resident_identity i
-JOIN 
-    ${database}.resident r ON i.id = r.identity_id
+    ${database}.resident r
 JOIN 
     ${database}.apartment_resident_rel arr ON r.id = arr.resident_id
 JOIN 

@@ -11,13 +11,12 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
-    I.created_at, RI.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, SUB.id as subServiceID, SUB.name as subServiceType, I.customer_preferred_time as scheduledTime, I.initial_activity_time as initialActivityTime,
+    I.created_at, R.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, SUB.id as subServiceID, SUB.name as subServiceType, I.customer_preferred_time as scheduledTime, I.initial_activity_time as initialActivityTime,
     I.img_src
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
     left join ${database}.project P on A.project_id = P.id
     left join ${database}.resident R on I.resident_id = R.id
-    left join ${database}.resident_identity RI on R.identity_id = RI.id
     left join ${database}.service S on I.service_type = S.id
     left join ${database}.service_organisation_rel SUB on I.service_subtype = SUB.id
     left join ${database}.agent AG on I.agent_id = AG.id
@@ -145,12 +144,11 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}'
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
-    I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.customer_preferred_time as time, I.initial_activity_time as initialActivityTime, I.img_src, I.updated_at
+    I.created_at, R.ph_num as phNum, I.description, S.name as serviceType, I.customer_preferred_time as time, I.initial_activity_time as initialActivityTime, I.img_src, I.updated_at
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
     left join ${database}.project P on A.project_id = P.id
     left join ${database}.resident R on I.resident_id = R.id
-    left join ${database}.resident_identity RI on R.identity_id = RI.id
     left join ${database}.service S on I.service_type = S.id
     left join ${database}.service_organisation_rel SOR on I.service_subtype = SOR.id
     where I.resident_id = ? AND I.org_id = ?
@@ -167,7 +165,7 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' 
     END as status, 
     I.created_at, 
-    RI.ph_num as phNum, 
+    R.ph_num as phNum, 
     I.description, 
     S.name as serviceType, 
     I.customer_preferred_time as time, 
@@ -179,7 +177,6 @@ module.exports = {
     LEFT JOIN ${database}.apartment A ON I.apartment_id = A.id 
     LEFT JOIN ${database}.project P ON A.project_id = P.id
     LEFT JOIN ${database}.resident R ON I.resident_id = R.id
-    LEFT JOIN ${database}.resident_identity RI ON R.identity_id = RI.id
     LEFT JOIN ${database}.service S ON I.service_type = S.id
     LEFT JOIN ${database}.service_organisation_rel SOR ON I.service_subtype = SOR.id
     WHERE I.id = ? 
@@ -495,7 +492,7 @@ WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STA
     return `DELETE FROM ${database}.estimate WHERE id = ?`;
   },
   getResidentFCMTokenByResidentID(database) {
-    return `SELECT RI.fcm_token as fcmToken FROM ${database}.resident_identity RI join ${database}.resident R on RI.id = R.identity_id where R.id = ?`;
+    return `SELECT fcm_token as fcmToken FROM ${database}.resident where id = ?`;
   },
   getIssueEventByIssueIdAndEntityId(database) {
     return `SELECT * FROM ${database}.issue_event WHERE issue_id = ? AND entity_id = ? AND sub_status = ? `

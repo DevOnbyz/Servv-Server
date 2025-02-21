@@ -116,16 +116,11 @@ const validateResidentPhNum = (completeResidentDetails) => {
 const addAndAttachResidentID = async (orgID, userID, completeResidentDetails) => {
   for (item of completeResidentDetails) {
     const phNum = getE164(item.mobileNo, countryCodes[item.country])
-    const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum])
-    const residentIdentityID = _.isEmpty(phNumDetails) ? (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addResidentIdentity(CONSTANTS.BUILDING_DATABASE), [{ ph_num: phNum, created_by: userID }]))?.insertId : phNumDetails[0]?.id
-    item.residentIdentityID = residentIdentityID
+    const residentDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [phNum, orgID])
 
-    if (!_.isEmpty(phNumDetails)) {
-      const residentOrgDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [residentIdentityID, orgID])
-      item.residentID = !_.isEmpty(residentOrgDetails) ? residentOrgDetails.id : null
-    } else {
-      item.residentID = null
-    }
+    item.phoneNumber = phNum
+    item.residentID = !_.isEmpty(residentDetails) ? residentDetails.id : null
+
   }
   return completeResidentDetails
 }

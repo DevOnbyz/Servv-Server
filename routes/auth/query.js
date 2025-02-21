@@ -19,16 +19,16 @@ module.exports = {
     return `SELECT * FROM ${database}.organisation where id = ?`
   },
   getResidentbyPhNum(database) {
-    return `SELECT * FROM ${database}.resident_identity where ph_num = ?`
+    return `SELECT * FROM ${database}.resident where ph_num = ?`
   },
   getAgentbyPhNum(database) {
     return `SELECT * FROM ${database}.agent_identity where ph_num = ?`
   },
   getCustomerData(database) {
-    return `SELECT * FROM ${database}.resident R INNER JOIN ${database}.resident_identity RI ON R.identity_id = RI.id WHERE RI.ph_num = ?`
+    return `SELECT * FROM ${database}.resident WHERE ph_num = ?`
   },
-  getDistichOrgOfResidentsByIdentityID(database) {
-    return `SELECT DISTINCT org_id, id as residentId FROM ${database}.resident where identity_id = ?`
+  getDistichOrgOfResidentsID(database) {
+    return `SELECT DISTINCT org_id, id as residentId FROM ${database}.resident where id = ?`
   },
   getDistichOrgOfAgentsByIdentityID(database) {
     return `SELECT DISTINCT org_id, id as agentId FROM ${database}.agent where identity_id = ?`
@@ -37,7 +37,7 @@ module.exports = {
     return `SELECT * FROM ${database}.organisation where id in (?)`
   },
   updateResidentFcmToken(database) {
-    return `UPDATE ${database}.resident_identity SET fcm_token = ? WHERE ph_num = ?`;
+    return `UPDATE ${database}.resident SET fcm_token = ? WHERE ph_num = ?`;
   },
   updateAgentFcmToken(database) {
     return `UPDATE ${database}.agent_identity SET fcm_token = ? WHERE ph_num = ?`;

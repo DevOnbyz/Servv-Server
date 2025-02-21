@@ -106,33 +106,30 @@ exports.addResidentController = async (request, response) => {
     const apartments = request.body.apartments
     if (_.isEmpty(apartments)) return sendHTTPResponse.error(response, 'Please select project', null, 400)
 
-    for (item of apartments) {
-      const doorNo = unifyDoorNumber(item?.doorNo)
-      const projectID = item?.projectID
-      const data = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveApratmentByProjectAndName(CONSTANTS.BUILDING_DATABASE), [projectID, doorNo])
-      if (!_.isEmpty(data)) {
-        const projectName = data[0].project_name;
-        const message = `Door number ${doorNo} already exists for the project ${projectName}`
-        return sendHTTPResponse.error(response, message, null, 400)
+      for (item of apartments) {
+        const doorNo = unifyDoorNumber(item?.doorNo)
+        const projectID = item?.projectID
+        const data = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveApratmentByProjectAndName(CONSTANTS.BUILDING_DATABASE), [projectID, doorNo])
+        if (!_.isEmpty(data)) {
+          const projectName = data[0].project_name;
+          const message = `Door number ${doorNo} already exists for the project ${projectName}`
+          return sendHTTPResponse.error(response, message, null, 400)
+        }
       }
-    }
 
-    const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum])
-    const residentIdentityID = _.isEmpty(phNumDetails) ? (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addResidentIdentity(CONSTANTS.BUILDING_DATABASE), [{ ph_num: phNum, created_by: userID }]))?.insertId : phNumDetails[0]?.id
+    // Check if phone number exists in this organization
+    const existingResidentInOrg = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumAndOrg(CONSTANTS.BUILDING_DATABASE), [phNum, orgID])
 
-    if (!_.isEmpty(phNumDetails)) {
-      // if a resident having same phone number exists in a same organisation then the admin can edit not add
-      const residentOrgDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [residentIdentityID, orgID])
-      if (!_.isEmpty(residentOrgDetails)) return sendHTTPResponse.error(response, 'Resident with same phone number already exists', null, 400)
-    }
+    if (!_.isEmpty(existingResidentInOrg))
+      return sendHTTPResponse.error(response, 'Resident with same phone number already exists in this organization', null, 400)
 
     const residentDetails = {
       firstname,
       lastname,
+      ph_num: phNum,
       email_id: email,
       updated_by: userID,
       org_id: orgID,
-      identity_id: residentIdentityID,
     }
 
     const residentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addResident(CONSTANTS.BUILDING_DATABASE), [residentDetails]))?.insertId
@@ -206,11 +203,11 @@ exports.addResidentBulkController = async (request, response) => {
       const residentDetails = {
         firstname: item?.residentName,
         lastname: null,
-        identity_id: item?.residentIdentityID,
+        ph_num: item?.phoneNumber,
         org_id: orgID,
         created_by: userID
       }
-      const residentOrgDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [item?.residentIdentityID, orgID])
+      const residentOrgDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [item?.phoneNumber, orgID])
       const residentID = !_.isEmpty(residentOrgDetails) ? residentOrgDetails.id : (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addResident(CONSTANTS.BUILDING_DATABASE), [residentDetails]))?.insertId
       item.residentID = residentID
       const doorNo = unifyDoorNumber(item?.doorNumber)
@@ -259,20 +256,10 @@ exports.editResidentController = async (request, response) => {
       doorNo: item.name,
     }))
 
-    const currentResidentDetails = await runQueryOne(
-      CONSTANTS.BUILDING_DATABASE,
-      queryBuilder.getResidentByID(CONSTANTS.BUILDING_DATABASE),
-      [residentID]
-    )
-    const currentIdentityID = currentResidentDetails?.identity_id
+    const existingResident = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumAndOrg(CONSTANTS.BUILDING_DATABASE), [phNum, orgID])
 
-    const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum])
-
-    if (!_.isEmpty(phNumDetails) && phNumDetails[0]?.id !== currentIdentityID)
+    if (!_.isEmpty(existingResident) && existingResident[0]?.id !== residentID)
       return sendHTTPResponse.error(response, 'Resident with same phone number already exists', null, 400)
-
-    if (_.isEmpty(phNumDetails))
-      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentIdentity(CONSTANTS.BUILDING_DATABASE), [{ ph_num: phNum, created_by: userID },currentIdentityID])
 
     for (item of apartments) {
       const doorNo = unifyDoorNumber(item?.doorNo)
@@ -341,6 +328,7 @@ exports.editResidentController = async (request, response) => {
       firstname,
       lastname,
       email_id: email,
+      ph_num: phNum,
       updated_by: userID,
     }
     await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentDetails(CONSTANTS.BUILDING_DATABASE), [newResidentRecord, residentID])
