@@ -16,7 +16,7 @@ exports.getResidentController = async (request, response) => {
   try {
     const residentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentDataUnderOrg(CONSTANTS.BUILDING_DATABASE), [orgID])
     const groupedData = residentDetails?.reduce((acc, row) => {
-      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
+      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, handoverDate, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
       const fullName = `${firstname} ${lastname ?? ""}`.trim()
       let resident = acc.find((r) => r.phNum === ph_num)
       if (!resident) {
@@ -37,6 +37,7 @@ exports.getResidentController = async (request, response) => {
         projectID,
         name: projectName,
         doorNo: doorNo,
+        handoverDate: handoverDate,
         city: city,
         district: district,
         state: state,
@@ -60,7 +61,7 @@ exports.getResidentByIDController = async (request, response) => {
   try {
     const residentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentDataByID(CONSTANTS.BUILDING_DATABASE), [orgID, residentID])
     const groupedData = residentDetails?.reduce((acc, row) => {
-      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
+      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo,handoverDate, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
       const fullName = `${firstname} ${lastname}`.trim()
       let resident = acc.find((r) => r.phNum === ph_num)
       if (!resident) {
@@ -79,6 +80,7 @@ exports.getResidentByIDController = async (request, response) => {
         projectID,
         name: projectName,
         doorNo: doorNo,
+        handoverDate: handoverDate,
         city: city,
         district: district,
         state: state,
@@ -87,7 +89,7 @@ exports.getResidentByIDController = async (request, response) => {
 
       return acc
     }, [])
-    return sendHTTPResponse.success(response, 'Resident List fetched successfully', groupedData)
+    return sendHTTPResponse.success(response, 'Resident List fetched succsssessfully', groupedData)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | getResidentController | Error in fetching resident list | Error: ${error.message}`)
     sendHTTPResponse.error(response, 'Error while fetching resident list', error.message)
@@ -140,6 +142,7 @@ exports.addResidentController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
+        handover_date: item?.handoverDate || null,
         created_by: userID,
       }
       const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
@@ -215,6 +218,7 @@ exports.addResidentBulkController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
+        handover_date: item?.handoverDate || null,
         created_by: userID,
       }
       const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
@@ -303,9 +307,12 @@ exports.editResidentController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
+        handover_date: item?.handoverDate,
         updated_by: userID,
       }
 
+      
+      
       if (status === 'new') {
         const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
         const residentApartmentRel = {
@@ -316,6 +323,7 @@ exports.editResidentController = async (request, response) => {
         Log.info(`[${domain} | OrganisationID:${orgID}] | editResidentController | Adding resident in apartment | ResidentID: ${residentID} | ApartmentID: ${apartmentID}`)
         await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartmentResidentRel(CONSTANTS.BUILDING_DATABASE), [residentApartmentRel])
       } else if (status === 'update') {
+        console.log(apartmentData);
         const residentApartmentRel = residentOwnedApartmentRelDetails.find((rel) => rel.apartment_id === item.apartmentID)
         if (residentApartmentRel) {
           Log.info(`[${domain} | OrganisationID:${orgID}] | editResidentController | Updating resident in apartment | ResidentID: ${residentID} | ApartmentID: ${residentApartmentRel?.apartment_id} | apartmentData: ${JSON.stringify(apartmentData)}`)
