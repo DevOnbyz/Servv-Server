@@ -9,7 +9,7 @@ const { unifyDoorNumber } = require('../../lib/function')
 const { getAllProjectsByOrgID, getAllApartmentsUnderProject, getResidentByIDs } = require('../../db/query')
 const { formatPaymentHistory, validateKeys, validateProjectNames, validateDoorNoAndAttachProjectID, validateResidentPhNum, addAndAttachResidentID } = require('./functions')
 const neatCSV = require('neat-csv')
-
+const moment = require('moment');
 exports.getResidentController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
@@ -142,7 +142,7 @@ exports.addResidentController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
-        handover_date: item?.handoverDate || null,
+        handover_date: moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') || null,
         created_by: userID,
       }
       const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
@@ -218,7 +218,7 @@ exports.addResidentBulkController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
-        handover_date: item?.handoverDate || null,
+        handover_date: moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') || null,
         created_by: userID,
       }
       const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
@@ -307,7 +307,7 @@ exports.editResidentController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
-        handover_date: item?.handoverDate,
+        handover_date: moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss'),
         updated_by: userID,
       }
 
