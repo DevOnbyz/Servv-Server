@@ -181,5 +181,31 @@ ALTER TABLE `resident` DROP COLUMN `identity_id`;
 ALTER TABLE `resident` ADD CONSTRAINT `unique_org_phone` UNIQUE (`org_id`, `ph_num`);
 DROP TABLE `resident_identity`;
 
---17-02-2025
+--17-03-2025
 ALTER TABLE `apartment` ADD COLUMN `handover_date` DATETIME NULL AFTER `project_id`;
+
+--22-03-2025
+CREATE TABLE `organisation_feature` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
+    `feature_code` VARCHAR(100) NOT NULL UNIQUE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE `organisation_feature_mapping` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `org_id` INT NOT NULL,
+    `feature_id` INT NOT NULL,
+    `is_active` TINYINT DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_org_feature_mapping_ibfk_1` FOREIGN KEY (`org_id`) REFERENCES `organisation` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_org_feature_mapping_ibfk_2` FOREIGN KEY (`feature_id`) REFERENCES `organisation_feature` (`id`) ON DELETE CASCADE,
+    UNIQUE KEY `unique_org_feature` (`org_id`, `feature_id`)
+);
+
+
+INSERT INTO `organisation_feature` (`name`, `feature_code`) VALUES ('Mask Resident Phone Number', 'MASK_RESIDENT_PHONE');
+INSERT INTO `organisation_feature_mapping` (`org_id`, `feature_id`, `is_active`) VALUES (1, (SELECT id FROM organisation_feature WHERE feature_code = 'MASK_RESIDENT_PHONE'), 1);
+
