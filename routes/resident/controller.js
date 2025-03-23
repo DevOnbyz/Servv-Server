@@ -9,14 +9,14 @@ const { unifyDoorNumber } = require('../../lib/function')
 const { getAllProjectsByOrgID, getAllApartmentsUnderProject, getResidentByIDs } = require('../../db/query')
 const { formatPaymentHistory, validateKeys, validateProjectNames, validateDoorNoAndAttachProjectID, validateResidentPhNum, addAndAttachResidentID } = require('./functions')
 const neatCSV = require('neat-csv')
-
+const moment = require('moment');
 exports.getResidentController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
   try {
     const residentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentDataUnderOrg(CONSTANTS.BUILDING_DATABASE), [orgID])
     const groupedData = residentDetails?.reduce((acc, row) => {
-      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
+      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, handoverDate, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
       const fullName = `${firstname} ${lastname ?? ""}`.trim()
       let resident = acc.find((r) => r.phNum === ph_num)
       if (!resident) {
@@ -37,6 +37,7 @@ exports.getResidentController = async (request, response) => {
         projectID,
         name: projectName,
         doorNo: doorNo,
+        handoverDate: handoverDate,
         city: city,
         district: district,
         state: state,
@@ -60,7 +61,7 @@ exports.getResidentByIDController = async (request, response) => {
   try {
     const residentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentDataByID(CONSTANTS.BUILDING_DATABASE), [orgID, residentID])
     const groupedData = residentDetails?.reduce((acc, row) => {
-      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
+      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo,handoverDate, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
       const fullName = `${firstname} ${lastname}`.trim()
       let resident = acc.find((r) => r.phNum === ph_num)
       if (!resident) {
@@ -79,6 +80,7 @@ exports.getResidentByIDController = async (request, response) => {
         projectID,
         name: projectName,
         doorNo: doorNo,
+        handoverDate: handoverDate,
         city: city,
         district: district,
         state: state,
@@ -140,6 +142,7 @@ exports.addResidentController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
+        handover_date: moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') || null,
         created_by: userID,
       }
       const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
@@ -215,6 +218,7 @@ exports.addResidentBulkController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
+        handover_date: moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') || null,
         created_by: userID,
       }
       const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
@@ -303,9 +307,12 @@ exports.editResidentController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
+        handover_date: moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss'),
         updated_by: userID,
       }
 
+      
+      
       if (status === 'new') {
         const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
         const residentApartmentRel = {

@@ -180,3 +180,6 @@ ALTER TABLE `resident` DROP FOREIGN KEY `fk_resident_ibfk_3`;
 ALTER TABLE `resident` DROP COLUMN `identity_id`;
 ALTER TABLE `resident` ADD CONSTRAINT `unique_org_phone` UNIQUE (`org_id`, `ph_num`);
 DROP TABLE `resident_identity`;
+
+--17-02-2025
+ALTER TABLE `apartment` ADD COLUMN `handover_date` DATETIME NULL AFTER `project_id`;
