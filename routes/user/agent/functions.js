@@ -12,10 +12,6 @@ function maskPhoneNumber(phoneNumber, options = {}) {
 
     const phoneLength = phoneNumber.length;
 
-    if (phoneLength <= config.prefixLength + config.suffixLength) {
-        return phoneNumber;
-    }
-
     const prefix = phoneNumber.substring(0, config.prefixLength);
     const suffix = phoneNumber.substring(phoneLength - config.suffixLength);
     const middleLength = phoneLength - config.prefixLength - config.suffixLength;
