@@ -7,6 +7,7 @@ const sendHTTPResponse = require('../../../lib/sendHTTPResponse')
 const hashPassword = require('../../../lib/hashPassword')
 const { getAllProjectsByOrgID, getAllServicesUnderSystem } = require('../../../db/query')
 const runQueryOne = require('../../../db/runQueryOne')
+const { maskPhoneNumber } = require('./functions')
 
 exports.getAgentController = async (request, response) => {
   const orgID = request.orgID
@@ -99,7 +100,7 @@ exports.addAgentController = async (request, response) => {
       state,
       country,
       created_by: userID,
-      role_id:roleId
+      role_id: roleId
     }
 
     const agentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAgent(CONSTANTS.BUILDING_DATABASE), [agentDetails]))?.insertId
@@ -152,7 +153,7 @@ exports.editAgentController = async (request, response) => {
       district,
       state,
       country,
-      role_id:roleId
+      role_id: roleId
     }
     const existingServiceList = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllServicesByAgentID(CONSTANTS.BUILDING_DATABASE), [id]))?.map((item) => (item.service_id))
     const newServiceList = _.difference(serviceList, existingServiceList)
@@ -213,9 +214,13 @@ exports.getAssignmentByIDController = async (request, response) => {
   const userID = request.userID
   const assignmentID = request.params.assignmentID
   try {
+
+    const feature = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getOrganisationFeatureStatus(CONSTANTS.BUILDING_DATABASE), [orgID, CONSTANTS.FEATURE_CODES.MASK_RESIDENT_PHONE])
     const detailedAssignment = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getDetailedAssignmentUnderAgentByAssignmentID(CONSTANTS.BUILDING_DATABASE), [assignmentID, userID])
+    
     normalizedAgentList = {
       ...detailedAssignment,
+      ResidentPhone: feature?.is_active === CONSTANTS.FEATURE_STATUS.ACTIVE ? maskPhoneNumber(detailedAssignment.ResidentPhone) : detailedAssignment.ResidentPhone,
       agent_uploads: Array.isArray(detailedAssignment?.agent_uploads) ? detailedAssignment?.agent_uploads : detailedAssignment?.agent_uploads ? [detailedAssignment?.agent_uploads] : [],
       issueImages: Array.isArray(detailedAssignment?.issueImages) ? detailedAssignment?.issueImages : detailedAssignment?.issueImages ? [detailedAssignment?.issueImages] : []
     }

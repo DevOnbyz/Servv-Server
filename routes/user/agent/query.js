@@ -1,10 +1,10 @@
 const { ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, ISSUE_STATUS, ISSUE_STATUS_STRING, AGENT_ASSIGNMENT_TYPE } = require("../../../lib/constants");
 
 module.exports = {
-  getAgentIdentityByPhNum(database){
+  getAgentIdentityByPhNum(database) {
     return `SELECT * FROM ${database}.agent_identity where ph_num = ?`
   },
-  addAgentIdentity(database){
+  addAgentIdentity(database) {
     return `INSERT INTO ${database}.agent_identity SET ?`
   },
   getAgentByPhNumIDAndOrgID(database) {
@@ -49,7 +49,7 @@ module.exports = {
   getActiveWorkLoadByCountAgentID(database) {
     return `SELECT count(*) as activeWorkLoad FROM ${database}.issue WHERE agent_id = ? AND sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}`;
   },
-  getAgentAssignments(database , isActive, assignmentType) {
+  getAgentAssignments(database, isActive, assignmentType) {
     return `SELECT AA.id as assignmentId, I.id as issueId, I.agent_id as agentId, A.name as doorNo, P.name as projectName, AA.type as assignmentType,
     CASE WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}'
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING} THEN 'PENDING' 
@@ -63,12 +63,21 @@ module.exports = {
     LEFT JOIN ${database}.issue I ON AA.issue_id = I.id
     LEFT JOIN ${database}.apartment A ON I.apartment_id = A.id
     LEFT JOIN ${database}.project P ON A.project_id = P.id
-    LEFT JOIN ${database}.resident R ON I.resident_id = R.id
+    LEFT JOIN ${database}.
+     R ON I.resident_id = R.id
     WHERE AA.agent_id = ? 
     ${isActive ? `AND AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING}` : ''}
     ${assignmentType !== undefined ? `AND AA.type = ${assignmentType}` : ''}
     ORDER BY AA.created_at DESC`;
   },
+
+  getOrganisationFeatureStatus(database) {
+    return `SELECT FM.is_active 
+    FROM ${database}.organisation_feature_mapping FM
+    JOIN ${database}.organisation_feature F ON FM.feature_id = F.id
+    WHERE FM.org_id = ? AND F.feature_code = ?`;
+  },
+
   getDetailedAssignmentUnderAgentByAssignmentID(database) {
     return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', COALESCE(R.lastname, '')) as ResidentName, R.ph_num as ResidentPhone, AA.issue_id as issueId, CONCAT(B.firstname, ' ', COALESCE(B.lastname, '')) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as siteVisitTime,
     CASE
