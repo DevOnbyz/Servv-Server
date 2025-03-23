@@ -89,7 +89,7 @@ exports.getResidentByIDController = async (request, response) => {
 
       return acc
     }, [])
-    return sendHTTPResponse.success(response, 'Resident List fetched succsssessfully', groupedData)
+    return sendHTTPResponse.success(response, 'Resident List fetched successfully', groupedData)
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | getResidentController | Error in fetching resident list | Error: ${error.message}`)
     sendHTTPResponse.error(response, 'Error while fetching resident list', error.message)
@@ -323,7 +323,6 @@ exports.editResidentController = async (request, response) => {
         Log.info(`[${domain} | OrganisationID:${orgID}] | editResidentController | Adding resident in apartment | ResidentID: ${residentID} | ApartmentID: ${apartmentID}`)
         await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartmentResidentRel(CONSTANTS.BUILDING_DATABASE), [residentApartmentRel])
       } else if (status === 'update') {
-        console.log(apartmentData);
         const residentApartmentRel = residentOwnedApartmentRelDetails.find((rel) => rel.apartment_id === item.apartmentID)
         if (residentApartmentRel) {
           Log.info(`[${domain} | OrganisationID:${orgID}] | editResidentController | Updating resident in apartment | ResidentID: ${residentID} | ApartmentID: ${residentApartmentRel?.apartment_id} | apartmentData: ${JSON.stringify(apartmentData)}`)
