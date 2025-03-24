@@ -63,8 +63,7 @@ module.exports = {
     LEFT JOIN ${database}.issue I ON AA.issue_id = I.id
     LEFT JOIN ${database}.apartment A ON I.apartment_id = A.id
     LEFT JOIN ${database}.project P ON A.project_id = P.id
-    LEFT JOIN ${database}.
-     R ON I.resident_id = R.id
+    LEFT JOIN ${database}.resident R ON I.resident_id = R.id
     WHERE AA.agent_id = ? 
     ${isActive ? `AND AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING}` : ''}
     ${assignmentType !== undefined ? `AND AA.type = ${assignmentType}` : ''}
