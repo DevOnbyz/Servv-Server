@@ -61,7 +61,7 @@ exports.getResidentByIDController = async (request, response) => {
   try {
     const residentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentDataByID(CONSTANTS.BUILDING_DATABASE), [orgID, residentID])
     const groupedData = residentDetails?.reduce((acc, row) => {
-      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo,handoverDate, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
+      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, handoverDate, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
       const fullName = `${firstname} ${lastname}`.trim()
       let resident = acc.find((r) => r.phNum === ph_num)
       if (!resident) {
@@ -108,16 +108,16 @@ exports.addResidentController = async (request, response) => {
     const apartments = request.body.apartments
     if (_.isEmpty(apartments)) return sendHTTPResponse.error(response, 'Please select project', null, 400)
 
-      for (item of apartments) {
-        const doorNo = unifyDoorNumber(item?.doorNo)
-        const projectID = item?.projectID
-        const data = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveApratmentByProjectAndName(CONSTANTS.BUILDING_DATABASE), [projectID, doorNo])
-        if (!_.isEmpty(data)) {
-          const projectName = data[0].project_name;
-          const message = `Door number ${doorNo} already exists for the project ${projectName}`
-          return sendHTTPResponse.error(response, message, null, 400)
-        }
+    for (item of apartments) {
+      const doorNo = unifyDoorNumber(item?.doorNo)
+      const projectID = item?.projectID
+      const data = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveApratmentByProjectAndName(CONSTANTS.BUILDING_DATABASE), [projectID, doorNo])
+      if (!_.isEmpty(data)) {
+        const projectName = data[0].project_name;
+        const message = `Door number ${doorNo} already exists for the project ${projectName}`
+        return sendHTTPResponse.error(response, message, null, 400)
       }
+    }
 
     // Check if phone number exists in this organization
     const existingResidentInOrg = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumAndOrg(CONSTANTS.BUILDING_DATABASE), [phNum, orgID])
@@ -142,7 +142,7 @@ exports.addResidentController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
-        handover_date: moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') || null,
+        handover_date: item?.handoverDate ? moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') : null,
         created_by: userID,
       }
       const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
@@ -218,7 +218,7 @@ exports.addResidentBulkController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
-        handover_date: moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') || null,
+        handover_date: item?.handoverDate ? moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') : null,
         created_by: userID,
       }
       const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
@@ -307,11 +307,9 @@ exports.editResidentController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
-        handover_date: moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss'),
+        handover_date: item?.handoverDate ? moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') : null,
         updated_by: userID,
       }
-
-      
       
       if (status === 'new') {
         const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
