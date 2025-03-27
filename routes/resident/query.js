@@ -117,13 +117,15 @@ WHERE
   getResidentByIDUnderOrg(database) {
     return `
       SELECT 
-      R.id, R.org_id,
-      O.id AS organisation_id, O.razorpay_route_account_id
+        R.id, R.org_id,
+        O.id AS organisation_id, O.razorpay_route_account_id
       FROM ${database}.resident R
-      INNER JOIN ${database}.organisation O ON R.org_id = O.id
-      WHERE R.id = ?;
+      INNER JOIN ${database}.organisation O
+      ON R.org_id = O.id
+      WHERE R.id = ? AND O.id = ?;
     `;
-  },
+},
+
   updateApartmentDetails(database) {
     return `UPDATE ${database}.apartment SET ? WHERE id = ?`
   },
