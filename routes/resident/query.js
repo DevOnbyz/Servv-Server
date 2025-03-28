@@ -124,7 +124,7 @@ WHERE
       ON R.org_id = O.id
       WHERE R.id = ? AND O.id = ?;
     `;
-},
+  },
 
   updateApartmentDetails(database) {
     return `UPDATE ${database}.apartment SET ? WHERE id = ?`
@@ -155,28 +155,44 @@ WHERE
   },
   getRazorpayPaymentByResidentID: (database) => {
     return `
-    SELECT DISTINCT p.total_amount, p.created_at as event_time, o.issue_id, s.name as serviceName
+    SELECT 
+      p.total_amount, 
+      p.created_at as event_time, 
+      o.issue_id, 
+      s.name as serviceName
     FROM ${database}.payment p
     JOIN ${database}.order o ON p.order_id = o.id 
     JOIN ${database}.issue i ON o.issue_id = i.id
     JOIN ${database}.service s ON i.service_type = s.id
     WHERE p.org_id = ? 
-    AND i.resident_id = ?
-    GROUP BY p.id;`
+      AND i.resident_id = ?
+    GROUP BY 
+      p.total_amount, 
+      p.created_at, 
+      o.issue_id, 
+      s.name;`
   },
-
   getManualPaymentByResidentID: (database) => {
     return `
-    SELECT DISTINCT i.total_charge as total_amount, i.issue_id,s.name AS serviceName,
-    (SELECT MAX(event_time) FROM ${database}.issue_event WHERE issue_id = iss.id AND sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID}) as event_time
+    SELECT 
+      i.total_charge as total_amount, 
+      i.issue_id,
+      s.name AS serviceName,
+      MAX(iss_event.event_time) as event_time
     FROM ${database}.invoice i
     JOIN ${database}.issue iss ON i.issue_id = iss.id
     JOIN ${database}.service s ON iss.service_type = s.id
+    LEFT JOIN ${database}.issue_event iss_event ON iss_event.issue_id = iss.id 
+      AND iss_event.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID}
     WHERE iss.org_id = ? 
-    AND i.status = ${CONSTANTS.QUOTATION_STATUS.PAID}
-    AND iss.resident_id = ?
-    GROUP BY i.id;`  
-  },
+      AND i.status = ${CONSTANTS.QUOTATION_STATUS.PAID}
+      AND iss.resident_id = ?
+    GROUP BY 
+      i.total_charge, 
+      i.issue_id, 
+      s.name;`  
+  }
+,  
   getPaymentWithOrderByOrgID: (database) => {
     return `SELECT p.*, o.*
     FROM ${database}.payment p

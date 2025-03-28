@@ -413,8 +413,11 @@ exports.getResidentPaymentHistoryController = async (request, response) => {
     const razorpayPaymentHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getRazorpayPaymentByResidentID(CONSTANTS.BUILDING_DATABASE), [residentDetails.org_id, residentID])
     const manualPaymentHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getManualPaymentByResidentID(CONSTANTS.BUILDING_DATABASE), [residentDetails.org_id, residentID])
 
-    residentDetails.paymentHistory = formatPaymentHistory([...razorpayPaymentHistory, ...manualPaymentHistory])
-
+    residentDetails.paymentHistory = formatPaymentHistory(
+      _.uniqBy([...razorpayPaymentHistory, ...manualPaymentHistory], 
+        item => `${item.total_amount}_${item.event_time}_${item.serviceName}`
+      )
+    )
     return sendHTTPResponse.success(response, 'Resident List fetched successfully', residentDetails)
   } catch (error) {
     Log.error(`[ residentID:${residentID}] | addSupportController | Error on adding Support | Error: ${error.message}`)
