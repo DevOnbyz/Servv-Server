@@ -12,7 +12,8 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
     I.created_at, R.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, SUB.id as subServiceID, SUB.name as subServiceType, I.customer_preferred_time as scheduledTime, I.initial_activity_time as initialActivityTime,
-    I.img_src
+    I.img_src,
+    A.handover_date as handoverDate
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
     left join ${database}.project P on A.project_id = P.id
