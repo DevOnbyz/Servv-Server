@@ -209,3 +209,7 @@ CREATE TABLE `organisation_feature_mapping` (
 INSERT INTO `organisation_feature` (`name`, `feature_code`) VALUES ('Mask Resident Phone Number', 'MASK_RESIDENT_PHONE');
 INSERT INTO `organisation_feature_mapping` (`org_id`, `feature_id`, `is_active`) VALUES (1, (SELECT id FROM organisation_feature WHERE feature_code = 'MASK_RESIDENT_PHONE'), 1);
 
+
+--15-04-2025
+ALTER TABLE `agent` MODIFY COLUMN `lastname` VARCHAR(255) NULL;
+ALTER TABLE `admin` MODIFY COLUMN `lastname` VARCHAR(255) NULL;

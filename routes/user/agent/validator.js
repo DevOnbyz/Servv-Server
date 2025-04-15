@@ -4,8 +4,8 @@ const addAgentSchema = Joi.object({
   firstname: Joi.string().required().messages({
     'string.empty': 'Firstname is required',
   }),
-  lastname: Joi.string().required().messages({
-    'string.empty': 'Lastname is required',
+  lastname: Joi.string().allow(null).messages({
+    'string.base': 'Lastname cannot be empty',
   }),
   email: Joi.string().optional().allow(null),
   phNum: Joi.string().required().messages({
@@ -14,7 +14,7 @@ const addAgentSchema = Joi.object({
   serviceList: Joi.array().required().messages({
     'string.empty': 'Service List is required',
   }),
-  city : Joi.string().required().messages({
+  city: Joi.string().required().messages({
     'string.empty': 'City is required',
   }),
   district: Joi.string().required().messages({
@@ -35,8 +35,8 @@ const editAgentSchema = Joi.object({
   firstname: Joi.string().required().messages({
     'string.empty': 'Firstname is required',
   }),
-  lastname: Joi.string().required().messages({
-    'string.empty': 'Lastname is required',
+  lastname: Joi.string().allow(null).messages({
+    'string.base': 'Lastname cannot be empty',
   }),
   email: Joi.string().optional().allow(null),
   phNum: Joi.string().required().messages({
@@ -45,7 +45,7 @@ const editAgentSchema = Joi.object({
   serviceList: Joi.array().required().messages({
     'string.empty': 'Service List is required',
   }),
-  city : Joi.string().required().messages({
+  city: Joi.string().required().messages({
     'string.empty': 'City is required',
   }),
   district: Joi.string().required().messages({

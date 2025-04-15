@@ -48,7 +48,7 @@ CREATE TABLE `role_permission_rel` (
 CREATE TABLE `admin` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `firstname` VARCHAR(100) NOT NULL,
-    `lastname` VARCHAR(100) NOT NULL,
+    `lastname` VARCHAR(255) NULL,
     `email` VARCHAR(100),
     `ph_num` VARCHAR(30) NOT NULL,
     `username` VARCHAR(255) UNIQUE NOT NULL,
@@ -204,7 +204,7 @@ CREATE TABLE `agent` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `identity_id` INT NOT NULL,
     `firstname` VARCHAR(255) NOT NULL,
-    `lastname` VARCHAR(255) NOT NULL,
+    `lastname` VARCHAR(255) NULL,
     `org_id` INT,
     `status` TINYINT DEFAULT 1,
     `city` VARCHAR(255),

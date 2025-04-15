@@ -44,7 +44,7 @@ exports.addAdminController = async (request, response) => {
     const serviceList = request.body.serviceList ?? []
     const roleId = request.body.roleId ?? null
 
-    const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAdminIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum])
+    const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAdminIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum,orgID])
 
     if (!_.isEmpty(phNumDetails))
       return sendHTTPResponse.error(response, 'Manager with same phone number already exists in this organisation', null, 400)
@@ -85,6 +85,12 @@ exports.editAdminController = async (request, response) => {
     const isPassordChanged = !!request.body.isPasswordChanged
     const password = request.body.password
     const serviceList = request.body.serviceList ?? []
+
+    const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAdminIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum,orgID])
+
+    if (!_.isEmpty(phNumDetails) && phNumDetails[0].ph_num !== phNum)
+      return sendHTTPResponse.error(response, 'Manager with same phone number already exists in this organisation', null, 400)
+
 
     const adminDetails = {
       firstname,
