@@ -27,7 +27,10 @@ const scheduleSiteVisitSchema = Joi.object({
     'string.empty': 'agentID is required',
   }),
   scheduleTime: Joi.string().required().messages({
-    'string.empty': 'date and time is required',
+    'string.empty': 'preferred date is required',
+  }),
+  timeSlot: Joi.number().required().messages({
+    'any.required': 'timeSlot is required',
   }),
   timeSlot: Joi.number().optional().messages({
     'number.empty': 'time slot is required',

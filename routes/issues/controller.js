@@ -245,6 +245,8 @@ exports.workOrderIssueController = async (request, response) => {
   const issueID = request.params.issueID
   try {
     const { agentID, notes, scheduleTime, isCustomerPreferred } = request.body
+    const timeSlot = parseInt(request.body.timeSlot) || 0;
+
     const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if (notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status == CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, `You can't add a work order for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
@@ -265,6 +267,7 @@ exports.workOrderIssueController = async (request, response) => {
       status: CONSTANTS.AGENT_ASSIGNMENT_STATUS.PENDING,
       assigned_by: request.userID,
       visit_scheduled_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null,
+      time_slot: timeSlot,
       otp_sent_time: null,
       otp_code: generateOTP(),
       notes,
@@ -277,6 +280,7 @@ exports.workOrderIssueController = async (request, response) => {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.WORK_ASSIGNED,
       event_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : moment().utc().format('YYYY-MM-DD HH:mm:ss'),
+      time_slot: timeSlot,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED,
       entity_id: entityID,
       description: notes,
