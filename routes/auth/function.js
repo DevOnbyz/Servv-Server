@@ -38,8 +38,9 @@ exports.generateCustomerToken = async (customerData) => {
     const id = customerData.id
     const firstname = customerData.firstname
     const lastname = customerData.lastname
+    const phNum = customerData.ph_num
     const fullName = lastname ? `${firstname} ${lastname}` : firstname
-    const associatedOrganisationList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getDistichOrgOfResidentsID(CONSTANTS.BUILDING_DATABASE), [id])
+    const associatedOrganisationList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getDistichOrgOfResidentsID(CONSTANTS.BUILDING_DATABASE), [phNum])
     const orgIDs = associatedOrganisationList?.map(org => org.org_id)
     const orgsDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getOrgDetailsByIDs(CONSTANTS.BUILDING_DATABASE), [orgIDs])
     const associatedOrganisation = orgsDetails?.map((org) => ({
