@@ -1,4 +1,4 @@
-const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, QUOTATION_STATUS, SERVV_USER_TYPE_NUM, AGENT_ASSIGNMENT_TYPE, TIME_SLOTS_NUM, TIME_SLOTS_STRING, SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM, SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING } = require("../../lib/constants");
+const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, QUOTATION_STATUS, SERVV_USER_TYPE_NUM, AGENT_ASSIGNMENT_TYPE,} = require("../../lib/constants");
 
 module.exports = {
   addIssue(database) {
@@ -12,9 +12,7 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
     I.created_at, R.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, SUB.id as subServiceID, SUB.name as subServiceType, I.customer_preferred_time as scheduledTime, I.initial_activity_time as initialActivityTime,
-    CASE WHEN I.time_slot = ${TIME_SLOTS_NUM.NONE} THEN '${TIME_SLOTS_STRING.NONE}' 
-    WHEN I.time_slot = ${TIME_SLOTS_NUM.MORNING} THEN '${TIME_SLOTS_STRING.MORNING}' 
-    WHEN I.time_slot = ${TIME_SLOTS_NUM.AFTERNOON} THEN '${TIME_SLOTS_STRING.AFTERNOON}' END as timeSlot,
+    I.time_slot as timeSlot,
     I.img_src,
     A.handover_date as handoverDate
     FROM ${database}.issue I
@@ -199,17 +197,8 @@ module.exports = {
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
     END AS over_due_date,
-    CASE
-      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_1} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_1}'
-      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_2} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_2}'
-      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_3} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_3}'
-      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_4} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_4}'
-      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_5} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_5}'
-      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_6} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_6}'
-      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_7} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_7}'
-    ELSE NULL
-    END AS time_slot,
     AA.notes as note_for_agent,
+    AA.time_slot as time_slot,
     AA.agent_inferences as agent_inferences,
     AA.agent_uploads as agent_uploads,
     CASE
@@ -231,16 +220,7 @@ module.exports = {
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
     END AS overDueDate,
-    CASE
-      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_1} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_1}'
-      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_2} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_2}'
-      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_3} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_3}'
-      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_4} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_4}'
-      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_5} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_5}'
-      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_6} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_6}'
-      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_7} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_7}'
-    ELSE NULL
-    END AS time_slot,
+    AA.time_slot as time_slot,
     AA.notes as noteForAgent,
     AA.agent_inferences as agentInferences,
     AA.agent_uploads as agent_uploads,

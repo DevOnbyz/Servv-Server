@@ -29,10 +29,7 @@ const scheduleSiteVisitSchema = Joi.object({
   scheduleTime: Joi.string().required().messages({
     'string.empty': 'preferred date is required',
   }),
-  timeSlot: Joi.number().required().messages({
-    'any.required': 'timeSlot is required',
-  }),
-  timeSlot: Joi.number().optional().messages({
+  timeSlot: Joi.number().optional().allow(null).messages({
     'number.empty': 'time slot is required',
   }),
   isCustomerPreferred: Joi.boolean().required().messages({
