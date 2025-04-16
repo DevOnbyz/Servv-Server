@@ -139,6 +139,9 @@ exports.addIssueController = async (request, response) => {
         request.body.imgSrcPaths.push(savedFilePath)
       }
     }
+
+    const timeSlot = parseInt(request.body.timeSlot) || 0;
+
     const issueData = {
       org_id: orgID,
       apartment_id: apartmentID,
@@ -154,12 +157,14 @@ exports.addIssueController = async (request, response) => {
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.OPEN,
       initial_activity_time: _.isEmpty(request.body.scheduledTime) ? null : moment(convertToUTC(request.body.scheduledTime, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss'),
       customer_preferred_time: _.isEmpty(request.body.scheduledTime) ? null : moment(convertToUTC(request.body.scheduledTime, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss'),
+      time_slot: timeSlot,
       img_src: _.isEmpty(request.body.imgSrcPaths) ? null : (request.body.imgSrcPaths)?.join(','),
     }
     const insertID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addIssue(CONSTANTS.BUILDING_DATABASE), [issueData]))?.insertId
     const issueLogData = {
       issue_id: insertID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.OPEN,
+      time_slot: timeSlot,
       event_time: _.isEmpty(request.body.scheduledTime) ? moment().utc().format('YYYY-MM-DD HH:mm:ss') : moment(convertToUTC(request.body.scheduledTime, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.OPEN,
       description: '',

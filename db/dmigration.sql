@@ -213,3 +213,7 @@ INSERT INTO `organisation_feature_mapping` (`org_id`, `feature_id`, `is_active`)
 --15-04-2025
 ALTER TABLE `agent` MODIFY COLUMN `lastname` VARCHAR(255) NULL;
 ALTER TABLE `admin` MODIFY COLUMN `lastname` VARCHAR(255) NULL;
+
+ALTER TABLE `issue` ADD COLUMN `time_slot` TINYINT DEFAULT 0 AFTER `customer_preferred_time`;
+ALTER TABLE `issue_event` ADD COLUMN `time_slot` TINYINT DEFAULT 0 AFTER `event_time`;
+ALTER TABLE `agent_assignment` ADD COLUMN `time_slot` TINYINT DEFAULT 0 AFTER `visit_scheduled_time`;

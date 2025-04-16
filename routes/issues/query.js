@@ -1,4 +1,4 @@
-const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, QUOTATION_STATUS, SERVV_USER_TYPE_NUM, AGENT_ASSIGNMENT_TYPE } = require("../../lib/constants");
+const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, QUOTATION_STATUS, SERVV_USER_TYPE_NUM, AGENT_ASSIGNMENT_TYPE, TIME_SLOTS_NUM, TIME_SLOTS_STRING } = require("../../lib/constants");
 
 module.exports = {
   addIssue(database) {
@@ -12,6 +12,9 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
     I.created_at, R.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, SUB.id as subServiceID, SUB.name as subServiceType, I.customer_preferred_time as scheduledTime, I.initial_activity_time as initialActivityTime,
+    CASE WHEN I.time_slot = ${TIME_SLOTS_NUM.NONE} THEN '${TIME_SLOTS_STRING.NONE}' 
+    WHEN I.time_slot = ${TIME_SLOTS_NUM.MORNING} THEN '${TIME_SLOTS_STRING.MORNING}' 
+    WHEN I.time_slot = ${TIME_SLOTS_NUM.AFTERNOON} THEN '${TIME_SLOTS_STRING.AFTERNOON}' END as timeSlot,
     I.img_src,
     A.handover_date as handoverDate
     FROM ${database}.issue I
