@@ -354,6 +354,7 @@ exports.getResidentByProjectController = async (request, response) => {
     const apartmentIDAndDoorNoList = apartmentsUnderProject?.map((apartment) => ({
       apartment_id: apartment?.id,
       door_no: apartment?.name,
+      handover_date: apartment?.handover_date,
     }))
 
     const apartmentIDList = apartmentsUnderProject?.map((apartment) => apartment?.id)
