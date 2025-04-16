@@ -13,7 +13,7 @@ const addIssueSchema = Joi.object({
   serviceID: Joi.string().required().messages({
     'string.empty': 'serviceID is required',
   }),
-  subServiceID: Joi.string().required().messages({
+  subServiceID: Joi.string().required().allow(null).messages({
     'string.empty': 'subServiceID is required',
   }),
   description: Joi.string().optional().allow(null),
@@ -28,6 +28,9 @@ const scheduleSiteVisitSchema = Joi.object({
   }),
   scheduleTime: Joi.string().required().messages({
     'string.empty': 'date and time is required',
+  }),
+  timeSlot: Joi.number().optional().messages({
+    'number.empty': 'time slot is required',
   }),
   isCustomerPreferred: Joi.boolean().required().messages({
     'string.empty': 'isSkipped is required',

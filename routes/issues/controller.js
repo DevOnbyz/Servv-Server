@@ -186,7 +186,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const { agentID, notes, scheduleTime, isCustomerPreferred } = request.body
+    const { agentID, notes, scheduleTime, timeSlot, isCustomerPreferred } = request.body
 
     const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
@@ -208,6 +208,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
       status: CONSTANTS.AGENT_ASSIGNMENT_STATUS.PENDING,
       assigned_by: request.userID,
       visit_scheduled_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null,
+      time_slot: timeSlot ? parseInt(timeSlot) : 0,
       otp_sent_time: null,
       otp_code: generateOTP(),
       notes,
@@ -222,6 +223,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED,
       entity_id: entityID,
       event_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : moment().utc().format('YYYY-MM-DD HH:mm:ss'),
+      time_slot: timeSlot ? parseInt(timeSlot) : 0,
       description: notes,
       creator_id: request.userID,
       creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
