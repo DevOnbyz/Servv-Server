@@ -388,6 +388,7 @@ module.exports = {
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1)
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1) 
     END as visitTime,
+    time_slot as timeSlot,
     CASE
     WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} ,${ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT}) THEN 
         CASE 
@@ -454,6 +455,7 @@ WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STA
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1)
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1) 
     END as visitTime,
+    time_slot as timeSlot,
     CASE
     WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}) THEN 
         CASE 
