@@ -28,7 +28,7 @@ module.exports = {
     return `SELECT * FROM ${database}.resident WHERE ph_num = ?`
   },
   getDistichOrgOfResidentsID(database) {
-    return `SELECT DISTINCT org_id, id as residentId FROM ${database}.resident where id = ?`
+    return `SELECT DISTINCT org_id, id as residentId FROM ${database}.resident where ph_num = ?`
   },
   getDistichOrgOfAgentsByIdentityID(database) {
     return `SELECT DISTINCT org_id, id as agentId FROM ${database}.agent where identity_id = ?`
