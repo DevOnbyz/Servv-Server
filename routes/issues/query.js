@@ -1,4 +1,4 @@
-const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, QUOTATION_STATUS, SERVV_USER_TYPE_NUM, AGENT_ASSIGNMENT_TYPE } = require("../../lib/constants");
+const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, QUOTATION_STATUS, SERVV_USER_TYPE_NUM, AGENT_ASSIGNMENT_TYPE,} = require("../../lib/constants");
 
 module.exports = {
   addIssue(database) {
@@ -12,6 +12,7 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
     I.created_at, R.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, SUB.id as subServiceID, SUB.name as subServiceType, I.customer_preferred_time as scheduledTime, I.initial_activity_time as initialActivityTime,
+    I.time_slot as timeSlot,
     I.img_src,
     A.handover_date as handoverDate
     FROM ${database}.issue I
@@ -197,6 +198,7 @@ module.exports = {
     ELSE 0
     END AS over_due_date,
     AA.notes as note_for_agent,
+    AA.time_slot as time_slot,
     AA.agent_inferences as agent_inferences,
     AA.agent_uploads as agent_uploads,
     CASE
@@ -218,6 +220,7 @@ module.exports = {
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
     END AS overDueDate,
+    AA.time_slot as time_slot,
     AA.notes as noteForAgent,
     AA.agent_inferences as agentInferences,
     AA.agent_uploads as agent_uploads,
@@ -247,6 +250,7 @@ module.exports = {
   },
   getWorkOrderUnderIssue(database) {
     return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as site_visit_time,
+    AA.time_slot as timeSlot,
     CASE 
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
