@@ -257,6 +257,7 @@ CREATE TABLE `issue` (
     `issue_type` VARCHAR(255),
     `initial_activity_time` DATETIME,
     `customer_preferred_time` DATETIME,
+    `time_slot` TINYINT DEFAULT 0,
     `due_date` DATETIME,
     `rating` INT,
     `reviewed` TINYINT DEFAULT 0, -- 0 = pending, 1 = reviewed
@@ -292,6 +293,7 @@ CREATE TABLE `issue_event` (
     `sub_status` TINYINT DEFAULT NULL,
     `entity_id` INT DEFAULT NULL, -- Can be agent_assignment_id, estimate_id wrt to the substatus added
     `event_time` DATETIME DEFAULT NULL,
+    `time_slot` TINYINT DEFAULT 0,
     `description` TEXT,
     `creator_id` INT,
     `creator_type` TINYINT,
@@ -310,6 +312,7 @@ CREATE TABLE `agent_assignment` (
     `notes` TEXT,
     `assigned_by` INT,
     `visit_scheduled_time` DATETIME,
+    `time_slot` TINYINT DEFAULT 0,
     `otp_sent_time` DATETIME,
     `otp_code` VARCHAR(10),
     `agent_inferences` TEXT,
