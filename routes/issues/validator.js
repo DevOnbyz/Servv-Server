@@ -32,7 +32,7 @@ const scheduleSiteVisitSchema = Joi.object({
   timeSlot: Joi.number().optional().allow(null).messages({
     'number.empty': 'time slot is required',
   }),
-  isCustomerPreferred: Joi.boolean().required().messages({
+  isCustomerPreferred: Joi.boolean().optional().allow(null).messages({
     'string.empty': 'isSkipped is required',
   }),
 })
@@ -43,6 +43,9 @@ const reAssignAgentSchema = Joi.object({
   }),
   modifiedVisit: Joi.boolean().required().messages({
     'string.empty': 'modifiedVisit is required',
+  }),
+  timeSlot: Joi.number().optional().allow(null).messages({
+    'number.empty': 'time slot is required',
   }),
   modifiedDate: Joi.string().optional().allow(null),
   modifiedNote: Joi.string().optional().allow(null, ''),

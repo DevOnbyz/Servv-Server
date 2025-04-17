@@ -81,6 +81,7 @@ module.exports = {
         IE.entity_id, 
         IE.creator_type, 
         IE.event_time,
+        IE.time_slot as issueEventTimeSlot,
         IE.created_at,
         (SELECT is_satisfied FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} ORDER BY created_at DESC LIMIT 1) as isSatisfied,
         (SELECT feedback_comments FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} ORDER BY created_at DESC LIMIT 1) as feedbackComments,
@@ -250,7 +251,7 @@ module.exports = {
   },
   getWorkOrderUnderIssue(database) {
     return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as site_visit_time,
-    AA.time_slot as timeSlot,
+    AA.time_slot as time_slot,
     CASE 
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
