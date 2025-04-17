@@ -1,4 +1,4 @@
-const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, QUOTATION_STATUS, SERVV_USER_TYPE_NUM, AGENT_ASSIGNMENT_TYPE,} = require("../../lib/constants");
+const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, QUOTATION_STATUS, SERVV_USER_TYPE_NUM, AGENT_ASSIGNMENT_TYPE, TIME_SLOTS_NUM, TIME_SLOTS_STRING,} = require("../../lib/constants");
 
 module.exports = {
   addIssue(database) {
@@ -172,6 +172,11 @@ module.exports = {
     I.description, 
     S.name as serviceType, 
     I.customer_preferred_time as time, 
+    CASE 
+      WHEN I.time_slot = ${TIME_SLOTS_NUM.MORNING} THEN '${TIME_SLOTS_STRING.MORNING}'
+      WHEN I.time_slot = ${TIME_SLOTS_NUM.AFTERNOON} THEN '${TIME_SLOTS_STRING.AFTERNOON}'
+      WHEN I.time_slot = ${TIME_SLOTS_NUM.NONE} THEN '${TIME_SLOTS_STRING.NONE}'
+    END as time_slot,
     I.initial_activity_time as initialActivityTime, 
     I.img_src,
     I.reviewed,
