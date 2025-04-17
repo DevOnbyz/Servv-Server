@@ -89,9 +89,12 @@ const recordPaymentSchema = Joi.object({
   notes: Joi.string().optional().allow(null),
 })
 const preferredTimeSchema = Joi.object({
-  preferredDatetime: Joi.string().isoDate().optional().messages({
-   'string.isoDate': 'preferredDatetime must be in a valid ISO 8601 format (e.g., 2024-12-04T20:11:14.168Z)',
-  }) ,
+  preferredDate: Joi.string().optional().messages({
+    'string.empty': 'preferred date is required',
+  }),
+  timeSlot: Joi.number().optional().allow(null).messages({
+    'number.empty': 'time slot is required',
+  }),
   isSkipped: Joi.boolean().required().messages({
     'string.empty': 'isSkipped is required',
   }),
