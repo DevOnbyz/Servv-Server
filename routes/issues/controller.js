@@ -186,7 +186,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const { agentID, notes, scheduleTime, timeSlot, isCustomerPreferred } = request.body
+    const { agentID, notes, scheduleTime, timeSlot } = request.body
 
     const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
@@ -197,8 +197,6 @@ exports.scheduleVisitIssueController = async (request, response) => {
       agent_id: agentID,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED,
     }
-    if (!isCustomerPreferred)
-      newIssueData.customer_preferred_time = null
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
@@ -244,7 +242,7 @@ exports.workOrderIssueController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const { agentID, notes, scheduleTime, isCustomerPreferred } = request.body
+    const { agentID, notes, scheduleTime } = request.body
     const timeSlot = parseInt(request.body.timeSlot) || 0;
 
     const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
@@ -256,8 +254,6 @@ exports.workOrderIssueController = async (request, response) => {
       agent_id: agentID,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED,
     }
-    if (!isCustomerPreferred)
-      newIssueData.customer_preferred_time = null
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
@@ -306,6 +302,7 @@ exports.reAssignWorkOrderController = async (request, response) => {
   const modifiedVisit = request.body.modifiedVisit
   const modifiedNote = request.body.modifiedNote
   const modifiedDate = request.body.modifiedDate
+  const timeSlot = request.body.timeSlot
   try {
     const activeWorkOrder = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
     if (_.isEmpty(activeWorkOrder)) return sendHTTPResponse.error(response, 'No active work order found for this issue')
@@ -341,9 +338,10 @@ exports.reAssignWorkOrderController = async (request, response) => {
       notes: modifiedNote ?? null
     }
     if (modifiedVisit) {
-      newIssueData.customer_preferred_time = null
+      // newIssueData.customer_preferred_time = null
       newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
-      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssueEvent(CONSTANTS.BUILDING_DATABASE), [{ event_time: modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null }, issueID])
+      newAgentAssignmentData.time_slot = timeSlot
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssueEvent(CONSTANTS.BUILDING_DATABASE), [{ event_time: modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null,time_slot:timeSlot }, issueID])
     }
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
@@ -422,6 +420,7 @@ exports.reAssignSiteVisitController = async (request, response) => {
   const modifiedVisit = request.body.modifiedVisit
   const modifiedNote = request.body.modifiedNote
   const modifiedDate = request.body.modifiedDate
+  const timeSlot = request.body.timeSlot
   try {
 
     // there should be an active site visit to re-assign
@@ -461,11 +460,12 @@ exports.reAssignSiteVisitController = async (request, response) => {
     }
     // sent notification to the agent regarding the issue
     if (modifiedVisit) {
-      newIssueData.customer_preferred_time = null
+      // newIssueData.customer_preferred_time = null
       const scheduleTime = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
       // newIssueData.customer_preferred_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.visit_scheduled_time = scheduleTime
-      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssueEvent(CONSTANTS.BUILDING_DATABASE), [{ event_time: scheduleTime }, issueID])
+      newAgentAssignmentData.time_slot = timeSlot
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssueEvent(CONSTANTS.BUILDING_DATABASE), [{ event_time: scheduleTime,time_slot:timeSlot }, issueID])
     }
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
