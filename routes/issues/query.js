@@ -62,7 +62,7 @@ module.exports = {
             WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.ONHOLD} THEN 'ON HOLD'
             WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.CLOSED} THEN 'ON CLOSED'
         END as event_type_string,
-        CONCAT(A.firstname, ' ', A.lastname) as generatedBy,
+        CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as generatedBy,
         CASE
           WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
           WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
@@ -112,7 +112,7 @@ module.exports = {
             WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.ONHOLD} THEN 'ON HOLD'
             WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.CLOSED} THEN 'ON CLOSED'
         END as event_type_string,
-        CONCAT(A.firstname, ' ', A.lastname) as generatedBy,
+        CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as generatedBy,
         CASE
           WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
           WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
@@ -207,7 +207,7 @@ module.exports = {
     return `INSERT INTO ${database}.agent_assignment SET ?`;
   },
   getSiteVisitUnderIssue(database) {
-    return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as site_visit_time,
+    return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as site_visit_time,
     CASE
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
@@ -230,7 +230,7 @@ module.exports = {
     where issue_id = ? and type = ${AGENT_ASSIGNMENT_TYPE.SITE_VISIT} ORDER BY AA.created_at DESC`;
   },
   getSiteVisitUnderIssueWithDetails(database) {
-    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', COALESCE(R.lastname, '')) as ResidentName ,AA.issue_id as issueId, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as siteVisitTime,
+    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', COALESCE(R.lastname, '')) as ResidentName ,AA.issue_id as issueId, CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as siteVisitTime,
     CASE
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
@@ -250,7 +250,7 @@ module.exports = {
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
     END as status,
     AP.name as doorNo, P.name as projectName, S.name as serviceType, SOR.name as serviceSubTypeName,
-    CONCAT(A.firstname, ' ', A.lastname) as agentAssignmentCreatedBy,
+    CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as agentAssignmentCreatedBy,
     CONCAT(B.firstname, ' ', B.lastname) as issueCreatedBy
     FROM ${database}.agent_assignment AA
     LEFT JOIN ${database}.agent A ON A.id = AA.agent_id
@@ -264,7 +264,7 @@ module.exports = {
     where issue_id = ? and type = ${AGENT_ASSIGNMENT_TYPE.SITE_VISIT} ORDER BY AA.created_at DESC`;
   },
   getWorkOrderUnderIssue(database) {
-    return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as site_visit_time,
+    return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as site_visit_time,
     AA.time_slot as time_slot,
     CASE 
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)

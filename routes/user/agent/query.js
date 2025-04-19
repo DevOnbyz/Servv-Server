@@ -126,7 +126,7 @@ module.exports = {
       ELSE NULL 
     END as assignmentCompletedTime,
     AP.name as doorNo, P.name as projectName, S.name as serviceType, SOR.name as serviceSubTypeName,
-    CONCAT(A.firstname, ' ', A.lastname) as agentAssignmentCreatedBy,
+    CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as agentAssignmentCreatedBy,
     CONCAT(B.firstname, ' ', B.lastname) as issueCreatedBy
     FROM ${database}.agent_assignment AA
     LEFT JOIN ${database}.admin A ON A.id = AA.assigned_by
