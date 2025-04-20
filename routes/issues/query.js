@@ -64,8 +64,8 @@ module.exports = {
         END as event_type_string,
         CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as generatedBy,
         CASE
-          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
-          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
+          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
+          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
         END as assignee,
         CASE
         WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.PAID}) THEN (SELECT total_charge FROM ${database}.invoice WHERE issue_id = IE.issue_id)
@@ -114,8 +114,8 @@ module.exports = {
         END as event_type_string,
         CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as generatedBy,
         CASE
-          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
-          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
+          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
+          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
         END as assignee,
         CASE
         WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.PAID}) THEN (SELECT total_charge FROM ${database}.invoice WHERE issue_id = IE.issue_id)
@@ -423,8 +423,8 @@ module.exports = {
     WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.PAID} ,${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}) THEN 
         CASE
             WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by')) IS NOT NULL AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by_type')) = ${SERVV_USER_TYPE_NUM.ADMIN}
-            THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by')) LIMIT 1)
-            ELSE (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
+            THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by')) LIMIT 1)
+            ELSE (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
         END
     END as createdBy,
     CASE
@@ -464,8 +464,8 @@ WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STA
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN 'Agent'
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN 'Resident' END as userType,
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
     END as agentName,
     CASE
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1)
@@ -498,8 +498,8 @@ WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STA
     WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.PAID} ,${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}) THEN 
         CASE
             WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by')) IS NOT NULL AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by_type')) = ${SERVV_USER_TYPE_NUM.ADMIN}
-            THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by')) LIMIT 1)
-            ELSE (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
+            THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by')) LIMIT 1)
+            ELSE (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
         END
     END as createdBy
     FROM ${database}.issue_event where issue_id = ? ORDER BY created_at ASC`;
