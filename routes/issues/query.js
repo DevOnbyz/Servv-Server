@@ -336,7 +336,8 @@ module.exports = {
     WHEN E.status = ${QUOTATION_STATUS.CANCELLED} THEN 'cancelled'
     WHEN E.status = ${QUOTATION_STATUS.SEND} THEN 'sent'
     ELSE 'pending' END as status,
-    admin.id as created_by, admin.firstname as created_by_firstname, admin.lastname as created_by_lastname, issue.customer_preferred_time as customerPreferredTime
+    admin.id as created_by, admin.firstname as created_by_firstname, admin.lastname as created_by_lastname, issue.customer_preferred_time as customerPreferredTime,
+    issue.time_slot as time_slot
     FROM ${database}.estimate E
     left join ${database}.admin on E.created_by = admin.id
     LEFT JOIN ${database}.issue ON E.issue_id = issue.id
