@@ -162,3 +162,58 @@ VALUES
 
 ALTER TABLE `agent` ADD COLUMN `role_id` INT;
 ALTER TABLE `agent` ADD CONSTRAINT `fk_agent_ibfk_5` FOREIGN KEY (`role_id`) REFERENCES `role` (`id`) ON DELETE CASCADE;
+
+--16-02-2025
+ALTER TABLE `issue_event` ADD COLUMN `info` JSON AFTER description;
+ALTER TABLE `invoice` MODIFY COLUMN `total_charge` FLOAT NOT NULL;
+ALTER TABLE `estimate` MODIFY COLUMN `total_charge` FLOAT NOT NULL;
+
+--17-02-2025
+ALTER TABLE `resident` ADD COLUMN `ph_num` VARCHAR(255) NOT NULL AFTER `lastname`;
+
+--copy all data to resident table
+UPDATE `resident` R
+JOIN `resident_identity` RI ON R.identity_id = RI.id 
+SET R.ph_num = RI.ph_num, R.email_id = COALESCE(R.email_id, RI.email_id),R.fcm_token = COALESCE(R.fcm_token, RI.fcm_token);
+
+ALTER TABLE `resident` DROP FOREIGN KEY `fk_resident_ibfk_3`;
+ALTER TABLE `resident` DROP COLUMN `identity_id`;
+ALTER TABLE `resident` ADD CONSTRAINT `unique_org_phone` UNIQUE (`org_id`, `ph_num`);
+DROP TABLE `resident_identity`;
+
+--17-03-2025
+ALTER TABLE `apartment` ADD COLUMN `handover_date` DATETIME NULL AFTER `project_id`;
+
+--22-03-2025
+CREATE TABLE `organisation_feature` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
+    `feature_code` VARCHAR(100) NOT NULL UNIQUE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE `organisation_feature_mapping` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `org_id` INT NOT NULL,
+    `feature_id` INT NOT NULL,
+    `is_active` TINYINT DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_org_feature_mapping_ibfk_1` FOREIGN KEY (`org_id`) REFERENCES `organisation` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_org_feature_mapping_ibfk_2` FOREIGN KEY (`feature_id`) REFERENCES `organisation_feature` (`id`) ON DELETE CASCADE,
+    UNIQUE KEY `unique_org_feature` (`org_id`, `feature_id`)
+);
+
+
+INSERT INTO `organisation_feature` (`name`, `feature_code`) VALUES ('Mask Resident Phone Number', 'MASK_RESIDENT_PHONE');
+INSERT INTO `organisation_feature_mapping` (`org_id`, `feature_id`, `is_active`) VALUES (1, (SELECT id FROM organisation_feature WHERE feature_code = 'MASK_RESIDENT_PHONE'), 1);
+
+
+--15-04-2025
+ALTER TABLE `agent` MODIFY COLUMN `lastname` VARCHAR(255) NULL;
+ALTER TABLE `admin` MODIFY COLUMN `lastname` VARCHAR(255) NULL;
+
+ALTER TABLE `issue` ADD COLUMN `time_slot` TINYINT DEFAULT 0 AFTER `customer_preferred_time`;
+ALTER TABLE `issue_event` ADD COLUMN `time_slot` TINYINT DEFAULT 0 AFTER `event_time`;
+ALTER TABLE `agent_assignment` ADD COLUMN `time_slot` TINYINT DEFAULT 0 AFTER `visit_scheduled_time`;

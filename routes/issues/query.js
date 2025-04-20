@@ -1,4 +1,4 @@
-const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, QUOTATION_STATUS, SERVV_USER_TYPE_NUM, AGENT_ASSIGNMENT_TYPE } = require("../../lib/constants");
+const { ISSUE_STATUS, ISSUE_STATUS_STRING, ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, QUOTATION_STATUS, SERVV_USER_TYPE_NUM, AGENT_ASSIGNMENT_TYPE, TIME_SLOTS_NUM, TIME_SLOTS_STRING, SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM, SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING,} = require("../../lib/constants");
 
 module.exports = {
   addIssue(database) {
@@ -11,13 +11,14 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}' 
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
-    I.created_at, RI.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, SUB.id as subServiceID, SUB.name as subServiceType, I.customer_preferred_time as scheduledTime, I.initial_activity_time as initialActivityTime,
-    I.img_src
+    I.created_at, R.ph_num as phNum, I.description as issueDescription, S.name as serviceType, S.id as serviceID, SUB.id as subServiceID, SUB.name as subServiceType, I.customer_preferred_time as scheduledTime, I.initial_activity_time as initialActivityTime,
+    I.time_slot as timeSlot,
+    I.img_src,
+    A.handover_date as handoverDate
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
     left join ${database}.project P on A.project_id = P.id
     left join ${database}.resident R on I.resident_id = R.id
-    left join ${database}.resident_identity RI on R.identity_id = RI.id
     left join ${database}.service S on I.service_type = S.id
     left join ${database}.service_organisation_rel SUB on I.service_subtype = SUB.id
     left join ${database}.agent AG on I.agent_id = AG.id
@@ -61,10 +62,10 @@ module.exports = {
             WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.ONHOLD} THEN 'ON HOLD'
             WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.CLOSED} THEN 'ON CLOSED'
         END as event_type_string,
-        CONCAT(A.firstname, ' ', A.lastname) as generatedBy,
+        CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as generatedBy,
         CASE
-          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
-          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
+          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
+          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
         END as assignee,
         CASE
         WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.PAID}) THEN (SELECT total_charge FROM ${database}.invoice WHERE issue_id = IE.issue_id)
@@ -80,6 +81,7 @@ module.exports = {
         IE.entity_id, 
         IE.creator_type, 
         IE.event_time,
+        IE.time_slot as issueEventTimeSlot,
         IE.created_at,
         (SELECT is_satisfied FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} ORDER BY created_at DESC LIMIT 1) as isSatisfied,
         (SELECT feedback_comments FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} ORDER BY created_at DESC LIMIT 1) as feedbackComments,
@@ -110,10 +112,10 @@ module.exports = {
             WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.ONHOLD} THEN 'ON HOLD'
             WHEN IE.sub_status = ${ISSUE_SUB_STATUS_NUM.CLOSED} THEN 'ON CLOSED'
         END as event_type_string,
-        CONCAT(A.firstname, ' ', A.lastname) as generatedBy,
+        CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as generatedBy,
         CASE
-          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
-          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
+          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
+          WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}, ${ISSUE_SUB_STATUS_NUM.WORK_CANCELLED}) THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id ORDER BY id DESC LIMIT 1))
         END as assignee,
         CASE
         WHEN IE.sub_status IN (${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.PAID}) THEN (SELECT total_charge FROM ${database}.invoice WHERE issue_id = IE.issue_id)
@@ -128,8 +130,16 @@ module.exports = {
         IE.creator_id, 
         IE.entity_id, 
         IE.creator_type, 
-        IE.event_time,
-        IE.created_at,
+        IE.event_time, 
+        CASE 
+          WHEN IE.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_1} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_1}'
+          WHEN IE.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_2} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_2}'
+          WHEN IE.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_3} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_3}'
+          WHEN IE.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_4} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_4}'
+          WHEN IE.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_5} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_5}'
+          WHEN IE.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_6} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_6}'
+          WHEN IE.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_7} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_7}'
+        END as time_slot,
         (SELECT is_satisfied FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} ORDER BY created_at DESC LIMIT 1) as isSatisfied,
         (SELECT feedback_comments FROM ${database}.agent_assignment WHERE issue_id = IE.issue_id AND IE.sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} ORDER BY created_at DESC LIMIT 1) as feedbackComments,
         AA.updated_at
@@ -146,12 +156,11 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.INPROGRESS} THEN '${ISSUE_STATUS_STRING.INPROGRESS}' 
     WHEN I.status = ${ISSUE_STATUS.CLOSED} THEN '${ISSUE_STATUS_STRING.CLOSED}'
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' END as status, 
-    I.created_at, RI.ph_num as phNum, I.description, S.name as serviceType, I.customer_preferred_time as time, I.initial_activity_time as initialActivityTime, I.img_src, I.updated_at
+    I.created_at, R.ph_num as phNum, I.description, S.name as serviceType, I.customer_preferred_time as time, I.initial_activity_time as initialActivityTime, I.img_src, I.updated_at
     FROM ${database}.issue I
     left join ${database}.apartment A on I.apartment_id = A.id 
     left join ${database}.project P on A.project_id = P.id
     left join ${database}.resident R on I.resident_id = R.id
-    left join ${database}.resident_identity RI on R.identity_id = RI.id
     left join ${database}.service S on I.service_type = S.id
     left join ${database}.service_organisation_rel SOR on I.service_subtype = SOR.id
     where I.resident_id = ? AND I.org_id = ?
@@ -168,10 +177,15 @@ module.exports = {
     WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}' 
     END as status, 
     I.created_at, 
-    RI.ph_num as phNum, 
+    R.ph_num as phNum, 
     I.description, 
     S.name as serviceType, 
     I.customer_preferred_time as time, 
+    CASE 
+      WHEN I.time_slot = ${TIME_SLOTS_NUM.MORNING} THEN '${TIME_SLOTS_STRING.MORNING}'
+      WHEN I.time_slot = ${TIME_SLOTS_NUM.AFTERNOON} THEN '${TIME_SLOTS_STRING.AFTERNOON}'
+      WHEN I.time_slot = ${TIME_SLOTS_NUM.NONE} THEN '${TIME_SLOTS_STRING.NONE}'
+    END as time_slot,
     I.initial_activity_time as initialActivityTime, 
     I.img_src,
     I.reviewed,
@@ -180,7 +194,6 @@ module.exports = {
     LEFT JOIN ${database}.apartment A ON I.apartment_id = A.id 
     LEFT JOIN ${database}.project P ON A.project_id = P.id
     LEFT JOIN ${database}.resident R ON I.resident_id = R.id
-    LEFT JOIN ${database}.resident_identity RI ON R.identity_id = RI.id
     LEFT JOIN ${database}.service S ON I.service_type = S.id
     LEFT JOIN ${database}.service_organisation_rel SOR ON I.service_subtype = SOR.id
     WHERE I.id = ? 
@@ -194,12 +207,13 @@ module.exports = {
     return `INSERT INTO ${database}.agent_assignment SET ?`;
   },
   getSiteVisitUnderIssue(database) {
-    return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as site_visit_time,
+    return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as site_visit_time,
     CASE
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
     END AS over_due_date,
     AA.notes as note_for_agent,
+    AA.time_slot as time_slot,
     AA.agent_inferences as agent_inferences,
     AA.agent_uploads as agent_uploads,
     CASE
@@ -216,11 +230,12 @@ module.exports = {
     where issue_id = ? and type = ${AGENT_ASSIGNMENT_TYPE.SITE_VISIT} ORDER BY AA.created_at DESC`;
   },
   getSiteVisitUnderIssueWithDetails(database) {
-    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', COALESCE(R.lastname, '')) as ResidentName ,AA.issue_id as issueId, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as siteVisitTime,
+    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', COALESCE(R.lastname, '')) as ResidentName ,AA.issue_id as issueId, CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as siteVisitTime,
     CASE
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
     END AS overDueDate,
+    AA.time_slot as time_slot,
     AA.notes as noteForAgent,
     AA.agent_inferences as agentInferences,
     AA.agent_uploads as agent_uploads,
@@ -235,7 +250,7 @@ module.exports = {
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
     END as status,
     AP.name as doorNo, P.name as projectName, S.name as serviceType, SOR.name as serviceSubTypeName,
-    CONCAT(A.firstname, ' ', A.lastname) as agentAssignmentCreatedBy,
+    CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as agentAssignmentCreatedBy,
     CONCAT(B.firstname, ' ', B.lastname) as issueCreatedBy
     FROM ${database}.agent_assignment AA
     LEFT JOIN ${database}.agent A ON A.id = AA.agent_id
@@ -249,7 +264,8 @@ module.exports = {
     where issue_id = ? and type = ${AGENT_ASSIGNMENT_TYPE.SITE_VISIT} ORDER BY AA.created_at DESC`;
   },
   getWorkOrderUnderIssue(database) {
-    return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as site_visit_time,
+    return `SELECT AA.id as id, AA.issue_id as issue_id, CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as site_visit_time,
+    AA.time_slot as time_slot,
     CASE 
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
@@ -320,7 +336,8 @@ module.exports = {
     WHEN E.status = ${QUOTATION_STATUS.CANCELLED} THEN 'cancelled'
     WHEN E.status = ${QUOTATION_STATUS.SEND} THEN 'sent'
     ELSE 'pending' END as status,
-    admin.id as created_by, admin.firstname as created_by_firstname, admin.lastname as created_by_lastname, issue.customer_preferred_time as customerPreferredTime
+    admin.id as created_by, admin.firstname as created_by_firstname, admin.lastname as created_by_lastname, issue.customer_preferred_time as customerPreferredTime,
+    issue.time_slot as time_slot
     FROM ${database}.estimate E
     left join ${database}.admin on E.created_by = admin.id
     LEFT JOIN ${database}.issue ON E.issue_id = issue.id
@@ -372,29 +389,52 @@ module.exports = {
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN 'Invoice Sent'
     ELSE 'Unknown Event' END as event_type,
     CASE
-    WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = creator_id LIMIT 1)
-    WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = creator_id LIMIT 1)
-    WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.resident WHERE id = creator_id LIMIT 1) END as name,
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = creator_id LIMIT 1)
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = creator_id LIMIT 1)
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.resident WHERE id = creator_id LIMIT 1) END as name,
     CASE
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN 'Admin'
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN 'Agent'
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN 'Resident' END as userType,
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
     END as agentName,
     CASE
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1)
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1) 
     END as visitTime,
+    time_slot as timeSlot,
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN (SELECT total_charge FROM ${database}.invoice WHERE id = entity_id LIMIT 1)
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN (SELECT total_charge FROM ${database}.estimate WHERE id = entity_id LIMIT 1)
-    END as totalCharge,
+    WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED} ,${ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT}) THEN 
+        CASE 
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) IS NOT NULL 
+            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) AS DECIMAL(10,2))
+            ELSE (SELECT total_charge FROM ${database}.estimate WHERE id = entity_id LIMIT 1)
+        END
+    WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED}, ${ISSUE_SUB_STATUS_NUM.PAID}) THEN 
+        CASE 
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) IS NOT NULL 
+            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) AS DECIMAL(10,2))
+            ELSE (SELECT total_charge FROM ${database}.invoice WHERE id = entity_id LIMIT 1)
+        END
+    END as totalCharge, 
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
-    END as createdBy
+    WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.PAID} ,${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}) THEN 
+        CASE
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by')) IS NOT NULL AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by_type')) = ${SERVV_USER_TYPE_NUM.ADMIN}
+            THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by')) LIMIT 1)
+            ELSE (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
+        END
+    END as createdBy,
+    CASE
+WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}) AND info IS NOT NULL AND JSON_VALID(info) AND JSON_CONTAINS_PATH(info, 'one', '$.agent_ids') THEN 
+        (
+            SELECT CONCAT('[', GROUP_CONCAT(CONCAT('"', CONCAT(firstname, ' ', COALESCE(lastname, '')), '"')), ']')
+            FROM ${database}.agent
+            WHERE JSON_CONTAINS(JSON_EXTRACT(info, '$.agent_ids'), CAST(id AS JSON))
+        )
+    END as previousAgents
     FROM ${database}.issue_event where issue_id = ? ORDER BY created_at ASC`;
   },
   getIssueHistoryForCustomer(database) {
@@ -416,28 +456,51 @@ module.exports = {
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN 'Invoice Generated'
     ELSE null END as event_type,
     CASE
-    WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = creator_id LIMIT 1)
-    WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = creator_id LIMIT 1)
-    WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.resident WHERE id = creator_id LIMIT 1) END as name,
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = creator_id LIMIT 1)
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = creator_id LIMIT 1)
+    WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.resident WHERE id = creator_id LIMIT 1) END as name,
     CASE
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.ADMIN} THEN 'Admin'
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.AGENT} THEN 'Agent'
     WHEN creator_type = ${SERVV_USER_TYPE_NUM.CUSTOMER} THEN 'Resident' END as userType,
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
+    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} OR sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED} THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.agent WHERE id = (SELECT agent_id FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1))
     END as agentName,
     CASE
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED} THEN (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1)
     WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED} THEN (SELECT visit_scheduled_time FROM ${database}.agent_assignment WHERE id = entity_id LIMIT 1) 
     END as visitTime,
+    CASE 
+      WHEN time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_1} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_1}'
+      WHEN time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_2} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_2}'
+      WHEN time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_3} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_3}'
+      WHEN time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_4} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_4}'
+      WHEN time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_5} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_5}'
+      WHEN time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_6} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_6}'
+      WHEN time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_7} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_7}'
+    END as time_slot,
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN (SELECT total_charge FROM ${database}.invoice WHERE id = entity_id LIMIT 1)
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN (SELECT total_charge FROM ${database}.estimate WHERE id = entity_id LIMIT 1)
-    END as totalCharge,
+    WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}) THEN 
+        CASE 
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) IS NOT NULL 
+            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) AS DECIMAL(10,2))
+            ELSE (SELECT total_charge FROM ${database}.estimate WHERE id = entity_id LIMIT 1)
+        END
+    WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.PAID}) THEN 
+        CASE 
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) IS NOT NULL 
+            THEN CAST(JSON_UNQUOTE(JSON_EXTRACT(info, '$.amount')) AS DECIMAL(10,2))
+            ELSE (SELECT total_charge FROM ${database}.invoice WHERE id = entity_id LIMIT 1)
+        END
+    END as totalCharge, 
     CASE
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
-    WHEN sub_status = ${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT} THEN (SELECT CONCAT(firstname, ' ', lastname) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
+    WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_SENT}, ${ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.PAID} ,${ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED}, ${ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED}) THEN 
+        CASE
+            WHEN info IS NOT NULL AND JSON_VALID(info) AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by')) IS NOT NULL AND JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by_type')) = ${SERVV_USER_TYPE_NUM.ADMIN}
+            THEN (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = JSON_UNQUOTE(JSON_EXTRACT(info, '$.approved_rejected_by')) LIMIT 1)
+            ELSE (SELECT CONCAT(firstname, ' ', COALESCE(lastname, '')) FROM ${database}.admin WHERE id = (SELECT created_by FROM ${database}.estimate WHERE id = entity_id LIMIT 1))
+        END
     END as createdBy
     FROM ${database}.issue_event where issue_id = ? ORDER BY created_at ASC`;
   },
@@ -460,7 +523,12 @@ module.exports = {
     return `DELETE FROM ${database}.estimate WHERE id = ?`;
   },
   getResidentFCMTokenByResidentID(database) {
-    return `SELECT RI.fcm_token as fcmToken FROM ${database}.resident_identity RI join ${database}.resident R on RI.id = R.identity_id where R.id = ?`;
+    return `SELECT fcm_token as fcmToken FROM ${database}.resident where id = ?`;
+  },
+  getIssueEventByIssueIdAndEntityId(database) {
+    return `SELECT * FROM ${database}.issue_event WHERE issue_id = ? AND entity_id = ? AND sub_status = ? `
+  },
+  updateIssueEventById(database) {
+    return `UPDATE ${database}.issue_event SET ? WHERE id = ?`;
   }
-
 };

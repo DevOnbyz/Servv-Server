@@ -1,3 +1,4 @@
+const CONSTANTS = require("../../lib/constants");
 const { PAYMENT_STATUS } = require("../../lib/constants");
 
 module.exports = {
@@ -5,16 +6,19 @@ module.exports = {
     return `INSERT INTO ${database}.resident SET ?`;
   },
   getResidentByPhNumIDAndOrgID(database) {
-    return `SELECT * FROM ${database}.resident WHERE identity_id = ? AND org_id = ?`;
-  },
-  getResidentByNameAndIdentity(database) {
-    return `SELECT * FROM ${database}.resident WHERE firstname = ? AND lastname = ? AND email = ? AND identity_id = ?`;
+    return `SELECT * FROM ${database}.resident WHERE ph_num  = ? AND org_id = ?`;
   },
   getResidentIdentityByPhNum(database) {
-    return `SELECT * FROM ${database}.resident_identity where ph_num = ?`
+    return `SELECT * FROM ${database}.resident where ph_num = ?`
+  },
+  getResidentByPhNumAndOrg(database) {
+    return `SELECT * FROM ${database}.resident WHERE ph_num = ? AND org_id = ?`
   },
   addResidentIdentity(database) {
     return `INSERT INTO ${database}.resident_identity SET ?`
+  },
+  updateResidentIdentity(database) {
+    return `UPDATE ${database}.resident_identity SET ? WHERE id = ?`
   },
   addApartment(database) {
     return `INSERT INTO ${database}.apartment SET ?`
@@ -46,22 +50,21 @@ AND
     SELECT
     r.id,
     arr.id AS apartmentResidentRelID,
-    i.ph_num,            
+    r.ph_num,            
     r.email_id,
     r.firstname,
     r.lastname,
     a.id AS apartmentID,
     p.id AS projectID,
     a.name AS doorNo,
+    a.handover_date AS handoverDate,
     p.name AS projectName,
     p.city AS city, 
     p.district AS district, 
     p.state AS state, 
     p.country AS country
 FROM 
-    ${database}.resident_identity i
-JOIN 
-    ${database}.resident r ON i.id = r.identity_id
+    ${database}.resident r
 JOIN 
     ${database}.apartment_resident_rel arr ON r.id = arr.resident_id
 JOIN 
@@ -77,22 +80,21 @@ WHERE
     SELECT
     r.id,
     arr.id AS apartmentResidentRelID,
-    i.ph_num,            
+    r.ph_num,            
     r.email_id,
     r.firstname,
     r.lastname,
     a.id AS apartmentID,
     p.id AS projectID,
     a.name AS doorNo,
+    a.handover_date AS handoverDate,
     p.name AS projectName,
     p.city AS city, 
     p.district AS district, 
     p.state AS state, 
     p.country AS country
 FROM 
-    ${database}.resident_identity i
-JOIN 
-    ${database}.resident r ON i.id = r.identity_id
+    ${database}.resident r
 JOIN 
     ${database}.apartment_resident_rel arr ON r.id = arr.resident_id
 JOIN 
@@ -115,13 +117,15 @@ WHERE
   getResidentByIDUnderOrg(database) {
     return `
       SELECT 
-      R.id, R.org_id,
-      O.id AS organisation_id, O.razorpay_route_account_id
+        R.id, R.org_id,
+        O.id AS organisation_id, O.razorpay_route_account_id
       FROM ${database}.resident R
-      INNER JOIN ${database}.organisation O ON R.org_id = O.id
-      WHERE R.id = ?;
+      INNER JOIN ${database}.organisation O
+      ON R.org_id = O.id
+      WHERE R.id = ? AND O.id = ?;
     `;
-  },  
+  },
+
   updateApartmentDetails(database) {
     return `UPDATE ${database}.apartment SET ? WHERE id = ?`
   },
@@ -149,14 +153,46 @@ WHERE
   addSupport: (database) => {
     return `INSERT INTO ${database}.support SET ?`
   },
-  getPaymentCompletedWithOrderByOrgID: (database) => {
-    return `SELECT p.*, o.*, s.name as serviceName
+  getRazorpayPaymentByResidentID: (database) => {
+    return `
+    SELECT 
+      p.total_amount, 
+      p.created_at as event_time, 
+      o.issue_id, 
+      s.name as serviceName
     FROM ${database}.payment p
-    JOIN ${database}.order o ON p.order_id = o.id
+    JOIN ${database}.order o ON p.order_id = o.id 
     JOIN ${database}.issue i ON o.issue_id = i.id
     JOIN ${database}.service s ON i.service_type = s.id
-    WHERE p.org_id = ?;`
+    WHERE p.org_id = ? 
+      AND i.resident_id = ?
+    GROUP BY 
+      p.total_amount, 
+      p.created_at, 
+      o.issue_id, 
+      s.name;`
   },
+  getManualPaymentByResidentID: (database) => {
+    return `
+    SELECT 
+      i.total_charge as total_amount, 
+      i.issue_id,
+      s.name AS serviceName,
+      MAX(iss_event.event_time) as event_time
+    FROM ${database}.invoice i
+    JOIN ${database}.issue iss ON i.issue_id = iss.id
+    JOIN ${database}.service s ON iss.service_type = s.id
+    LEFT JOIN ${database}.issue_event iss_event ON iss_event.issue_id = iss.id 
+      AND iss_event.sub_status = ${CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID}
+    WHERE iss.org_id = ? 
+      AND i.status = ${CONSTANTS.QUOTATION_STATUS.PAID}
+      AND iss.resident_id = ?
+    GROUP BY 
+      i.total_charge, 
+      i.issue_id, 
+      s.name;`  
+  }
+,  
   getPaymentWithOrderByOrgID: (database) => {
     return `SELECT p.*, o.*
     FROM ${database}.payment p

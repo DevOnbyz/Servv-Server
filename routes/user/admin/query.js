@@ -1,6 +1,6 @@
 module.exports = {
   getAdminIdentityByPhNum(database){
-    return `SELECT * FROM ${database}.admin where ph_num = ?`
+    return `SELECT * FROM ${database}.admin where ph_num = ? AND org_id = ?`
   },
   getAllAdminsUnderOrg(database) {
     return `

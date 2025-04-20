@@ -36,11 +36,11 @@ exports.generateAdminToken = async (adminData) => {
 exports.generateCustomerToken = async (customerData) => {
   try{
     const id = customerData.id
-    const identityID = customerData.identity_id
     const firstname = customerData.firstname
     const lastname = customerData.lastname
+    const phNum = customerData.ph_num
     const fullName = lastname ? `${firstname} ${lastname}` : firstname
-    const associatedOrganisationList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getDistichOrgOfResidentsByIdentityID(CONSTANTS.BUILDING_DATABASE), [identityID])
+    const associatedOrganisationList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getDistichOrgOfResidentsID(CONSTANTS.BUILDING_DATABASE), [phNum])
     const orgIDs = associatedOrganisationList?.map(org => org.org_id)
     const orgsDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getOrgDetailsByIDs(CONSTANTS.BUILDING_DATABASE), [orgIDs])
     const associatedOrganisation = orgsDetails?.map((org) => ({
@@ -51,7 +51,7 @@ exports.generateCustomerToken = async (customerData) => {
     const orgDomains = (orgsDetails?.map(org => org.domain))?.join(',')
     const domain = `MOBILE-${orgDomains}`
     
-    const accessToken = await jwtSign({id, name: fullName, identityID, domain, associatedOrganisation, userType: CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER})
+    const accessToken = await jwtSign({id, name: fullName, domain, associatedOrganisation, userType: CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER})
     return {error: false, data:{accessToken}}
   }
   catch(error){

@@ -9,14 +9,14 @@ const { unifyDoorNumber } = require('../../lib/function')
 const { getAllProjectsByOrgID, getAllApartmentsUnderProject, getResidentByIDs } = require('../../db/query')
 const { formatPaymentHistory, validateKeys, validateProjectNames, validateDoorNoAndAttachProjectID, validateResidentPhNum, addAndAttachResidentID } = require('./functions')
 const neatCSV = require('neat-csv')
-
+const moment = require('moment');
 exports.getResidentController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
   try {
     const residentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentDataUnderOrg(CONSTANTS.BUILDING_DATABASE), [orgID])
     const groupedData = residentDetails?.reduce((acc, row) => {
-      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
+      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, handoverDate, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
       const fullName = `${firstname} ${lastname ?? ""}`.trim()
       let resident = acc.find((r) => r.phNum === ph_num)
       if (!resident) {
@@ -37,6 +37,7 @@ exports.getResidentController = async (request, response) => {
         projectID,
         name: projectName,
         doorNo: doorNo,
+        handoverDate: handoverDate,
         city: city,
         district: district,
         state: state,
@@ -60,7 +61,7 @@ exports.getResidentByIDController = async (request, response) => {
   try {
     const residentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentDataByID(CONSTANTS.BUILDING_DATABASE), [orgID, residentID])
     const groupedData = residentDetails?.reduce((acc, row) => {
-      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
+      const { id, firstname, lastname, ph_num, email_id, projectName, doorNo, handoverDate, city, district, state, country, apartmentID, apartmentResidentRelID, projectID } = row
       const fullName = `${firstname} ${lastname}`.trim()
       let resident = acc.find((r) => r.phNum === ph_num)
       if (!resident) {
@@ -79,6 +80,7 @@ exports.getResidentByIDController = async (request, response) => {
         projectID,
         name: projectName,
         doorNo: doorNo,
+        handoverDate: handoverDate,
         city: city,
         district: district,
         state: state,
@@ -117,22 +119,19 @@ exports.addResidentController = async (request, response) => {
       }
     }
 
-    const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum])
-    const residentIdentityID = _.isEmpty(phNumDetails) ? (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addResidentIdentity(CONSTANTS.BUILDING_DATABASE), [{ ph_num: phNum, created_by: userID }]))?.insertId : phNumDetails[0]?.id
+    // Check if phone number exists in this organization
+    const existingResidentInOrg = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumAndOrg(CONSTANTS.BUILDING_DATABASE), [phNum, orgID])
 
-    if (!_.isEmpty(phNumDetails)) {
-      // if a resident having same phone number exists in a same organisation then the admin can edit not add
-      const residentOrgDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [residentIdentityID, orgID])
-      if (!_.isEmpty(residentOrgDetails)) return sendHTTPResponse.error(response, 'Resident with same phone number already exists', null, 400)
-    }
+    if (!_.isEmpty(existingResidentInOrg))
+      return sendHTTPResponse.error(response, 'Resident with same phone number already exists in this organization', null, 400)
 
     const residentDetails = {
       firstname,
       lastname,
+      ph_num: phNum,
       email_id: email,
       updated_by: userID,
       org_id: orgID,
-      identity_id: residentIdentityID,
     }
 
     const residentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addResident(CONSTANTS.BUILDING_DATABASE), [residentDetails]))?.insertId
@@ -143,6 +142,7 @@ exports.addResidentController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
+        handover_date: item?.handoverDate ? moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') : null,
         created_by: userID,
       }
       const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
@@ -166,15 +166,15 @@ exports.addResidentBulkController = async (request, response) => {
   const userID = request.userID
   const domain = request.domain
   try {
-    if(request.file.mimetype != 'text/csv')
+    if (request.file.mimetype != 'text/csv')
       return sendHTTPResponse.error(response, 'Resident details file should be in CSV format')
-  
+
     const csvFile = request.file.buffer.toString('utf8')
     const completeResidentDetails = await neatCSV(csvFile)
 
     Log.info(`[${domain} | OrganisationID:${orgID}] | addResidentBulkController | ${JSON.stringify(completeResidentDetails)}`)
 
-    if(_.isEmpty(completeResidentDetails))
+    if (_.isEmpty(completeResidentDetails))
       return sendHTTPResponse.error(response, 'Resident details file should not be empty', null, 400)
 
     // Validations starts
@@ -186,31 +186,31 @@ exports.addResidentBulkController = async (request, response) => {
     const projectsUnderOrg = await runQuery(CONSTANTS.BUILDING_DATABASE, getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID])
     await validateProjectNames(orgID, distinctProjectNames, projectsUnderOrg)
 
-    const projectIDNameList = projectsUnderOrg.map((project) => ({id: project.id, name: project.name?.toLowerCase()}))
+    const projectIDNameList = projectsUnderOrg.map((project) => ({ id: project.id, name: project.name?.toLowerCase() }))
     await validateDoorNoAndAttachProjectID(orgID, completeResidentDetails, projectIDNameList)
 
     validateResidentPhNum(completeResidentDetails)
     // Validations ends
 
     await addAndAttachResidentID(orgID, userID, completeResidentDetails)
-    
+
     const newResidentList = completeResidentDetails?.filter((item) => item.residentID === null)
     const existingResidentList = completeResidentDetails?.filter((item) => item.residentID !== null)
 
-    if(_.isEmpty(newResidentList) && !_.isEmpty(existingResidentList)){
+    if (_.isEmpty(newResidentList) && !_.isEmpty(existingResidentList)) {
       Log.info(`[${domain} | OrganisationID:${orgID}] | addResidentController | Residents already exist for the selected projects. To make changes, please edit them in settings.`)
       return sendHTTPResponse.error(response, 'Residents already exist for the selected projects. To make changes, please edit them in settings.', null, 400)
     }
 
-    for(item of newResidentList) {
+    for (item of newResidentList) {
       const residentDetails = {
         firstname: item?.residentName,
         lastname: null,
-        identity_id: item?.residentIdentityID,
+        ph_num: item?.phoneNumber,
         org_id: orgID,
         created_by: userID
       }
-      const residentOrgDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [item?.residentIdentityID, orgID])
+      const residentOrgDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [item?.phoneNumber, orgID])
       const residentID = !_.isEmpty(residentOrgDetails) ? residentOrgDetails.id : (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addResident(CONSTANTS.BUILDING_DATABASE), [residentDetails]))?.insertId
       item.residentID = residentID
       const doorNo = unifyDoorNumber(item?.doorNumber)
@@ -218,6 +218,7 @@ exports.addResidentBulkController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
+        handover_date: item?.handoverDate ? moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') : null,
         created_by: userID,
       }
       const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
@@ -249,6 +250,7 @@ exports.editResidentController = async (request, response) => {
     const email = request.body.emailID
     const apartments = request.body.apartments
     const status = request.body.status
+    const phNum = request.body.phNum
     const residentOwnedApartmentRelDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentApartmentRelByResidentID(CONSTANTS.BUILDING_DATABASE), [residentID])
     const ownedApartmentID = residentOwnedApartmentRelDetails?.map((item) => item.apartment_id)
     const residentOwnedApartmentDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getApartmentsByIDs(CONSTANTS.BUILDING_DATABASE), [ownedApartmentID])
@@ -257,6 +259,11 @@ exports.editResidentController = async (request, response) => {
       projectID: item.project_id,
       doorNo: item.name,
     }))
+
+    const existingResident = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByPhNumAndOrg(CONSTANTS.BUILDING_DATABASE), [phNum, orgID])
+
+    if (!_.isEmpty(existingResident) && existingResident[0]?.id !== residentID)
+      return sendHTTPResponse.error(response, 'Resident with same phone number already exists', null, 400)
 
     for (item of apartments) {
       const doorNo = unifyDoorNumber(item?.doorNo)
@@ -300,9 +307,10 @@ exports.editResidentController = async (request, response) => {
       const apartmentData = {
         project_id: projectID,
         name: doorNo,
+        handover_date: item?.handoverDate ? moment(item?.handoverDate, 'DD-MM-YYYY').format('YYYY-MM-DD HH:mm:ss') : null,
         updated_by: userID,
       }
-
+      
       if (status === 'new') {
         const apartmentID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addApartment(CONSTANTS.BUILDING_DATABASE), [apartmentData]))?.insertId
         const residentApartmentRel = {
@@ -325,6 +333,7 @@ exports.editResidentController = async (request, response) => {
       firstname,
       lastname,
       email_id: email,
+      ph_num: phNum,
       updated_by: userID,
     }
     await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateResidentDetails(CONSTANTS.BUILDING_DATABASE), [newResidentRecord, residentID])
@@ -345,6 +354,7 @@ exports.getResidentByProjectController = async (request, response) => {
     const apartmentIDAndDoorNoList = apartmentsUnderProject?.map((apartment) => ({
       apartment_id: apartment?.id,
       door_no: apartment?.name,
+      handover_date: apartment?.handover_date,
     }))
 
     const apartmentIDList = apartmentsUnderProject?.map((apartment) => apartment?.id)
@@ -394,17 +404,22 @@ exports.addSupportController = async (request, response) => {
 }
 exports.getResidentPaymentHistoryController = async (request, response) => {
   const residentID = parseInt(request.params.id)
-  
+  const orgID = request.orgID
   try {
-    const [residentDetails] = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByIDUnderOrg(CONSTANTS.BUILDING_DATABASE), [residentID])
+    const [residentDetails] = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentByIDUnderOrg(CONSTANTS.BUILDING_DATABASE), [residentID,orgID])
 
     if (_.isEmpty(residentDetails)) return sendHTTPResponse.success(response, [])
     if (_.isEmpty(residentDetails.razorpay_route_account_id)) return sendHTTPResponse.error(response, 'Razorpay route account not found for the organisation - org_id:' + residentDetails.org_id, null, 400)
-      
-    const paymentHistory = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.getPaymentCompletedWithOrderByOrgID(CONSTANTS.BUILDING_DATABASE),[residentDetails.org_id])
-    residentDetails.paymentHistory = formatPaymentHistory(paymentHistory)
 
-    return sendHTTPResponse.success(response, 'Resident List fetched successfully',residentDetails)
+    const razorpayPaymentHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getRazorpayPaymentByResidentID(CONSTANTS.BUILDING_DATABASE), [residentDetails.org_id, residentID])
+    const manualPaymentHistory = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getManualPaymentByResidentID(CONSTANTS.BUILDING_DATABASE), [residentDetails.org_id, residentID])
+
+    residentDetails.paymentHistory = formatPaymentHistory(
+      _.uniqBy([...razorpayPaymentHistory, ...manualPaymentHistory], 
+        item => `${item.total_amount}_${item.event_time}_${item.serviceName}`
+      )
+    )
+    return sendHTTPResponse.success(response, 'Resident List fetched successfully', residentDetails)
   } catch (error) {
     Log.error(`[ residentID:${residentID}] | addSupportController | Error on adding Support | Error: ${error.message}`)
     return sendHTTPResponse.error(response, 'Error on adding Support', error.message)

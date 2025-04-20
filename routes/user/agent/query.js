@@ -1,10 +1,10 @@
-const { ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, ISSUE_STATUS, ISSUE_STATUS_STRING, AGENT_ASSIGNMENT_TYPE } = require("../../../lib/constants");
+const { ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, ISSUE_STATUS, ISSUE_STATUS_STRING, AGENT_ASSIGNMENT_TYPE, TIME_SLOTS_NUM, TIME_SLOTS_STRING, SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM, SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING } = require("../../../lib/constants");
 
 module.exports = {
-  getAgentIdentityByPhNum(database){
+  getAgentIdentityByPhNum(database) {
     return `SELECT * FROM ${database}.agent_identity where ph_num = ?`
   },
-  addAgentIdentity(database){
+  addAgentIdentity(database) {
     return `INSERT INTO ${database}.agent_identity SET ?`
   },
   getAgentByPhNumIDAndOrgID(database) {
@@ -49,14 +49,23 @@ module.exports = {
   getActiveWorkLoadByCountAgentID(database) {
     return `SELECT count(*) as activeWorkLoad FROM ${database}.issue WHERE agent_id = ? AND sub_status = ${ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED}`;
   },
-  getAgentAssignments(database , isActive, assignmentType) {
+  getAgentAssignments(database, isActive, assignmentType) {
     return `SELECT AA.id as assignmentId, I.id as issueId, I.agent_id as agentId, A.name as doorNo, P.name as projectName, AA.type as assignmentType,
     CASE WHEN I.status = ${ISSUE_STATUS.ONHOLD} THEN '${ISSUE_STATUS_STRING.ONHOLD}'
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING} THEN 'PENDING' 
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
     END as status,
-    AA.visit_scheduled_time as scheduledTime,
+    AA.visit_scheduled_time as scheduledTime, 
+    CASE 
+      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_1} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_1}'
+      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_2} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_2}'
+      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_3} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_3}'
+      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_4} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_4}'
+      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_5} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_5}'
+      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_6} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_6}'
+      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_7} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_7}'
+    END as time_slot,
     P.city as city, P.district as district, P.state as state, P.country as country,
     CONCAT(R.firstname, ' ',  COALESCE(R.lastname, '')) as ResidentName
     FROM ${database}.agent_assignment AA
@@ -69,8 +78,25 @@ module.exports = {
     ${assignmentType !== undefined ? `AND AA.type = ${assignmentType}` : ''}
     ORDER BY AA.created_at DESC`;
   },
+
+  getOrganisationFeatureStatus(database) {
+    return `SELECT FM.is_active 
+    FROM ${database}.organisation_feature_mapping FM
+    JOIN ${database}.organisation_feature F ON FM.feature_id = F.id
+    WHERE FM.org_id = ? AND F.feature_code = ?`;
+  },
+
   getDetailedAssignmentUnderAgentByAssignmentID(database) {
-    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', R.lastname) as ResidentName, RI.ph_num as ResidentPhone, AA.issue_id as issueId, CONCAT(A.firstname, ' ', A.lastname) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as siteVisitTime,
+    return `SELECT AA.id as id, I.id as issueId, CONCAT(R.firstname, ' ', COALESCE(R.lastname, '')) as ResidentName, R.ph_num as ResidentPhone, AA.issue_id as issueId, CONCAT(B.firstname, ' ', COALESCE(B.lastname, '')) as assignee, AA.created_at as createdAt, AA.visit_scheduled_time as siteVisitTime,
+    CASE 
+      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_1} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_1}'
+      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_2} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_2}'
+      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_3} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_3}'
+      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_4} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_4}'
+      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_5} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_5}'
+      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_6} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_6}'
+      WHEN AA.time_slot = ${SITEVISIT_AND_WORKORER_TIME_SLOTS_NUM.SLOT_7} THEN '${SITEVISIT_AND_WORKORER_TIME_SLOTS_STRING.SLOT_7}'
+    END as time_slot,
     CASE
     WHEN AA.visit_scheduled_time < CURDATE() THEN DATEDIFF(CURDATE(), AA.visit_scheduled_time)
     ELSE 0
@@ -82,18 +108,28 @@ module.exports = {
     I.description as issueDescription,
     I.img_src as issueImages,
     P.city as city, P.district as district, P.state as state, P.country as country,
-    AA.created_at as AgentAssignmentCreatedTime,
+    I.created_at as AgentAssignmentCreatedTime,
     AA.updated_at as AgentAssignmentLastUpdatedTime,
     CASE
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.PENDING} THEN 'PENDING'
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} THEN 'COMPLETED'
     WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.CANCELLED} THEN 'CANCELLED'
     END as status,
+    CASE 
+    WHEN AA.status = ${AGENT_ASSIGNMENT_STATUS.COMPLETED} 
+      THEN (SELECT event_time FROM ${database}.issue_event WHERE issue_id = I.id AND sub_status = 
+              CASE 
+                  WHEN AA.type = 0 THEN ${ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED}
+                  WHEN AA.type = 1 THEN ${ISSUE_SUB_STATUS_NUM.WORK_COMPLETED}
+              END
+            LIMIT 1)
+      ELSE NULL 
+    END as assignmentCompletedTime,
     AP.name as doorNo, P.name as projectName, S.name as serviceType, SOR.name as serviceSubTypeName,
-    CONCAT(A.firstname, ' ', A.lastname) as agentAssignmentCreatedBy,
+    CONCAT(A.firstname, ' ', COALESCE(A.lastname, '')) as agentAssignmentCreatedBy,
     CONCAT(B.firstname, ' ', B.lastname) as issueCreatedBy
     FROM ${database}.agent_assignment AA
-    LEFT JOIN ${database}.agent A ON A.id = AA.agent_id
+    LEFT JOIN ${database}.admin A ON A.id = AA.assigned_by
     LEFT JOIN ${database}.admin B ON B.id = AA.created_by
     LEFT JOIN ${database}.issue I ON I.id = AA.issue_id
     LEFT JOIN ${database}.apartment AP ON AP.id = I.apartment_id
@@ -101,7 +137,6 @@ module.exports = {
     LEFT JOIN ${database}.service S ON S.id = I.service_type
     LEFT JOIN ${database}.service_organisation_rel SOR ON SOR.id = I.service_subtype
     LEFT JOIN ${database}.resident R ON R.id = I.resident_id
-    LEFT JOIN ${database}.resident_identity RI ON RI.id = R.identity_id
     where AA.id = ? AND AA.agent_id = ? ORDER BY AA.created_at DESC`;
   }
 };

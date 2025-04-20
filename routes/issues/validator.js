@@ -13,7 +13,7 @@ const addIssueSchema = Joi.object({
   serviceID: Joi.string().required().messages({
     'string.empty': 'serviceID is required',
   }),
-  subServiceID: Joi.string().required().messages({
+  subServiceID: Joi.string().required().allow(null).messages({
     'string.empty': 'subServiceID is required',
   }),
   description: Joi.string().optional().allow(null),
@@ -22,12 +22,17 @@ const addIssueSchema = Joi.object({
 })
 
 const scheduleSiteVisitSchema = Joi.object({
-  notes: Joi.string().optional().allow(null),
+  notes: Joi.string().optional().allow(null,""),
   agentID: Joi.number().required().messages({
     'string.empty': 'agentID is required',
   }),
-  scheduleTime: Joi.string().optional().allow(null),
-  isCustomerPreferred: Joi.boolean().required().messages({
+  scheduleTime: Joi.string().required().messages({
+    'string.empty': 'preferred date is required',
+  }),
+  timeSlot: Joi.number().optional().allow(null).messages({
+    'number.empty': 'time slot is required',
+  }),
+  isCustomerPreferred: Joi.boolean().optional().allow(null).messages({
     'string.empty': 'isSkipped is required',
   }),
 })
@@ -38,6 +43,9 @@ const reAssignAgentSchema = Joi.object({
   }),
   modifiedVisit: Joi.boolean().required().messages({
     'string.empty': 'modifiedVisit is required',
+  }),
+  timeSlot: Joi.number().optional().allow(null).messages({
+    'number.empty': 'time slot is required',
   }),
   modifiedDate: Joi.string().optional().allow(null),
   modifiedNote: Joi.string().optional().allow(null, ''),
@@ -81,9 +89,12 @@ const recordPaymentSchema = Joi.object({
   notes: Joi.string().optional().allow(null),
 })
 const preferredTimeSchema = Joi.object({
-  preferredDatetime: Joi.string().isoDate().optional().messages({
-   'string.isoDate': 'preferredDatetime must be in a valid ISO 8601 format (e.g., 2024-12-04T20:11:14.168Z)',
-  }) ,
+  preferredDate: Joi.string().optional().messages({
+    'string.empty': 'preferred date is required',
+  }),
+  timeSlot: Joi.number().optional().allow(null).messages({
+    'number.empty': 'time slot is required',
+  }),
   isSkipped: Joi.boolean().required().messages({
     'string.empty': 'isSkipped is required',
   }),

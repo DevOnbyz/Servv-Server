@@ -4,8 +4,8 @@ const addAdminSchema = Joi.object({
   firstname: Joi.string().required().messages({
     'string.empty': 'Firstname is required',
   }),
-  lastname: Joi.string().required().messages({
-    'string.empty': 'Lastname is required',
+  lastname: Joi.string().allow(null).messages({
+    'string.base': 'Lastname cannot be empty',
   }),
   password: Joi.string().required().messages({
     'string.empty': 'Password is required',
@@ -31,8 +31,8 @@ const editAdminSchema = Joi.object({
   firstname: Joi.string().required().messages({
     'string.empty': 'Firstname is required',
   }),
-  lastname: Joi.string().required().messages({
-    'string.empty': 'Lastname is required',
+  lastname: Joi.string().allow(null).messages({
+    'string.base': 'Lastname cannot be empty',
   }),
   password: Joi.string().optional().allow(null),
   username: Joi.string().required().messages({

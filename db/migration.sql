@@ -48,7 +48,7 @@ CREATE TABLE `role_permission_rel` (
 CREATE TABLE `admin` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `firstname` VARCHAR(100) NOT NULL,
-    `lastname` VARCHAR(100) NOT NULL,
+    `lastname` VARCHAR(255) NULL,
     `email` VARCHAR(100),
     `ph_num` VARCHAR(30) NOT NULL,
     `username` VARCHAR(255) UNIQUE NOT NULL,
@@ -123,23 +123,13 @@ CREATE TABLE `project_service_rel` (
     CONSTRAINT `fk_project_service_rel_ibfk_2` FOREIGN KEY (service_id) REFERENCES service_organisation_rel (id) ON DELETE CASCADE,
     CONSTRAINT `fk_project_service_rel_ibfk_3` FOREIGN KEY (created_by) REFERENCES admin (id)
 );
-CREATE TABLE `resident_identity` (
-    `id` INT AUTO_INCREMENT PRIMARY KEY,
-    `ph_num` VARCHAR(255) UNIQUE NOT NULL,  -- Phone number stays unique here
-    `email_id` VARCHAR(255),
-    `fcm_token` TEXT,
-    `created_by` INT,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_by` INT,
-    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    CONSTRAINT `fk_resident_identity_ibfk_1` FOREIGN KEY (created_by) REFERENCES admin (id)
-);
 
 CREATE TABLE `resident` (
   `id` INT AUTO_INCREMENT PRIMARY KEY,
   `identity_id` INT NOT NULL,
   `firstname` VARCHAR(255) NOT NULL,
   `lastname` VARCHAR(255),
+  `ph_num` VARCHAR(255) NOT NULL,
   `email_id` VARCHAR(255) DEFAULT NULL,
   `status` TINYINT DEFAULT 1,
   `org_id` INT,
@@ -150,8 +140,8 @@ CREATE TABLE `resident` (
   `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
    CONSTRAINT `fk_resident_ibfk_1` FOREIGN KEY (created_by) REFERENCES admin (id),
    CONSTRAINT `fk_resident_ibfk_2` FOREIGN KEY (updated_by) REFERENCES admin (id),
-   CONSTRAINT `fk_resident_ibfk_3` FOREIGN KEY (identity_id) REFERENCES resident_identity (id),
    CONSTRAINT `fk_resident_ibfk_4` FOREIGN KEY (org_id) REFERENCES organisation (id)
+   UNIQUE KEY `unique_org_phone` (`org_id`, `ph_num`);
 );
 
 CREATE TABLE `apartment` (
@@ -214,7 +204,7 @@ CREATE TABLE `agent` (
     `id` INT AUTO_INCREMENT PRIMARY KEY,
     `identity_id` INT NOT NULL,
     `firstname` VARCHAR(255) NOT NULL,
-    `lastname` VARCHAR(255) NOT NULL,
+    `lastname` VARCHAR(255) NULL,
     `org_id` INT,
     `status` TINYINT DEFAULT 1,
     `city` VARCHAR(255),
@@ -267,6 +257,7 @@ CREATE TABLE `issue` (
     `issue_type` VARCHAR(255),
     `initial_activity_time` DATETIME,
     `customer_preferred_time` DATETIME,
+    `time_slot` TINYINT DEFAULT 0,
     `due_date` DATETIME,
     `rating` INT,
     `reviewed` TINYINT DEFAULT 0, -- 0 = pending, 1 = reviewed
@@ -302,6 +293,7 @@ CREATE TABLE `issue_event` (
     `sub_status` TINYINT DEFAULT NULL,
     `entity_id` INT DEFAULT NULL, -- Can be agent_assignment_id, estimate_id wrt to the substatus added
     `event_time` DATETIME DEFAULT NULL,
+    `time_slot` TINYINT DEFAULT 0,
     `description` TEXT,
     `creator_id` INT,
     `creator_type` TINYINT,
@@ -320,6 +312,7 @@ CREATE TABLE `agent_assignment` (
     `notes` TEXT,
     `assigned_by` INT,
     `visit_scheduled_time` DATETIME,
+    `time_slot` TINYINT DEFAULT 0,
     `otp_sent_time` DATETIME,
     `otp_code` VARCHAR(10),
     `agent_inferences` TEXT,
@@ -500,6 +493,26 @@ CREATE TABLE `payment` (
     `transfer_id` VARCHAR(255),
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE `organisation_feature` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `name` VARCHAR(255) NOT NULL,
+    `feature_code` VARCHAR(100) NOT NULL UNIQUE,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+);
+
+CREATE TABLE `organisation_feature_mapping` (
+    `id` INT AUTO_INCREMENT PRIMARY KEY,
+    `org_id` INT NOT NULL,
+    `feature_id` INT NOT NULL,
+    `is_active` TINYINT DEFAULT 0,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` DATETIME DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    CONSTRAINT `fk_org_feature_mapping_ibfk_1` FOREIGN KEY (`org_id`) REFERENCES `organisation` (`id`) ON DELETE CASCADE,
+    CONSTRAINT `fk_org_feature_mapping_ibfk_2` FOREIGN KEY (`feature_id`) REFERENCES `organisation_feature` (`id`) ON DELETE CASCADE,
+    UNIQUE KEY `unique_org_feature` (`org_id`, `feature_id`)
 );
 
 INSERT INTO `service` SET name='plumbing';

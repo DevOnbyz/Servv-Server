@@ -62,7 +62,7 @@ exports.getAnnouncementsController = async (request, response) => {
     
         for (const response of announcementResponses) {
           const residentDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE,getResidentByIDs(CONSTANTS.BUILDING_DATABASE),[response.resident_id])
-          response.name = `${residentDetails.firstname} ${residentDetails.lastname}`
+          response.name = residentDetails.lastname ? `${residentDetails.firstname} ${residentDetails.lastname}` : residentDetails.firstname
           response.phNum = residentDetails.ph_num
           response.associatedProject = (await getProjectAssocaitedWithResident(response.resident_id,projectListUnderOrg))?.map((item) => item.name)
         }

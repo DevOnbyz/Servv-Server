@@ -139,6 +139,9 @@ exports.addIssueController = async (request, response) => {
         request.body.imgSrcPaths.push(savedFilePath)
       }
     }
+
+    const timeSlot = parseInt(request.body.timeSlot) || 0;
+
     const issueData = {
       org_id: orgID,
       apartment_id: apartmentID,
@@ -154,13 +157,15 @@ exports.addIssueController = async (request, response) => {
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.OPEN,
       initial_activity_time: _.isEmpty(request.body.scheduledTime) ? null : moment(convertToUTC(request.body.scheduledTime, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss'),
       customer_preferred_time: _.isEmpty(request.body.scheduledTime) ? null : moment(convertToUTC(request.body.scheduledTime, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss'),
+      time_slot: timeSlot,
       img_src: _.isEmpty(request.body.imgSrcPaths) ? null : (request.body.imgSrcPaths)?.join(','),
     }
     const insertID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addIssue(CONSTANTS.BUILDING_DATABASE), [issueData]))?.insertId
     const issueLogData = {
       issue_id: insertID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.OPEN,
-      event_time:_.isEmpty(request.body.scheduledTime) ? moment().utc().format('YYYY-MM-DD HH:mm:ss') : moment(convertToUTC(request.body.scheduledTime, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss'),
+      time_slot: timeSlot,
+      event_time: _.isEmpty(request.body.scheduledTime) ? moment().utc().format('YYYY-MM-DD HH:mm:ss') : moment(convertToUTC(request.body.scheduledTime, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.OPEN,
       description: '',
       creator_id: request.userID,
@@ -181,7 +186,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const { agentID, notes, scheduleTime, isCustomerPreferred } = request.body
+    const { agentID, notes, scheduleTime, timeSlot } = request.body
 
     const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
@@ -192,9 +197,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
       agent_id: agentID,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED,
     }
-    if (!isCustomerPreferred)
-      newIssueData.customer_preferred_time = null
-    
+
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
     const agentAssignmentData = {
@@ -203,6 +206,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
       status: CONSTANTS.AGENT_ASSIGNMENT_STATUS.PENDING,
       assigned_by: request.userID,
       visit_scheduled_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null,
+      time_slot: timeSlot ? parseInt(timeSlot) : 0,
       otp_sent_time: null,
       otp_code: generateOTP(),
       notes,
@@ -217,6 +221,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED,
       entity_id: entityID,
       event_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : moment().utc().format('YYYY-MM-DD HH:mm:ss'),
+      time_slot: timeSlot ? parseInt(timeSlot) : 0,
       description: notes,
       creator_id: request.userID,
       creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
@@ -237,7 +242,9 @@ exports.workOrderIssueController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const { agentID, notes, scheduleTime,isCustomerPreferred } = request.body
+    const { agentID, notes, scheduleTime } = request.body
+    const timeSlot = parseInt(request.body.timeSlot) || 0;
+
     const notAllowedSubStatusForWorkOrder = [CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED, CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT, CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID, CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED]
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if (notAllowedSubStatusForWorkOrder.includes(issueDetails[0]?.sub_status) || issueDetails[0]?.status == CONSTANTS.ISSUE_STATUS.CLOSED) return sendHTTPResponse.error(response, `You can't add a work order for this issue as the issue is already in ${getSubStatusStringById(issueDetails[0]?.sub_status)}`)
@@ -247,8 +254,6 @@ exports.workOrderIssueController = async (request, response) => {
       agent_id: agentID,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED,
     }
-    if (!isCustomerPreferred)
-      newIssueData.customer_preferred_time = null
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
@@ -258,6 +263,7 @@ exports.workOrderIssueController = async (request, response) => {
       status: CONSTANTS.AGENT_ASSIGNMENT_STATUS.PENDING,
       assigned_by: request.userID,
       visit_scheduled_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : null,
+      time_slot: timeSlot,
       otp_sent_time: null,
       otp_code: generateOTP(),
       notes,
@@ -270,6 +276,7 @@ exports.workOrderIssueController = async (request, response) => {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.WORK_ASSIGNED,
       event_time: scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD HH:mm:ss') : moment().utc().format('YYYY-MM-DD HH:mm:ss'),
+      time_slot: timeSlot,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED,
       entity_id: entityID,
       description: notes,
@@ -295,9 +302,29 @@ exports.reAssignWorkOrderController = async (request, response) => {
   const modifiedVisit = request.body.modifiedVisit
   const modifiedNote = request.body.modifiedNote
   const modifiedDate = request.body.modifiedDate
+  const timeSlot = request.body.timeSlot
   try {
-    const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
-    if (_.isEmpty(activeSiteVisit)) return sendHTTPResponse.error(response, 'No active work order found for this issue')
+    const activeWorkOrder = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveWorkOrderByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
+    if (_.isEmpty(activeWorkOrder)) return sendHTTPResponse.error(response, 'No active work order found for this issue')
+
+    const currentIssueEvent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueEventByIssueIdAndEntityId(CONSTANTS.BUILDING_DATABASE), [issueID, activeWorkOrder.id, CONSTANTS.ISSUE_SUB_STATUS_NUM.WORK_ASSIGNED])
+
+    let infoJSON = {
+      agent_ids: [activeWorkOrder.agent_id]
+    }
+
+    if (currentIssueEvent && currentIssueEvent.info) {
+      const existingInfo = JSON.parse(currentIssueEvent.info)
+      const lastAgentId = existingInfo.agent_ids[existingInfo.agent_ids.length - 1]
+      if (lastAgentId !== activeWorkOrder.agent_id && agentID !== activeWorkOrder.agent_id) {
+        infoJSON.agent_ids = [...existingInfo.agent_ids, activeWorkOrder.agent_id]
+      } else {
+        infoJSON.agent_ids = [...existingInfo.agent_ids]
+      }
+    }
+
+    if (currentIssueEvent)
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssueEventById(CONSTANTS.BUILDING_DATABASE), [{ info: JSON.stringify(infoJSON) }, currentIssueEvent.id])
 
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
@@ -311,9 +338,10 @@ exports.reAssignWorkOrderController = async (request, response) => {
       notes: modifiedNote ?? null
     }
     if (modifiedVisit) {
-      newIssueData.customer_preferred_time =  null
+      // newIssueData.customer_preferred_time = null
       newAgentAssignmentData.visit_scheduled_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
-      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssueEvent(CONSTANTS.BUILDING_DATABASE), [{event_time:modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null}, issueID])
+      newAgentAssignmentData.time_slot = timeSlot
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssueEvent(CONSTANTS.BUILDING_DATABASE), [{ event_time: modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null,time_slot:timeSlot }, issueID])
     }
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
@@ -369,7 +397,7 @@ exports.closeIssueController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.CLOSED,
-      event_time:moment().utc().format('YYYY-MM-DD HH:mm:ss'),
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.CLOSED,
       creator_id: request.userID,
       creator_type: request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN ? CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN : CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER
@@ -392,11 +420,31 @@ exports.reAssignSiteVisitController = async (request, response) => {
   const modifiedVisit = request.body.modifiedVisit
   const modifiedNote = request.body.modifiedNote
   const modifiedDate = request.body.modifiedDate
+  const timeSlot = request.body.timeSlot
   try {
 
     // there should be an active site visit to re-assign
     const activeSiteVisit = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getActiveSiteVisitByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID]))
     if (_.isEmpty(activeSiteVisit)) return sendHTTPResponse.error(response, 'No active site visit found for this issue')
+
+    const currentIssueEvent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssueEventByIssueIdAndEntityId(CONSTANTS.BUILDING_DATABASE), [issueID, activeSiteVisit.id, CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED])
+
+    let infoJSON = {
+      agent_ids: [activeSiteVisit.agent_id]
+    }
+
+    if (currentIssueEvent && currentIssueEvent.info) {
+      const existingInfo = JSON.parse(currentIssueEvent.info)
+      const lastAgentId = existingInfo.agent_ids[existingInfo.agent_ids.length - 1]
+      if (lastAgentId !== activeSiteVisit.agent_id && agentID !== activeSiteVisit.agent_id) {
+        infoJSON.agent_ids = [...existingInfo.agent_ids, activeSiteVisit.agent_id]
+      } else {
+        infoJSON.agent_ids = [...existingInfo.agent_ids]
+      }
+    }
+
+    if (currentIssueEvent)
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssueEventById(CONSTANTS.BUILDING_DATABASE), [{ info: JSON.stringify(infoJSON) }, currentIssueEvent.id])
 
     const newIssueData = {
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
@@ -412,12 +460,14 @@ exports.reAssignSiteVisitController = async (request, response) => {
     }
     // sent notification to the agent regarding the issue
     if (modifiedVisit) {
-      newIssueData.customer_preferred_time = null
+      // newIssueData.customer_preferred_time = null
       const scheduleTime = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
       // newIssueData.customer_preferred_time = modifiedDate ? moment(convertToUTC(modifiedDate, CONSTANTS.TIMEZONE)).format('YYYY-MM-DD HH:mm:ss') : null
       newAgentAssignmentData.visit_scheduled_time = scheduleTime
-      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssueEvent(CONSTANTS.BUILDING_DATABASE), [{event_time:scheduleTime}, issueID])
+      newAgentAssignmentData.time_slot = timeSlot
+      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssueEvent(CONSTANTS.BUILDING_DATABASE), [{ event_time: scheduleTime,time_slot:timeSlot }, issueID])
     }
+
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentIDInAgentAssignmentofActiveIssue(CONSTANTS.BUILDING_DATABASE), [newAgentAssignmentData, issueID])
     Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | Site visit has been re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
@@ -456,7 +506,7 @@ exports.cancelSiteVisitController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.SITE_VISIT_CANCELLED,
-      event_time:moment().utc().format('YYYY-MM-DD HH:mm:ss'),
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_CANCELLED,
       entity_id: activeSiteVisitID,
       creator_id: request.userID,
@@ -521,7 +571,7 @@ exports.completeSiteVisitController = async (request, response) => {
     const issueLogData = {
       issue_id: issueID,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.SITE_VISIT_COMPLETED,
-      event_time:moment().utc().format('YYYY-MM-DD HH:mm:ss'),
+      event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.SITE_VISIT_COMPLETED,
       entity_id: activeSiteVisitID,
       creator_id: request.userID,
@@ -619,6 +669,12 @@ exports.addAndSendEstimateController = async (request, response) => {
       status: isDraft ? CONSTANTS.QUOTATION_STATUS.DRAFTED : CONSTANTS.QUOTATION_STATUS.SEND,
       created_by: request.userID
     }
+
+    const infoJSON = {
+      amount: totalCharge,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
     const issueLogData = {
       issue_id: issueID,
       event_type: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
@@ -626,7 +682,8 @@ exports.addAndSendEstimateController = async (request, response) => {
       sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
       description: notes,
       creator_id: request.userID,
-      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      info: JSON.stringify(infoJSON)
     }
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
@@ -672,18 +729,27 @@ exports.approveEstimateController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [estimateData, estimate.id])
     const newIssueData = {
+      customer_preferred_time: null,
       status: CONSTANTS.ISSUE_STATUS.INPROGRESS,
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
+    const infoJSON = {
+      amount: estimate.total_charge,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
     const issueLogData = {
       issue_id: issueID,
+      entity_id: estimate.id,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_APPROVED,
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_APPROVED,
       creator_id: request.userID,
-      creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      info: JSON.stringify(infoJSON)
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
@@ -715,13 +781,21 @@ exports.sendEstimateController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
+    const infoJSON = {
+      amount: estimate.total_charge,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
     const issueLogData = {
       issue_id: issueID,
+      entity_id: estimate.id,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
       creator_id: request.userID,
-      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      info: JSON.stringify(infoJSON)
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
@@ -810,13 +884,21 @@ exports.editEstimateController = async (request, response) => {
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateEstimate(CONSTANTS.BUILDING_DATABASE), [estimateData, estimate.id])
 
+    const infoJSON = {
+      amount: totalCharge,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
     const issueLogData = {
       issue_id: issueID,
+      entity_id: estimate.id,
       event_type: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_SENT,
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_DRAFT : CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_SENT,
       creator_id: request.userID,
-      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      info: JSON.stringify(infoJSON)
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
@@ -833,7 +915,7 @@ exports.rejectEstimateController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const rejectReason = request.body.rejectReason ?? null;
+    const rejectReason = request.body.rejectReason ?? null
 
     const estimate = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getEstimateByIssueID(CONSTANTS.BUILDING_DATABASE), [issueID])
     if (_.isEmpty(estimate)) return sendHTTPResponse.error(response, 'No active estimate found for this issue', null, 400)
@@ -857,13 +939,21 @@ exports.rejectEstimateController = async (request, response) => {
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
+    const infoJSON = {
+      amount: estimate.total_charge,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
     const issueLogData = {
       issue_id: issueID,
+      entity_id: estimate.id,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.ESTIMATE_REJECTED,
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.ESTIMATE_REJECTED,
       creator_id: request.userID,
-      creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      info: JSON.stringify(infoJSON)
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
     Log.info(`[${domain} | OrganisationID:${orgID}] | rejectEstimateController | The estimate has been rejected | estimateID: ${estimate.id} | logID: ${logID}`)
@@ -969,6 +1059,11 @@ exports.addAndSentInvoiceController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
+    const infoJSON = {
+      amount: totalCharge,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
     const issueLogData = {
       issue_id: issueID,
       event_type: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_SENT,
@@ -976,7 +1071,8 @@ exports.addAndSentInvoiceController = async (request, response) => {
       sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT,
       description: notes,
       creator_id: request.userID,
-      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      info: JSON.stringify(infoJSON)
     }
 
     if (_.isEmpty(exsitingInvoiceDetails)) {
@@ -1077,13 +1173,21 @@ exports.editInvoiceController = async (request, response) => {
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateInvoice(CONSTANTS.BUILDING_DATABASE), [invoiceDBData, invoiceData.id])
 
+    const infoJSON = {
+      amount: invoiceData.total_charge,
+      approved_rejected_by: invoiceData.approved_rejected_by || null,
+      approved_rejected_by_type: invoiceData.approved_rejected_by_type || null
+    }
+
     const issueLogData = {
       issue_id: issueID,
+      entity_id: invoiceData.id,
       event_type: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_SENT,
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: isDraft ? CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_DRAFTED : CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_SENT,
       creator_id: request.userID,
-      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type: CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      info: JSON.stringify(infoJSON)
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
@@ -1118,13 +1222,21 @@ exports.approveInvoiceController = async (request, response) => {
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
 
+    const infoJSON = {
+      amount: invoice.total_charge,
+      approved_rejected_by: request.userID,
+      approved_rejected_by_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+    }
+
     const issueLogData = {
       issue_id: issueID,
+      entity_id: invoice.id,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.INVOICE_APPROVED,
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.INVOICE_APPROVED,
       creator_id: request.userID,
-      creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN
+      creator_type: request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER ? CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER : CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN,
+      info: JSON.stringify(infoJSON)
     }
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
 
@@ -1166,6 +1278,7 @@ exports.recordPaymentController = async (request, response) => {
 
     const issueLogData = {
       issue_id: issueID,
+      entity_id: paymentDetails.id,
       event_type: CONSTANTS.ISSUE_SUB_STATUS_STRING.PAID,
       event_time: moment().utc().format('YYYY-MM-DD HH:mm:ss'),
       sub_status: CONSTANTS.ISSUE_SUB_STATUS_NUM.PAID,
@@ -1188,9 +1301,10 @@ exports.addPreferredTimeController = async (request, response) => {
   const domain = request.domain
   const issueID = request.params.issueID
   try {
-    const { preferredDatetime, isSkipped } = request.body
+    const { preferredDate, timeSlot, isSkipped } = request.body
     const newIssueData = {
-      customer_preferred_time: isSkipped ? null : moment.utc(preferredDatetime)?.format('YYYY-MM-DD HH:mm:ss')
+      customer_preferred_time: isSkipped ? null : moment.utc(preferredDate)?.format('YYYY-MM-DD'),
+      time_slot: timeSlot || 0
     }
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
     Log.info(`[${domain} | OrganisationID:${orgID}] | addPreferredTimeController | The preferred time has been added successfully | IssueID: ${issueID}`)
