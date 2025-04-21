@@ -228,6 +228,10 @@ exports.scheduleVisitIssueController = async (request, response) => {
     }
 
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+    const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails.resident_id]))?.fcmToken
+    const agentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentFCMTokenByAgentID(CONSTANTS.BUILDING_DATABASE), [issueDetails.agent_id]))?.fcmToken
+    blastPushNotification(residentFCMToken, 'Site Visit Scheduled', `You have a site visit scheduled.`)
+    blastPushNotification(agentFCMToken, 'Site Visit Scheduled', `You have a site visit scheduled.`)
     Log.info(`[${domain} | OrganisationID:${orgID}] | scheduleVisitIssueController | Issue visit scheduled successfully | IssueID: ${issueID} | LogID: ${logID}`)
     return sendHTTPResponse.success(response, 'Issue visit scheduled successfully', { entityID, logID })
   } catch (error) {
@@ -285,6 +289,11 @@ exports.workOrderIssueController = async (request, response) => {
     }
 
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+    const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails.resident_id]))?.fcmToken
+    const agentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentFCMTokenByAgentID(CONSTANTS.BUILDING_DATABASE), [issueDetails.agent_id]))?.fcmToken
+
+    blastPushNotification(residentFCMToken, 'Work Order Scheduled', `A work order has been scheduled for you.`)
+    blastPushNotification(agentFCMToken, 'Work Order Scheduled', `A work order has been scheduled for you.`)
     Log.info(`[${domain} | OrganisationID:${orgID}] | workOrderIssueController | Work order has been successfully scheduled | IssueID: ${issueID} | LogID: ${logID}`)
     return sendHTTPResponse.success(response, 'Work order has been successfully scheduled', { entityID, logID })
   } catch (error) {

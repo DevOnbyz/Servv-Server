@@ -530,5 +530,8 @@ WHEN sub_status IN (${ISSUE_SUB_STATUS_NUM.SITE_VISIT_ASSIGNED}, ${ISSUE_SUB_STA
   },
   updateIssueEventById(database) {
     return `UPDATE ${database}.issue_event SET ? WHERE id = ?`;
-  }
+  },
+  getAgentFCMTokenByAgentID(database) {
+    return `SELECT fcm_token as fcmToken FROM ${database}.agent_identity where id = ?`;
+  },
 };
