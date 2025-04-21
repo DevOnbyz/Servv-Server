@@ -96,7 +96,12 @@ const validateDoorNoAndAttachProjectID = async (orgID, completeResidentDetails, 
 
 const countryCodes = {
   India: 'IN',
-  UAE: 'AE'
+  UAE: 'AE',
+  Saudi: 'SA',
+  Qatar: 'QA',
+  Kuwait: 'KW',
+  Oman: 'OM',
+  Bhutan: 'BT',
 };
 
 const validateResidentPhNum = (completeResidentDetails) => {
