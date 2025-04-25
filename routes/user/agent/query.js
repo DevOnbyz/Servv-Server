@@ -2,26 +2,26 @@ const { ISSUE_SUB_STATUS_NUM, AGENT_ASSIGNMENT_STATUS, ISSUE_STATUS, ISSUE_STATU
 
 module.exports = {
   getAgentIdentityByPhNum(database) {
-    return `SELECT * FROM ${database}.agent_identity where ph_num = ?`
+    return `SELECT * FROM ${database}.agent WHERE ph_num = ?`
   },
   addAgentIdentity(database) {
-    return `INSERT INTO ${database}.agent_identity SET ?`
+    return `INSERT INTO ${database}.agent SET ?`
   },
   getAgentByPhNumIDAndOrgID(database) {
-    return `SELECT * FROM ${database}.agent WHERE identity_id = ? AND org_id = ?`;
+    return `SELECT * FROM ${database}.agent WHERE ph_num = ? AND org_id = ?`;
   },
-  addAgent(database) {
+    addAgent(database) {
     return `INSERT INTO ${database}.agent SET ?`;
   },
   addAgentServiceRel(database) {
     return `INSERT INTO ${database}.agent_service_rel SET ?`;
   },
   getAllAgentsUnderOrg(database) {
-    return `SELECT AG.id, AG.org_id, AG.identity_id, AG.status, AG.firstname, AG.lastname, AG.email_id as email, AG.city, AG.district, AG.state, AG.country ,AGI.ph_num as ph_num,AG.role_id as role_id,R.name AS role, AG.created_at as created_at FROM ${database}.agent AG INNER JOIN ${database}.agent_identity AGI ON AG.identity_id = AGI.id LEFT JOIN ${database}.role R ON AG.role_id = R.id  WHERE AG.org_id = ? order by id desc`;
+    return `SELECT AG.id, AG.org_id, AG.status, AG.firstname, AG.lastname, AG.email_id as email, AG.city, AG.district, AG.state, AG.country, AG.ph_num as ph_num, AG.role_id as role_id, R.name AS role, AG.created_at as created_at FROM ${database}.agent AG LEFT JOIN ${database}.role R ON AG.role_id = R.id WHERE AG.org_id = ? order by id desc`;
   },
   getAllAgentsByAgentIDandOrg(database) {
-    return `SELECT AG.id, AG.org_id, AG.identity_id, AG.status, AG.firstname, AG.lastname, AG.email_id, AG.city, AG.district, AG.state, AG.country ,AGI.ph_num as phNum FROM ${database}.agent AG INNER JOIN ${database}.agent_identity AGI ON AG.identity_id = AGI.id WHERE AG.id in (?) AND AG.org_id = ?`;
-  },
+    return `SELECT AG.id, AG.org_id, AG.status, AG.firstname, AG.lastname, AG.email_id, AG.city, AG.district, AG.state, AG.country, AG.ph_num as phNum FROM ${database}.agent AG WHERE AG.id in (?) AND AG.org_id = ?`;
+  },  
   getDistinctServiceAgentMappingByAgentID(database) {
     return `SELECT DISTINCT service_id FROM ${database}.agent_service_rel where agent_id = ?`;
   },
@@ -29,7 +29,7 @@ module.exports = {
     return `SELECT * FROM ${database}.agent WHERE id = ?`;
   },
   getAgentIdentityDetailsByID(database) {
-    return `SELECT * FROM ${database}.agent_identity WHERE id = ?`;
+    return `SELECT id, ph_num, email_id, fcm_token, created_at FROM ${database}.agent WHERE id = ?`;
   },
   updateAgentDetailsByID(database) {
     return `UPDATE ${database}.agent SET ? WHERE id = ?`;

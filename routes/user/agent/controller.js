@@ -80,21 +80,18 @@ exports.addAgentController = async (request, response) => {
     const country = request.body.country ?? null
     const roleId = request.body.roleId ?? null
 
-    const phNumDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum])
-    const agentIdentityID = _.isEmpty(phNumDetails) ? (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAgentIdentity(CONSTANTS.BUILDING_DATABASE), [{ ph_num: phNum, created_by: userID }]))?.insertId : phNumDetails[0]?.id
-
-    if (!_.isEmpty(phNumDetails)) {
-      // if a agent having same phone number exists in a same organisation then the admin cant add agent again
-      const agentOrgDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [agentIdentityID, orgID])
-      if (!_.isEmpty(agentOrgDetails)) return sendHTTPResponse.error(response, 'Agent with same phone number already exists in this organisation', null, 400)
+    // Check if agent with this phone number already exists in this organization
+    const existingAgent = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [phNum, orgID])
+    if (!_.isEmpty(existingAgent)) {
+      return sendHTTPResponse.error(response, 'Agent with same phone number already exists in this organisation', null, 400)
     }
 
     const agentDetails = {
       firstname,
       lastname,
       email_id: email,
+      ph_num: phNum,
       org_id: orgID,
-      identity_id: agentIdentityID,
       city,
       district,
       state,
@@ -140,13 +137,18 @@ exports.editAgentController = async (request, response) => {
     const country = request.body.country ?? null
     const roleId = request.body.roleId ?? null
 
-    const agentDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [id])
-    const agentEntityID = agentDetails?.identity_id
+    
+    // Check if another agent with this phone number exists in the same organization
+    const existingAgentWithPhNum = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [phNum, orgID])
+    if (!_.isEmpty(existingAgentWithPhNum) && existingAgentWithPhNum.id !== parseInt(id)) {
+      return sendHTTPResponse.error(response, 'Agent with same phone number already exists in this organisation', null, 400)
+    }
 
     const newAgentDetails = {
       firstname,
       lastname,
       email_id: email,
+      ph_num: phNum,
       updated_by: userID,
       org_id: orgID,
       city,
@@ -155,12 +157,15 @@ exports.editAgentController = async (request, response) => {
       country,
       role_id: roleId
     }
+    
     const existingServiceList = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllServicesByAgentID(CONSTANTS.BUILDING_DATABASE), [id]))?.map((item) => (item.service_id))
     const newServiceList = _.difference(serviceList, existingServiceList)
     const deactivatedServiceList = _.difference(existingServiceList, serviceList)
+    
     if (!_.isEmpty(deactivatedServiceList)) {
       await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.deleteAgentServiceRelByAgentIDAndServiceIDs(CONSTANTS.BUILDING_DATABASE), [id, deactivatedServiceList])
     }
+    
     if (!_.isEmpty(newServiceList)) {
       for (const service of newServiceList) {
         const agentServiceDetails = {
@@ -171,19 +176,9 @@ exports.editAgentController = async (request, response) => {
         await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAgentServiceRel(CONSTANTS.BUILDING_DATABASE), [agentServiceDetails])
       }
     }
-    // Check if a agent having same phone number exists in a same organisation then the admin cant add agent again
-    const phNumDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentIdentityByPhNum(CONSTANTS.BUILDING_DATABASE), [phNum]) //getting identity id of the phone number entered
-    if (!_.isEmpty(phNumDetails)) { // if a agent having same phone number exists in agent identity table
-      const agentOrgDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAgentByPhNumIDAndOrgID(CONSTANTS.BUILDING_DATABASE), [phNumDetails?.id, orgID])
-      if (!_.isEmpty(agentOrgDetails) && agentOrgDetails?.identity_id !== agentEntityID) return sendHTTPResponse.error(response, 'Agent with same phone number already exists in this organisation', null, 400)
-
-      // if a agent having same phone number exists in another organisation then the agent can update the identity id
-      const updatedAgentIdentityId = phNumDetails?.id
-      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [{ ...newAgentDetails, identity_id: updatedAgentIdentityId }, id])
-    } else {
-      const newAgentIdentityID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAgentIdentity(CONSTANTS.BUILDING_DATABASE), [{ ph_num: phNum, created_by: userID }]))?.insertId
-      await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [{ ...newAgentDetails, identity_id: newAgentIdentityID }, id])
-    }
+    
+    await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [newAgentDetails, id])
+    
     return sendHTTPResponse.success(response, 'Agent updated successfully')
   }
   catch (error) {
@@ -191,6 +186,7 @@ exports.editAgentController = async (request, response) => {
     return sendHTTPResponse.error(response, 'Error on editing admin', error)
   }
 }
+
 
 exports.getAgentAssignmentsController = async (request, response) => {
   const orgID = request.orgID
