@@ -229,7 +229,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
 
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
     console.log({ issueDetails })
-    const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails.resident_id]))?.fcmToken
+    const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].resident_id]))?.fcmToken
     console.log('residentFCMToken', residentFCMToken)
     blastPushNotification(residentFCMToken, 'Site Visit Assigned', `A site visit has been scheduled for your request on ${scheduleTime ? moment(scheduleTime).format('YYYY-MM-DD') : moment().utc().format('YYYY-MM-DD')} with Agent [Agent Name].`)
     Log.info(`[${domain} | OrganisationID:${orgID}] | scheduleVisitIssueController | Issue visit scheduled successfully | IssueID: ${issueID} | LogID: ${logID}`)
