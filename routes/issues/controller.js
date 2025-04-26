@@ -478,7 +478,7 @@ exports.reAssignSiteVisitController = async (request, response) => {
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].resident_id]))?.fcmToken
     const agent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [agentID])
-    blastPushNotification(residentFCMToken, 'Site Visit Assigned', `A site visit has been scheduled for your request on ${modifiedDate ? momentTZ.utc(modifiedDate).tz('Asia/Kolkata').format('DD MMMM YYYY') : momentTZ().tz('Asia/Kolkata').format('DD MMMM YYYY')} with Agent ${agent?.firstname} ${agent?.lastname}.`)
+    blastPushNotification(residentFCMToken, 'Site Visit Reassigned', `Your site visit has been rescheduled to ${modifiedDate ? momentTZ.utc(modifiedDate).tz('Asia/Kolkata').format('DD MMMM YYYY') : momentTZ().tz('Asia/Kolkata').format('DD MMMM YYYY')} with Agent ${agent?.firstname} ${agent?.lastname}.`)
     Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | Site visit has been re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
     return sendHTTPResponse.success(response, 'Site visit has been re-assigned successfully')
   } catch (error) {
@@ -523,6 +523,10 @@ exports.cancelSiteVisitController = async (request, response) => {
     }
 
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].resident_id]))?.fcmToken
+    blastPushNotification(residentFCMToken, 'Site Visit Canceled', `Your scheduled site visit has been canceled. Contact support for assistance.`)
 
     // await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.cancelSiteVisit(CONSTANTS.BUILDING_DATABASE), [issueID])
     Log.info(`[${domain} | OrganisationID:${orgID}] | cancelSiteVisitController | Site visit has been cancelled | IssueID: ${issueID} | LogID: ${logID}`)
