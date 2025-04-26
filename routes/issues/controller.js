@@ -11,6 +11,7 @@ const { addIssueEvent } = require('../../db/query')
 const { getAgentDetailsByID } = require('../user/agent/query')
 const { generateOTP, getSubStatusStringById, blastPushNotification } = require('../../lib/function')
 const moment = require('moment')
+const momentTZ = require('moment-timezone')
 const runQueryOne = require('../../db/runQueryOne')
 const Fn = require('./functions')
 const { convertToUTC } = require('../announcement/functions')
@@ -231,7 +232,7 @@ exports.scheduleVisitIssueController = async (request, response) => {
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
     const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].resident_id]))?.fcmToken
     const agent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [agentID])
-    blastPushNotification(residentFCMToken, 'Site Visit Assigned', `A site visit has been scheduled for your request on ${scheduleTime ? moment(scheduleTime).utc().format('YYYY-MM-DD') : moment().utc().format('YYYY-MM-DD')} with Agent ${agent?.firstname} ${agent?.lastname}.`)
+    blastPushNotification(residentFCMToken, 'Site Visit Assigned', `A site visit has been scheduled for your request on ${scheduleTime ? momentTZ.utc(scheduleTime).tz('Asia/Kolkata').format('DD MMMM YYYY') : momentTZ().tz('Asia/Kolkata').format('DD MMMM YYYY')} with Agent ${agent?.firstname} ${agent?.lastname}.`)
     Log.info(`[${domain} | OrganisationID:${orgID}] | scheduleVisitIssueController | Issue visit scheduled successfully | IssueID: ${issueID} | LogID: ${logID}`)
     return sendHTTPResponse.success(response, 'Issue visit scheduled successfully', { entityID, logID })
   } catch (error) {
