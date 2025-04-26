@@ -475,6 +475,10 @@ exports.reAssignSiteVisitController = async (request, response) => {
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentIDInAgentAssignmentofActiveIssue(CONSTANTS.BUILDING_DATABASE), [newAgentAssignmentData, issueID])
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].resident_id]))?.fcmToken
+    const agent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [agentID])
+    blastPushNotification(residentFCMToken, 'Site Visit Assigned', `A site visit has been scheduled for your request on ${scheduleTime ? momentTZ.utc(scheduleTime).tz('Asia/Kolkata').format('DD MMMM YYYY') : momentTZ().tz('Asia/Kolkata').format('DD MMMM YYYY')} with Agent ${agent?.firstname} ${agent?.lastname}.`)
     Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | Site visit has been re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
     return sendHTTPResponse.success(response, 'Site visit has been re-assigned successfully')
   } catch (error) {
