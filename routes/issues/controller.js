@@ -290,6 +290,11 @@ exports.workOrderIssueController = async (request, response) => {
     }
 
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
+
+    const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].resident_id]))?.fcmToken
+    const agent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [agentID])
+    blastPushNotification(residentFCMToken, 'Work Assigned', `Work has been scheduled for your request on ${scheduleTime ? momentTZ.utc(scheduleTime).tz('Asia/Kolkata').format('DD MMMM YYYY') : momentTZ().tz('Asia/Kolkata').format('DD MMMM YYYY')} with Agent ${agent?.firstname} ${agent?.lastname}.`)
+
     Log.info(`[${domain} | OrganisationID:${orgID}] | workOrderIssueController | Work order has been successfully scheduled | IssueID: ${issueID} | LogID: ${logID}`)
     return sendHTTPResponse.success(response, 'Work order has been successfully scheduled', { entityID, logID })
   } catch (error) {
@@ -351,6 +356,12 @@ exports.reAssignWorkOrderController = async (request, response) => {
 
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateIssue(CONSTANTS.BUILDING_DATABASE), [newIssueData, issueID])
     await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.updateAgentIDInAgentAssignmentofActiveIssue(CONSTANTS.BUILDING_DATABASE), [newAgentAssignmentData, issueID])
+
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].resident_id]))?.fcmToken
+    const agent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [agentID])
+    blastPushNotification(residentFCMToken, 'Work Reassigned', `Your work has been rescheduled to ${modifiedDate ? momentTZ.utc(modifiedDate).tz('Asia/Kolkata').format('DD MMMM YYYY') : momentTZ().tz('Asia/Kolkata').format('DD MMMM YYYY')} with Agent ${agent?.firstname} ${agent?.lastname}.`)
+
     Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignWorkOrderController | The work order has been re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
     return sendHTTPResponse.success(response, 'The work order has been re-assigned successfully')
   } catch (error) {
@@ -1103,7 +1114,7 @@ exports.addAndSentInvoiceController = async (request, response) => {
       const issueDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
       const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails.resident_id]))?.fcmToken
       Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | ResidentFCMToken: ${residentFCMToken} | IssueID: ${issueID} | Notification sent successfully`)
-      blastPushNotification(residentFCMToken, 'Invoice Generated', `An invoice has been generated for your service request.`)
+      blastPushNotification(residentFCMToken, 'Invoice Generated', `Your invoice for ${issueID} has been generated. Check the details.`)
     }
     Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSentInvoiceController | The invoice has been ${isDraft ? 'drafted' : 'sent'} successfully | IssueID: ${issueID}`)
     return sendHTTPResponse.success(response, `The invoice has been ${isDraft ? 'drafted' : 'sent'} successfully`, { logID })
@@ -1407,6 +1418,11 @@ exports.cancelWorkOrderController = async (request, response) => {
 
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
     Log.info(`[${domain} | OrganisationID:${orgID}] | cancelWorkOrderController | The work order has been cancelled | IssueID: ${issueID} | LogID: ${logID}`)
+
+    const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
+    const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].resident_id]))?.fcmToken
+    blastPushNotification(residentFCMToken, 'Work Canceled ', `Your scheduled work has been canceled. Contact support for assistance.`)
+
     return sendHTTPResponse.success(response, 'The work order has been cancelled')
   } catch (error) {
     Log.error(`[${domain} | OrganisationID:${orgID}] | cancelWorkOrderController | ${error.message}`)
