@@ -714,7 +714,7 @@ exports.addAndSendEstimateController = async (request, response) => {
       const issueDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
       const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails.resident_id]))?.fcmToken
       Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | ResidentFCMToken: ${residentFCMToken} | IssueID: ${issueID} | Notification sent successfully`)
-      blastPushNotification(residentFCMToken, 'Estimate Generated', `An estimate has been generated for your service request.`)
+      blastPushNotification(residentFCMToken, 'Estimate Generated', `Your estimate for ${issueID} is now available. Review and approve.`)
     }
     Log.info(`[${domain} | OrganisationID:${orgID}] | addAndSendEstimateController | The Estimate has been ${isDraft ? "drafted" : "sent"} successfully | IssueID: ${issueID}`)
     return sendHTTPResponse.success(response, `The Estimate has been ${isDraft ? "drafted" : "sent"} successfully`, { logID })
