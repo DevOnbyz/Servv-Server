@@ -3,7 +3,8 @@
   "version": "1.0.0",
   "description": "Facility management tool",
   "scripts": {
-    "start": "nodemon server.js",
+    "dev": "nodemon server.js",
+    "start": "node server.js",
     "socket": "nodemon services/socketService/index.js"
   },
   "author": "servv-team",
