@@ -183,7 +183,7 @@ exports.addIssueController = async (request, response) => {
 }
 
 
-exports.scheduleVisitIssueController = async (request, response) => {
+exports. scheduleVisitIssueController = async (request, response) => {
   const orgID = request.orgID
   const domain = request.domain
   const issueID = request.params.issueID
@@ -232,7 +232,10 @@ exports.scheduleVisitIssueController = async (request, response) => {
     const logID = (await runQuery(CONSTANTS.BUILDING_DATABASE, addIssueEvent(CONSTANTS.BUILDING_DATABASE), [issueLogData]))?.insertId
     const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].resident_id]))?.fcmToken
     const agent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [agentID])
+
     blastPushNotification(residentFCMToken, 'Site Visit Assigned', `A site visit has been scheduled for your request on ${scheduleTime ? momentTZ.utc(scheduleTime).tz('Asia/Kolkata').format('DD MMMM YYYY') : momentTZ().tz('Asia/Kolkata').format('DD MMMM YYYY')} with Agent ${agent?.firstname} ${agent?.lastname}.`)
+    blastPushNotification(agent.fcm_token, 'Site Visit Assigned', `You have been assigned a site visit for ${issueID} on ${scheduleTime ? momentTZ.utc(scheduleTime).tz('Asia/Kolkata').format('DD MMMM YYYY') : momentTZ().tz('Asia/Kolkata').format('DD MMMM YYYY')}. Please check the details.`)
+
     Log.info(`[${domain} | OrganisationID:${orgID}] | scheduleVisitIssueController | Issue visit scheduled successfully | IssueID: ${issueID} | LogID: ${logID}`)
     return sendHTTPResponse.success(response, 'Issue visit scheduled successfully', { entityID, logID })
   } catch (error) {
@@ -293,7 +296,9 @@ exports.workOrderIssueController = async (request, response) => {
 
     const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].resident_id]))?.fcmToken
     const agent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [agentID])
+
     blastPushNotification(residentFCMToken, 'Work Assigned', `Work has been scheduled for your request on ${scheduleTime ? momentTZ.utc(scheduleTime).tz('Asia/Kolkata').format('DD MMMM YYYY') : momentTZ().tz('Asia/Kolkata').format('DD MMMM YYYY')} with Agent ${agent?.firstname} ${agent?.lastname}.`)
+    blastPushNotification(agent.fcm_token, 'Work Assigned', `You have been assigned a work for ${issueID} on ${scheduleTime ? momentTZ.utc(scheduleTime).tz('Asia/Kolkata').format('DD MMMM YYYY') : momentTZ().tz('Asia/Kolkata').format('DD MMMM YYYY')}. Please check the details.`)
 
     Log.info(`[${domain} | OrganisationID:${orgID}] | workOrderIssueController | Work order has been successfully scheduled | IssueID: ${issueID} | LogID: ${logID}`)
     return sendHTTPResponse.success(response, 'Work order has been successfully scheduled', { entityID, logID })
@@ -360,7 +365,9 @@ exports.reAssignWorkOrderController = async (request, response) => {
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].resident_id]))?.fcmToken
     const agent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [agentID])
+
     blastPushNotification(residentFCMToken, 'Work Reassigned', `Your work has been rescheduled to ${modifiedDate ? momentTZ.utc(modifiedDate).tz('Asia/Kolkata').format('DD MMMM YYYY') : momentTZ().tz('Asia/Kolkata').format('DD MMMM YYYY')} with Agent ${agent?.firstname} ${agent?.lastname}.`)
+    blastPushNotification(agent.fcm_token, 'Work Rescheduled', `The work for ${issueID} has been rescheduled to ${modifiedDate ? momentTZ.utc(modifiedDate).tz('Asia/Kolkata').format('DD MMMM YYYY') : momentTZ().tz('Asia/Kolkata').format('DD MMMM YYYY')}. Please check the updated details.`)
 
     Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignWorkOrderController | The work order has been re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
     return sendHTTPResponse.success(response, 'The work order has been re-assigned successfully')
@@ -489,7 +496,10 @@ exports.reAssignSiteVisitController = async (request, response) => {
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].resident_id]))?.fcmToken
     const agent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [agentID])
+    
     blastPushNotification(residentFCMToken, 'Site Visit Reassigned', `Your site visit has been rescheduled to ${modifiedDate ? momentTZ.utc(modifiedDate).tz('Asia/Kolkata').format('DD MMMM YYYY') : momentTZ().tz('Asia/Kolkata').format('DD MMMM YYYY')} with Agent ${agent?.firstname} ${agent?.lastname}.`)
+    blastPushNotification(agent.fcm_token, 'Site Visit Rescheduled', `The site visit for ${issueID} has been rescheduled to ${modifiedDate ? momentTZ.utc(modifiedDate).tz('Asia/Kolkata').format('DD MMMM YYYY') : momentTZ().tz('Asia/Kolkata').format('DD MMMM YYYY')}. Please check the updated details.`)
+
     Log.info(`[${domain} | OrganisationID:${orgID}] | reAssignSiteVisitController | Site visit has been re-assigned successfully | IssueID: ${issueID} to AgentID: ${agentID}`)
     return sendHTTPResponse.success(response, 'Site visit has been re-assigned successfully')
   } catch (error) {
@@ -537,7 +547,10 @@ exports.cancelSiteVisitController = async (request, response) => {
 
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].resident_id]))?.fcmToken
+    const agent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].agent_id])
+    
     blastPushNotification(residentFCMToken, 'Site Visit Canceled', `Your scheduled site visit has been canceled. Contact support for assistance.`)
+    blastPushNotification(agent.fcm_token, 'Site Visit Canceled', `Your scheduled site visit has been canceled. No further action needed."`)
 
     // await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.cancelSiteVisit(CONSTANTS.BUILDING_DATABASE), [issueID])
     Log.info(`[${domain} | OrganisationID:${orgID}] | cancelSiteVisitController | Site visit has been cancelled | IssueID: ${issueID} | LogID: ${logID}`)
@@ -1421,7 +1434,10 @@ exports.cancelWorkOrderController = async (request, response) => {
 
     const issueDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getIssuseByID(CONSTANTS.BUILDING_DATABASE), [issueID])
     const residentFCMToken = (await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getResidentFCMTokenByResidentID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].resident_id]))?.fcmToken
+    const agent = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getAgentDetailsByID(CONSTANTS.BUILDING_DATABASE), [issueDetails[0].agent_id])
+
     blastPushNotification(residentFCMToken, 'Work Canceled ', `Your scheduled work has been canceled. Contact support for assistance.`)
+    blastPushNotification(agent.fcm_token, 'Work Canceled ', `The work for ${issueID} has been canceled. No further action required. `)
 
     return sendHTTPResponse.success(response, 'The work order has been cancelled')
   } catch (error) {

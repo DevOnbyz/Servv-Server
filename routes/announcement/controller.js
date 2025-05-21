@@ -11,6 +11,7 @@ const fs = require('fs')
 const { v4: uuidv4 } = require('uuid')
 const { getAllProjectsByOrgID, getResidentByIDs } = require('../../db/query')
 const { getApartmentListByResidentID, formatAnnouncements, getProjectAssocaitedWithResident, filterAnnouncementsByProjects, formatAndFilterAnnouncements } = require('./functions')
+const { blastPushNotification } = require('../../lib/function')
 
 const formDataLogger = (formData) => {
   if (formData) {
@@ -30,18 +31,18 @@ exports.getAnnouncementsController = async (request, response) => {
       runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAnnouncementsByOrgID(CONSTANTS.BUILDING_DATABASE), [orgID]),
       runQuery(CONSTANTS.BUILDING_DATABASE, getAllProjectsByOrgID(CONSTANTS.BUILDING_DATABASE), orgID),
     ])
-    
+
     const announcementIDList = announcementList.map((announcement) => announcement.id)
 
     if (request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER) {
       const residentID = request.userID
       const apartmentList = await getApartmentListByResidentID(residentID)
-      
+
       if (_.isEmpty(apartmentList))
         return sendHTTPResponse.success(response, "Announcement List fetched successfully", [])
-    
-      const announcementList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAnnouncementsByOrgIDWithInterest(CONSTANTS.BUILDING_DATABASE), [residentID,orgID])
-      const projectAssociatedWithResident= await getProjectAssocaitedWithResident(residentID,projectListUnderOrg)
+
+      const announcementList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAllAnnouncementsByOrgIDWithInterest(CONSTANTS.BUILDING_DATABASE), [residentID, orgID])
+      const projectAssociatedWithResident = await getProjectAssocaitedWithResident(residentID, projectListUnderOrg)
       const filteredAnnouncement = filterAnnouncementsByProjects(announcementList, projectAssociatedWithResident)
       const formattedAnnouncements = formatAndFilterAnnouncements(filteredAnnouncement, projectListUnderOrg)
 
@@ -50,25 +51,25 @@ exports.getAnnouncementsController = async (request, response) => {
 
     const formattedAnnouncements = formatAnnouncements(announcementList, projectListUnderOrg)
     const announcementResponse = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getAnnouncementResponses(CONSTANTS.BUILDING_DATABASE), [announcementIDList])
-    
+
     if (!_.isEmpty(announcementResponse)) {
       for (const announcement of formattedAnnouncements) {
         const announcementID = announcement.id
         const announcementResponses = announcementResponse.filter(
           (response) => response.announcement_id === announcementID
         )
-    
+
         if (_.isEmpty(announcementResponses)) continue
-    
+
         for (const response of announcementResponses) {
-          const residentDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE,getResidentByIDs(CONSTANTS.BUILDING_DATABASE),[response.resident_id])
+          const residentDetails = await runQueryOne(CONSTANTS.BUILDING_DATABASE, getResidentByIDs(CONSTANTS.BUILDING_DATABASE), [response.resident_id])
           response.name = residentDetails.lastname ? `${residentDetails.firstname} ${residentDetails.lastname}` : residentDetails.firstname
           response.phNum = residentDetails.ph_num
-          response.associatedProject = (await getProjectAssocaitedWithResident(response.resident_id,projectListUnderOrg))?.map((item) => item.name)
+          response.associatedProject = (await getProjectAssocaitedWithResident(response.resident_id, projectListUnderOrg))?.map((item) => item.name)
         }
-          announcement.announcementResponses = announcementResponses
+        announcement.announcementResponses = announcementResponses
       }
-    }    
+    }
 
     return sendHTTPResponse.success(response, 'Announcement List fetched successfully', formattedAnnouncements)
   } catch (error) {
@@ -132,10 +133,33 @@ exports.addAnnouncementController = async (request, response) => {
       created_by: request.userID
     }
     const insertID = (await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addAnnouncementToOrg(CONSTANTS.BUILDING_DATABASE), [announcementData]))?.insertId
+
+    const projectsArray = Array.isArray(projectList) ? projectList : JSON.parse(projectList)
+
+    for (const projectId of projectsArray) {
+      const projectName = await runQueryOne(CONSTANTS.BUILDING_DATABASE, queryBuilder.getProjectById(CONSTANTS.BUILDING_DATABASE), [projectId])?.name
+      const apartments = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getApartmentsByProjectId(CONSTANTS.BUILDING_DATABASE), [projectId])
+
+      if (apartments && apartments.length > 0) {
+        const apartmentIds = apartments.map(apt => apt.id)
+        const residentsData = await runQuery(CONSTANTS.BUILDING_DATABASE,queryBuilder.getResidentsByApartmentIds(CONSTANTS.BUILDING_DATABASE),[apartmentIds])
+
+        if (residentsData && residentsData.length > 0) {
+          for (const resident of residentsData) {
+            if (resident.fcm_token) {
+              blastPushNotification(resident.fcm_token,'New Announcement',`New announcement for ${projectName}. Please check the latest updates.`)
+            }
+          }
+
+          Log.info(`[Servv | OrganisationID:${orgID}] | addAnnouncementController | Sent notifications to ${residentsData.length} residents for project ${projectName}`)
+        }
+      }
+    }
+
     return sendHTTPResponse.success(response, 'Announcement added successfully', { announcementID: insertID })
   } catch (error) {
     Log.error(`[Servv | OrganisationID:${orgID}] | addAnnouncementController | Error in adding announcement | Error: ${error.message}`)
-    sendHTTPResponse.error(response, 'Error on adding announcement', error.message)
+    return sendHTTPResponse.error(response, 'Error on adding announcement', error.message)
   }
 }
 
@@ -202,17 +226,17 @@ exports.addInterestController = async (request, response) => {
   const orgID = request.orgID
   const announcementID = request.body.announcementID
   const userID = request.userID
-  const userType = request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN ? CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN : CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER 
+  const userType = request.userType === CONSTANTS.SERVV_USER_TYPE_STRING.ADMIN ? CONSTANTS.SERVV_USER_TYPE_NUM.ADMIN : CONSTANTS.SERVV_USER_TYPE_NUM.CUSTOMER
   try {
-    if(!userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER)
-      sendHTTPResponse.error(response,'Only customer can add interest')
+    if (!userType == CONSTANTS.SERVV_USER_TYPE_STRING.CUSTOMER)
+      sendHTTPResponse.error(response, 'Only customer can add interest')
 
     const announcementInterestData = {
-      announcement_id:parseInt(announcementID),
-      resident_id:userID,
+      announcement_id: parseInt(announcementID),
+      resident_id: userID,
     }
 
-    const interest = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addInterestToAnnouncement(CONSTANTS.BUILDING_DATABASE),announcementInterestData)
+    const interest = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.addInterestToAnnouncement(CONSTANTS.BUILDING_DATABASE), announcementInterestData)
     return sendHTTPResponse.success(response, 'Interest added successfully', interest)
   } catch (error) {
     Log.error(`[Servv | OrganisationID:${orgID}] | addInterestController | Error in adding interest | Error: ${error.message}`)
