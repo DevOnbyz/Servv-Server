@@ -8,7 +8,7 @@ module.exports = {
     ORDER BY a.id DESC;
   `;
   },
-  getAllAnnouncementsByOrgIDWithInterest(database){
+  getAllAnnouncementsByOrgIDWithInterest(database) {
     return `SELECT a.*,
     CASE WHEN ai.id IS NOT NULL THEN true ELSE false END AS interest
     FROM ${database}.announcement a
@@ -26,16 +26,29 @@ module.exports = {
   updateAnnouncement(database) {
     return `UPDATE ${database}.announcement SET ? WHERE id = ?`;
   },
-  getResidentApartmentRelByResidentID(database){
+  getResidentApartmentRelByResidentID(database) {
     return `SELECT * FROM ${database}.apartment_resident_rel WHERE resident_id = ?`
   },
-  getProjectByApartmentID(database){
+  getProjectByApartmentID(database) {
     return `SELECT project_id FROM ${database}.apartment WHERE id in (?)`
   },
-  addInterestToAnnouncement(database){
+  addInterestToAnnouncement(database) {
     return `INSERT INTO ${database}.announcement_interest SET ?`;
   },
-  getAnnouncementResponses(database){
+  getAnnouncementResponses(database) {
     return `SELECT * FROM ${database}.announcement_interest WHERE announcement_id in (?)`
-  }
+  },
+  getProjectById(database) {
+    return `SELECT * FROM ${database}.project WHERE id = ?`
+  },
+  getApartmentsByProjectId(database) {
+    return `SELECT * FROM ${database}.apartment WHERE project_id = ?`
+  },
+  getResidentsByApartmentIds(database) {
+    return `
+    SELECT DISTINCT r.id, r.firstname, r.lastname, r.ph_num, r.email_id, r.fcm_token
+    FROM ${database}.resident r
+    JOIN ${database}.apartment_resident_rel arr ON r.id = arr.resident_id
+    WHERE arr.apartment_id IN (?) `
+  },
 }
