@@ -7,11 +7,10 @@ module.exports = {
       SELECT p.code AS code FROM ${database}.role_permission_rel AS rpr 
       LEFT JOIN ${database}.permission AS p ON rpr.permission_id = p.id
       WHERE rpr.role_id = ?;`;
-  }
-  ,
-  getAgentData(database) {
-    return `SELECT * FROM ${database}.agent A INNER JOIN ${database}.agent_identity AI ON A.identity_id = AI.id WHERE AI.ph_num = ?`
   },
+  getAgentData(database) {
+    return `SELECT * FROM ${database}.agent WHERE ph_num = ?`
+  },  
   getAdminDataByID(database) {
     return `SELECT * FROM ${database}.admin where id = ?`
   },
@@ -22,7 +21,7 @@ module.exports = {
     return `SELECT * FROM ${database}.resident where ph_num = ?`
   },
   getAgentbyPhNum(database) {
-    return `SELECT * FROM ${database}.agent_identity where ph_num = ?`
+    return `SELECT * FROM ${database}.agent WHERE ph_num = ?`
   },
   getCustomerData(database) {
     return `SELECT * FROM ${database}.resident WHERE ph_num = ?`
@@ -40,6 +39,6 @@ module.exports = {
     return `UPDATE ${database}.resident SET fcm_token = ? WHERE ph_num = ?`;
   },
   updateAgentFcmToken(database) {
-    return `UPDATE ${database}.agent_identity SET fcm_token = ? WHERE ph_num = ?`;
-  }
+    return `UPDATE ${database}.agent SET fcm_token = ? WHERE ph_num = ?`;
+  }  
 };

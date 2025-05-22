@@ -217,3 +217,17 @@ ALTER TABLE `admin` MODIFY COLUMN `lastname` VARCHAR(255) NULL;
 ALTER TABLE `issue` ADD COLUMN `time_slot` TINYINT DEFAULT 0 AFTER `customer_preferred_time`;
 ALTER TABLE `issue_event` ADD COLUMN `time_slot` TINYINT DEFAULT 0 AFTER `event_time`;
 ALTER TABLE `agent_assignment` ADD COLUMN `time_slot` TINYINT DEFAULT 0 AFTER `visit_scheduled_time`;
+
+--24-04-2025
+ALTER TABLE `agent` ADD COLUMN `ph_num` VARCHAR(255) UNIQUE, ADD COLUMN `fcm_token` TEXT;
+
+UPDATE `agent` a
+JOIN `agent_identity` ai ON a.identity_id = ai.id
+SET a.ph_num = ai.ph_num,
+    a.fcm_token = ai.fcm_token,
+    a.email_id = CASE WHEN a.email_id IS NULL OR a.email_id = '' THEN ai.email_id ELSE a.email_id END;
+
+ALTER TABLE `agent` DROP FOREIGN KEY `fk_agent_ibfk_3`;
+ALTER TABLE `agent` DROP COLUMN `identity_id`;
+ALTER TABLE `agent` ADD CONSTRAINT `unique_org_phone` UNIQUE (`org_id`, `ph_num`);
+DROP TABLE `agent_identity`;
