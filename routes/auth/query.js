@@ -30,7 +30,7 @@ module.exports = {
     return `SELECT DISTINCT org_id, id as residentId FROM ${database}.resident where ph_num = ?`
   },
   getDistichOrgOfAgentsByIdentityID(database) {
-    return `SELECT DISTINCT org_id, id as agentId FROM ${database}.agent where identity_id = ?`
+    return `SELECT DISTINCT org_id, id as agentId FROM ${database}.agent where id = ?`
   },
   getOrgDetailsByIDs(database) {
     return `SELECT * FROM ${database}.organisation where id in (?)`
