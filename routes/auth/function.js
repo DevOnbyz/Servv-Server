@@ -64,11 +64,10 @@ exports.generateCustomerToken = async (customerData) => {
 exports.generateAgentToken = async (agentData) => {
   try{
     const id = agentData.id
-    const identityID = agentData.identity_id
     const firstname = agentData.firstname
     const lastname = agentData.lastname
     const fullName = lastname ? `${firstname} ${lastname}` : firstname
-    const associatedOrganisationList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getDistichOrgOfAgentsByIdentityID(CONSTANTS.BUILDING_DATABASE), [identityID])
+    const associatedOrganisationList = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getDistichOrgOfAgentsByIdentityID(CONSTANTS.BUILDING_DATABASE), [id])
     const orgIDs = associatedOrganisationList?.map(org => org.org_id)
     const orgsDetails = await runQuery(CONSTANTS.BUILDING_DATABASE, queryBuilder.getOrgDetailsByIDs(CONSTANTS.BUILDING_DATABASE), [orgIDs])
     const associatedOrganisation = orgsDetails?.map((org) => ({
@@ -82,13 +81,13 @@ exports.generateAgentToken = async (agentData) => {
     const permissions = permissionCodes.map(permission => permission.code);
     const role = agentData.role_id ?? null
 
-    const accessToken = await jwtSign({id, name: fullName, identityID, domain,role, associatedOrganisation, userType: CONSTANTS.SERVV_USER_TYPE_STRING.AGENT, permissions})
+    const accessToken = await jwtSign({id, name: fullName, domain,role, associatedOrganisation, userType: CONSTANTS.SERVV_USER_TYPE_STRING.AGENT, permissions})
     const refreshToken = await jwtSign({id}, {expiresIn: CONSTANTS.REFRESH_TOKEN_EXPIRY})
 
     return {error: false, data:{accessToken,refreshToken}}
   }
   catch(error){
-    Log.error(`[Servv] | generateAgentToken | Error in generating agent token`,error.message)
+    Log.error(`[Servv] | generateAgentToken | Error in generating agent token`,error)
     return {error: true, data: null}
   }
   

@@ -31,7 +31,6 @@ module.exports = async (request, response, next) => {
     if(request.userType == CONSTANTS.SERVV_USER_TYPE_STRING.AGENT){
       request.orgID = request.query.organisationID
       request.userID = decoded?.data?.associatedOrganisation?.filter(org => org.id == request.orgID)[0]?.agentID
-      request.identityID = decoded?.data?.identityID
       request.domain = decoded?.data?.associatedOrganisation?.filter(org => org.id == request.orgID)[0]?.name
       request.name = decoded?.data?.name
       request.associatedOrganisation = decoded?.data?.associatedOrganisation
